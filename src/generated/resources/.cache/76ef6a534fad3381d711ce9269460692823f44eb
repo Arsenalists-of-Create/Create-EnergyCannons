@@ -1,0 +1,6 @@
+// 1.20.1	2025-01-16T10:02:38.3908905	Registrate Provider for createenergycannons [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
+4c353b537f7deabc1242802f408f9c9aee407b27 assets/createenergycannons/blockstates/creative_battery.json
+e92f11d40668c1bf54f78ba7d98b0dedfab67876 assets/createenergycannons/lang/en_ud.json
+f383133a8625d26f2e55e1ec0c1a6fe73c1b4a52 assets/createenergycannons/lang/en_us.json
+ad66c05f76b672b5ad8e74d85e7975afed3f1e9a assets/createenergycannons/models/item/creative_battery.json
+05cce8cf3d08895b0c5de5fb54aced294b3b8af6 data/createenergycannons/loot_tables/blocks/creative_battery.json
