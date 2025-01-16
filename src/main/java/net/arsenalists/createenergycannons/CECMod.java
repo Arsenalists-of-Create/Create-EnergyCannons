@@ -2,6 +2,7 @@ package net.arsenalists.createenergycannons;
 
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.arsenalists.createenergycannons.registry.CECCreativeModeTabs;
 import net.arsenalists.createenergycannons.registry.CECLang;
@@ -23,6 +24,7 @@ public class CECMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         REGISTRATE.registerEventListeners(modEventBus);
         CECBlocks.register();
+        CECBlockEntity.register();
         CECCreativeModeTabs.register(modEventBus);
         CECLang.register();
         MinecraftForge.EVENT_BUS.register(this);

@@ -34,7 +34,10 @@ public class CECCreativeModeTabs {
     }
 
     private static void displayItems(CreativeModeTab.ItemDisplayParameters pParameters, CreativeModeTab.Output pOutput) {
+        pOutput.accept(CECBlocks.ENERGY_CANNON_MOUNT);
         pOutput.accept(CECBlocks.BATTERY_BLOCK);
+        pOutput.accept(CECBlocks.RAILGUN_BARREL);
+        pOutput.accept(CECBlocks.COILGUN_BARREL);
     }
 
 

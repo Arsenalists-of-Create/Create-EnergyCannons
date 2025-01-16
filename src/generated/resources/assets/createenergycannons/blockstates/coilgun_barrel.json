@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "createenergycannons:block/coilgun_barrel",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "createenergycannons:block/coilgun_barrel",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "createenergycannons:block/coilgun_barrel",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "createenergycannons:block/coilgun_barrel",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "createenergycannons:block/coilgun_barrel"
+    },
+    "facing=west": {
+      "model": "createenergycannons:block/coilgun_barrel",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

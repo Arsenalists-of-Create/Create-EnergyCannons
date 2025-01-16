@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.arsenalists.createenergycannons.mixin",
+  "refmap": "createenergycannons.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+  ],
+  "mixins": [
+    "CannonMountBEAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

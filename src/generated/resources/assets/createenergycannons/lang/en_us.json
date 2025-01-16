@@ -1,4 +1,7 @@
 {
+  "block.createenergycannons.coilgun_barrel": "Coilgun Barrel",
   "block.createenergycannons.creative_battery": "Creative Battery",
+  "block.createenergycannons.energy_cannon_mount": "Energy Cannon Mount",
+  "block.createenergycannons.railgun_barrel": "Railgun Barrel",
   "itemGroup.createenergycannons.createenergycannons": "Create Energy Cannons"
 }
