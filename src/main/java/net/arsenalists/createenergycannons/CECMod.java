@@ -2,13 +2,12 @@ package net.arsenalists.createenergycannons;
 
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
-import net.arsenalists.createenergycannons.registry.CECBlockEntity;
-import net.arsenalists.createenergycannons.registry.CECBlocks;
-import net.arsenalists.createenergycannons.registry.CECCreativeModeTabs;
-import net.arsenalists.createenergycannons.registry.CECLang;
+import net.arsenalists.createenergycannons.registry.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
@@ -27,11 +26,21 @@ public class CECMod {
         CECBlockEntity.register();
         CECCreativeModeTabs.register(modEventBus);
         CECLang.register();
+        CECContraptionTypes.register();
+        CECCannonContraptionTypes.register();
+        modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    private void onCommonSetup(FMLCommonSetupEvent event) {
+        CECDefaultCannonMountPropertiesSerializers.init();
     }
 
     public static Logger getLogger() {
         return LOGGER;
     }
 
+    public static ResourceLocation resource(String id) {
+        return new ResourceLocation(MODID, id);
+    }
 }

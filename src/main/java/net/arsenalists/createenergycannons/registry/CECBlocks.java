@@ -9,6 +9,7 @@ import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.block.battery.CreativeBatteryBlock;
 import net.arsenalists.createenergycannons.block.energymount.EnergyCannonMount;
+import net.arsenalists.createenergycannons.block.laser.LaserBlock;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlockItem;
@@ -51,6 +52,16 @@ public class CECBlocks {
             .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
             .loot(CBCBuilderTransformers.nethersteelScrapLoot(10))
             .item(BigCannonBlockItem::new).build()
+            .register();
+
+    public static final BlockEntry<LaserBlock> LASER = CECMod.REGISTRATE
+            .block("laser", LaserBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(BlockBehaviour.Properties::noOcclusion)
+            .blockstate((c, p) -> p.directionalBlock(c.getEntry(), AssetLookup.standardModel(c, p)))
+            .addLayer(() -> RenderType::cutout)
+            .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
+            .simpleItem()
             .register();
 
     public static final BlockEntry<EnergyCannonMount> ENERGY_CANNON_MOUNT = CECMod.REGISTRATE

@@ -41,6 +41,6 @@ public interface CannonMountBEAccessor {
     void setPrevYaw(float yaw);
 
     @Invoker(value = "getContraption", remap = false)
-    AbstractMountedCannonContraption getContraptionA(BlockPos pos);
+    AbstractMountedCannonContraption getAbstractCannon(BlockPos pos);
 
 }

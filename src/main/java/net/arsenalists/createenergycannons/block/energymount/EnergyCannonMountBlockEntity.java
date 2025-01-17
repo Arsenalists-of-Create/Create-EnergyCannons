@@ -67,7 +67,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
             if (this.getLevel().isOutsideBuildHeight(assemblyPos)) {
                 throw cannonBlockOutsideOfWorld(assemblyPos);
             } else {
-                AbstractMountedCannonContraption mountedCannon = accessor().getContraptionA(assemblyPos);
+                AbstractMountedCannonContraption mountedCannon = accessor().getAbstractCannon(assemblyPos);
                 if (mountedCannon != null && mountedCannon.assemble(this.getLevel(), assemblyPos)) {
                     Direction facing = (Direction) this.getBlockState().getValue(CannonMountBlock.HORIZONTAL_FACING);
                     Direction facing1 = mountedCannon.initialOrientation();
