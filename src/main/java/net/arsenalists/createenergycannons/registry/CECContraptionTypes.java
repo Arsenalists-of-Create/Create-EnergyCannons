@@ -1,7 +1,7 @@
 package net.arsenalists.createenergycannons.registry;
 
 import com.simibubi.create.content.contraptions.ContraptionType;
-import net.arsenalists.createenergycannons.block.laser.LaserMountedCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.laser.LaserMountedCannonContraption;
 import rbasamoyai.createbigcannons.CreateBigCannons;
 
 public class CECContraptionTypes {

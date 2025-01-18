@@ -4,5 +4,6 @@
   "block.createenergycannons.energy_cannon_mount": "Energy Cannon Mount",
   "block.createenergycannons.laser": "Laser",
   "block.createenergycannons.railgun_barrel": "Railgun Barrel",
+  "item.createenergycannons.magnetic_sled": "Magnetic Sled",
   "itemGroup.createenergycannons.createenergycannons": "Create Energy Cannons"
 }

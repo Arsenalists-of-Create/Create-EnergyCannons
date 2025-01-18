@@ -39,6 +39,7 @@ public class CECCreativeModeTabs {
         pOutput.accept(CECBlocks.LASER);
         pOutput.accept(CECBlocks.RAILGUN_BARREL);
         pOutput.accept(CECBlocks.COILGUN_BARREL);
+        pOutput.accept(CECItems.MAGNETIC_SLED);
     }
 
 

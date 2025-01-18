@@ -1,10 +1,10 @@
-// 1.20.1	2025-01-16T16:20:05.6379865	Registrate Provider for createenergycannons [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
+// 1.20.1	2025-01-17T16:31:02.0351637	Registrate Provider for createenergycannons [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
 9205824521b7c0e23100d82306f739e2ef522345 assets/createenergycannons/blockstates/coilgun_barrel.json
 4c353b537f7deabc1242802f408f9c9aee407b27 assets/createenergycannons/blockstates/creative_battery.json
 d5afe5a1b27b74227fcf9c6c8cbaefbce3b0caa6 assets/createenergycannons/blockstates/laser.json
 d9069d2a3e7fc36eff6dc3042e6df225f47894eb assets/createenergycannons/blockstates/railgun_barrel.json
-9571d73dd646adbd14344233414d8fde749a954b assets/createenergycannons/lang/en_ud.json
-87ba923442fb37f64af4c6434ff966cb10d53805 assets/createenergycannons/lang/en_us.json
+1a4b38b64654873178e7de996ed971a9d0f03a56 assets/createenergycannons/lang/en_ud.json
+b410d03447d2421c3e6b4875e4647b29d884e222 assets/createenergycannons/lang/en_us.json
 4f8c9de41269f6e068481ed9c877431f8f696745 assets/createenergycannons/models/item/coilgun_barrel.json
 ad66c05f76b672b5ad8e74d85e7975afed3f1e9a assets/createenergycannons/models/item/creative_battery.json
 73ac526b2104ec10870c4fbb99fd92523847027b assets/createenergycannons/models/item/laser.json

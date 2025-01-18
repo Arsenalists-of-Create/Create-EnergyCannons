@@ -2,9 +2,9 @@ package net.arsenalists.createenergycannons.registry;
 
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import net.arsenalists.createenergycannons.CECMod;
-import net.arsenalists.createenergycannons.block.battery.CreativeBatteryBlockEntity;
-import net.arsenalists.createenergycannons.block.energymount.EnergyCannonMountBlockEntity;
-import net.arsenalists.createenergycannons.block.laser.LaserBlockEntity;
+import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntity;
+import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountInstance;
 
