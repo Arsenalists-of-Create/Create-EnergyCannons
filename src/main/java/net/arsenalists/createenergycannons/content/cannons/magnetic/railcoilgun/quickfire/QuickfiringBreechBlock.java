@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire;
 
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.ITransformableBlock;
@@ -8,10 +8,10 @@ import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.Iterate;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.IRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation.MountedRailCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBaseBlock;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.IRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.MountedRailCannonContrpation.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBaseBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlock;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

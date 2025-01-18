@@ -8,9 +8,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.entity.BeaconBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -27,7 +27,32 @@ public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
 
     public void render(LaserBlockEntity pBlockEntity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
         long i = pBlockEntity.getLevel().getGameTime();
-
+        if (pBlockEntity.getFireRate() == 0)
+            return;
+        int[] colors = new int[]{255, 255, 255};
+        Direction direction = pBlockEntity.getBlockState().getValue(LaserBlock.FACING);
+        pPoseStack.translate(0.5D, 0.5D, 0.5D);
+        switch (direction) {
+            case DOWN:
+                pPoseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+                break;
+            case NORTH:
+                pPoseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                break;
+            case SOUTH:
+                pPoseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                break;
+            case WEST:
+                pPoseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                break;
+            case EAST:
+                pPoseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+                break;
+            case UP:
+                break;
+        }
+        pPoseStack.translate(-0.5D, -0.25D, -0.5D);
+        renderBeaconBeam(pPoseStack, pBuffer, pPartialTick, i, 0, MAX_RENDER_Y, new float[]{colors[0] / 255f, colors[1] / 255f, colors[2] / 255f, 1F});
     }
 
     private static void renderBeaconBeam(PoseStack pPoseStack, MultiBufferSource pBufferSource, float pPartialTick, long pGameTime, int pYOffset, int pHeight, float[] pColors) {
@@ -91,7 +116,7 @@ public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
         pConsumer.vertex(pPose, pX, (float) pY, pZ).color(pRed, pGreen, pBlue, pAlpha).uv(pU, pV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(pNormal, 0.0F, 1.0F, 0.0F).endVertex();
     }
 
-    public boolean shouldRenderOffScreen(BeaconBlockEntity pBlockEntity) {
+    public boolean shouldRenderOffScreen(LaserBlockEntity pBlockEntity) {
         return true;
     }
 
@@ -99,7 +124,7 @@ public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
         return 256;
     }
 
-    public boolean shouldRender(BeaconBlockEntity pBlockEntity, Vec3 pCameraPos) {
+    public boolean shouldRender(LaserBlockEntity pBlockEntity, Vec3 pCameraPos) {
         return Vec3.atCenterOf(pBlockEntity.getBlockPos()).multiply(1.0D, 0.0D, 1.0D).closerThan(pCameraPos.multiply(1.0D, 0.0D, 1.0D), (double) this.getViewDistance());
     }
 }

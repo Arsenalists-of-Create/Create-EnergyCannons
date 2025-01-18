@@ -9,6 +9,7 @@ public class CECPartials {
     }
 
     public static final PartialModel MAGNETIC_SLED = block("magnetic_sled");
+    public static final PartialModel LASER_CUBE = block("laser_cube");
 
     private static PartialModel block(String path) {
         return new PartialModel(CECMod.resource("block/" + path));

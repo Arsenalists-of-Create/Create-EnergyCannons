@@ -1,9 +1,9 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.IRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBehavior;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.IRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBehavior;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;

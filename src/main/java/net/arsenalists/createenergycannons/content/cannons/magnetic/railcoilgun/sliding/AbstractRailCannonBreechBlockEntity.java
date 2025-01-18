@@ -1,9 +1,9 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding;
 
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.IRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBehavior;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.IRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBehavior;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;

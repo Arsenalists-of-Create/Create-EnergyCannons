@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire;
 
 import com.jozufozu.flywheel.backend.Backend;
 import com.mojang.blaze3d.vertex.PoseStack;

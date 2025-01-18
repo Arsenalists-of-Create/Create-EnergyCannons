@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;

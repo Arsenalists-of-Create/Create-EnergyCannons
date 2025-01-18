@@ -1,10 +1,10 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.screwbreech;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.screwbreech;
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.Iterate;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation.MountedRailCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.MountedRailCannonContrpation.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlock;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

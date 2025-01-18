@@ -1,11 +1,11 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding;
 
 import com.jozufozu.flywheel.backend.Backend;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.simibubi.create.foundation.render.CachedBufferer;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire.QuickfiringBreechBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire.QuickfiringBreechBlock;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;

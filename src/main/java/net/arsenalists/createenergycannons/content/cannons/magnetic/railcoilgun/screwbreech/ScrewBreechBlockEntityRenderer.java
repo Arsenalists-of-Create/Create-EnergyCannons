@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.screwbreech;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.screwbreech;
 
 import com.jozufozu.flywheel.backend.Backend;
 import com.mojang.blaze3d.vertex.PoseStack;

@@ -1,9 +1,9 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding;
 
 import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
 import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.IRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.IRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlock;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

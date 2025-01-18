@@ -5,6 +5,8 @@ import com.simibubi.create.content.contraptions.ContraptionType;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -15,6 +17,7 @@ import rbasamoyai.createbigcannons.cannon_control.ControlPitchContraption;
 import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptionType;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
+import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +26,12 @@ import java.util.Optional;
 public class MountedLaserCannonContraption extends AbstractMountedCannonContraption {
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
-        getLaser().ifPresent(laser -> laser.setFireRate(firePower));
+        getLaser().ifPresent(laser -> {
+                    laser.setFireRate(firePower);
+                    BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
+                }
+        );
+
     }
 
     public Optional<LaserBlockEntity> getLaser() {
@@ -31,7 +39,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     }
     @Override
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
-        System.out.println("Firing laser");
+        System.out.println("Firing shot");
     }
 
     @Override
@@ -78,6 +86,10 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         List<StructureTemplate.StructureBlockInfo> cannonBlocks = new ArrayList<>();
         cannonBlocks.add(new StructureTemplate.StructureBlockInfo(pos, startState, this.getBlockEntityNBT(level, pos)));
 
+        Direction facing = startCannon.getFacing(startState);
+        if (facing == Direction.DOWN || facing == Direction.UP) {
+            throw new AssemblyException(Component.literal("Invalid Cannon Orientation"));
+        }
         this.initialOrientation = startCannon.getFacing(startState);
         this.startPos = pos;
         this.anchor = pos;

@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -289,7 +289,7 @@ public class LayeredRailCannonBlockEntity extends SmartBlockEntity implements IR
                 BlockPos pos1 = newLayered.worldPosition.relative(dir);
                 BlockEntity be1 = newLayered.level.getBlockEntity(pos1);
                 BlockState state1 = newLayered.level.getBlockState(pos1);
-                if (be1 instanceof ICannonBlockEntity<?> cbe && state1.getBlock() instanceof net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlock cBlock && cBlock.getCannonMaterialInLevel(newLayered.level, state1, pos1) == newLayered.baseMaterial) {
+                if (be1 instanceof ICannonBlockEntity<?> cbe && state1.getBlock() instanceof net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlock cBlock && cBlock.getCannonMaterialInLevel(newLayered.level, state1, pos1) == newLayered.baseMaterial) {
                     boolean connect = this.cannonBehavior.isConnectedTo(dir);
                     newLayered.cannonBehavior.setConnectedFace(dir, connect);
                     cbe.cannonBehavior().setConnectedFace(dir.getOpposite(), connect);

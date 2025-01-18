@@ -4,17 +4,18 @@ import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.LayeredRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire.QuickfiringBreechBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire.QuickfiringBreechBlockEntityRenderer;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.quickfire.QuickfiringBreechInstance;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.screwbreech.ScrewBreechBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.screwbreech.ScrewBreechBlockEntityRenderer;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.screwbreech.ScrewBreechInstance;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding.SlidingBreechBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding.SlidingBreechBlockEntityRenderer;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding.SlidingBreechInstance;
+import net.arsenalists.createenergycannons.content.cannons.laser.LaserRenderer;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.LayeredRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire.QuickfiringBreechBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire.QuickfiringBreechBlockEntityRenderer;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.quickfire.QuickfiringBreechInstance;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.screwbreech.ScrewBreechBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.screwbreech.ScrewBreechBlockEntityRenderer;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.screwbreech.ScrewBreechInstance;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding.SlidingBreechBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding.SlidingBreechBlockEntityRenderer;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding.SlidingBreechInstance;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountInstance;
@@ -62,6 +63,7 @@ public class CECBlockEntity {
 
     public static final BlockEntityEntry<LaserBlockEntity> LASER = CECMod.REGISTRATE
             .blockEntity("laser", LaserBlockEntity::new)
+            .renderer(() -> LaserRenderer::new)
             .validBlock(CECBlocks.LASER)
             .register();
 

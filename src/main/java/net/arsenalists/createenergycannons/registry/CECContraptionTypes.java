@@ -3,7 +3,7 @@ package net.arsenalists.createenergycannons.registry;
 import com.simibubi.create.content.contraptions.ContraptionType;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.MountedRailCannonContrpation.MountedRailCannonContraption;
 import rbasamoyai.createbigcannons.CreateBigCannons;
 
 public class CECContraptionTypes {

@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.sliding;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.sliding;
 
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.TranslatingContraption;
