@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class LaserMountedCannonContraption extends AbstractMountedCannonContraption {
+public class MountedLaserCannonContraption extends AbstractMountedCannonContraption {
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
         getLaser().ifPresent(laser -> laser.setFireRate(firePower));

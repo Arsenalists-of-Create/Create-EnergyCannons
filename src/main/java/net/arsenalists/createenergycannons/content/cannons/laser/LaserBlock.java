@@ -51,7 +51,7 @@ public class LaserBlock extends DirectionalBlock implements CannonContraptionPro
 
     @Override
     public @NotNull AbstractMountedCannonContraption getCannonContraption() {
-        return new LaserMountedCannonContraption();
+        return new MountedLaserCannonContraption();
     }
 
     @Override

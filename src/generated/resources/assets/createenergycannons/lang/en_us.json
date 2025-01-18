@@ -1,9 +1,14 @@
 {
-  "block.createenergycannons.coilgun_barrel": "Coilgun Barrel",
   "block.createenergycannons.creative_battery": "Creative Battery",
   "block.createenergycannons.energy_cannon_mount": "Energy Cannon Mount",
   "block.createenergycannons.laser": "Laser",
+  "block.createenergycannons.nethersteel_coilgun_barrel": "Nethersteel Coilgun Barrel",
+  "block.createenergycannons.nethersteel_rail_screw_breech": "Nethersteel Rail Screw Breech",
   "block.createenergycannons.railgun_barrel": "Railgun Barrel",
+  "block.createenergycannons.steel_coilgun_barrel": "Steel Coilgun Barrel",
+  "block.createenergycannons.steel_rail_quickfiring_breech": "Steel Rail Quick-Firing Breech",
+  "block.createenergycannons.steel_rail_screw_breech": "Steel Rail Screw Breech",
+  "block.createenergycannons.steel_rail_sliding_breech": "Steel Rail Sliding Breech",
   "item.createenergycannons.magnetic_sled": "Magnetic Sled",
   "itemGroup.createenergycannons.createenergycannons": "Create Energy Cannons"
 }

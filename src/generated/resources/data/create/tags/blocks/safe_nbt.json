@@ -1,7 +1,12 @@
 {
   "values": [
     "createenergycannons:railgun_barrel",
-    "createenergycannons:coilgun_barrel",
+    "createenergycannons:nethersteel_rail_screw_breech",
+    "createenergycannons:steel_rail_screw_breech",
+    "createenergycannons:steel_rail_quickfiring_breech",
+    "createenergycannons:steel_rail_sliding_breech",
+    "createenergycannons:steel_coilgun_barrel",
+    "createenergycannons:nethersteel_coilgun_barrel",
     "createenergycannons:laser",
     "createenergycannons:energy_cannon_mount"
   ]

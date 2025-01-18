@@ -1,9 +1,14 @@
 {
-  "block.createenergycannons.coilgun_barrel": "ןǝɹɹɐᗺ unbןıoƆ",
   "block.createenergycannons.creative_battery": "ʎɹǝʇʇɐᗺ ǝʌıʇɐǝɹƆ",
   "block.createenergycannons.energy_cannon_mount": "ʇunoW uouuɐƆ ʎbɹǝuƎ",
   "block.createenergycannons.laser": "ɹǝsɐꞀ",
+  "block.createenergycannons.nethersteel_coilgun_barrel": "ןǝɹɹɐᗺ unbןıoƆ ןǝǝʇsɹǝɥʇǝN",
+  "block.createenergycannons.nethersteel_rail_screw_breech": "ɥɔǝǝɹᗺ ʍǝɹɔS ןıɐᴚ ןǝǝʇsɹǝɥʇǝN",
   "block.createenergycannons.railgun_barrel": "ןǝɹɹɐᗺ unbןıɐᴚ",
+  "block.createenergycannons.steel_coilgun_barrel": "ןǝɹɹɐᗺ unbןıoƆ ןǝǝʇS",
+  "block.createenergycannons.steel_rail_quickfiring_breech": "ɥɔǝǝɹᗺ buıɹıℲ-ʞɔınὉ ןıɐᴚ ןǝǝʇS",
+  "block.createenergycannons.steel_rail_screw_breech": "ɥɔǝǝɹᗺ ʍǝɹɔS ןıɐᴚ ןǝǝʇS",
+  "block.createenergycannons.steel_rail_sliding_breech": "ɥɔǝǝɹᗺ buıpıןS ןıɐᴚ ןǝǝʇS",
   "item.createenergycannons.magnetic_sled": "pǝןS ɔıʇǝubɐW",
   "itemGroup.createenergycannons.createenergycannons": "suouuɐƆ ʎbɹǝuƎ ǝʇɐǝɹƆ"
 }

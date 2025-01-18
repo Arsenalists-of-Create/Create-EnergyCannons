@@ -1,17 +1,24 @@
-// 1.20.1	2025-01-17T16:31:02.0351637	Registrate Provider for createenergycannons [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
-9205824521b7c0e23100d82306f739e2ef522345 assets/createenergycannons/blockstates/coilgun_barrel.json
+// 1.20.1	2025-01-18T00:11:42.009718	Registrate Provider for createenergycannons [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
 4c353b537f7deabc1242802f408f9c9aee407b27 assets/createenergycannons/blockstates/creative_battery.json
 d5afe5a1b27b74227fcf9c6c8cbaefbce3b0caa6 assets/createenergycannons/blockstates/laser.json
+49d97f073fd75d0bb11e2f9af9887e3e260c23bb assets/createenergycannons/blockstates/nethersteel_coilgun_barrel.json
 d9069d2a3e7fc36eff6dc3042e6df225f47894eb assets/createenergycannons/blockstates/railgun_barrel.json
-1a4b38b64654873178e7de996ed971a9d0f03a56 assets/createenergycannons/lang/en_ud.json
-b410d03447d2421c3e6b4875e4647b29d884e222 assets/createenergycannons/lang/en_us.json
-4f8c9de41269f6e068481ed9c877431f8f696745 assets/createenergycannons/models/item/coilgun_barrel.json
+a067f8a322cf1f16f2409e1ff717d2c720f5e26f assets/createenergycannons/blockstates/steel_coilgun_barrel.json
+28dd6bc6cbb9e0e5a7b5608f56b367d32d7a5b5a assets/createenergycannons/lang/en_ud.json
+3fd2fc48317e98a7b08a31446ffc9c53c03e2ec2 assets/createenergycannons/lang/en_us.json
 ad66c05f76b672b5ad8e74d85e7975afed3f1e9a assets/createenergycannons/models/item/creative_battery.json
 73ac526b2104ec10870c4fbb99fd92523847027b assets/createenergycannons/models/item/laser.json
+a5e2de7adacd5bc9115ea61c66523d21909069ed assets/createenergycannons/models/item/nethersteel_coilgun_barrel.json
 08eabb4d889570932a89de33c0efe3d831decc4a assets/createenergycannons/models/item/railgun_barrel.json
-629b1161f94d5ed5ef3225941fffbe769b06b08e data/createenergycannons/loot_tables/blocks/coilgun_barrel.json
+f21a424a12eab51ac5d60b35b8fca2f42f4f2b87 assets/createenergycannons/models/item/steel_coilgun_barrel.json
 05cce8cf3d08895b0c5de5fb54aced294b3b8af6 data/createenergycannons/loot_tables/blocks/creative_battery.json
 cedee75bd20a1134767be45fa5673298ff392b1a data/createenergycannons/loot_tables/blocks/energy_cannon_mount.json
 70a1ce4f3ff792752570e722fe6393674031c48f data/createenergycannons/loot_tables/blocks/laser.json
+9cf25583fc7fc66de2001d91518a3f3ae5f38589 data/createenergycannons/loot_tables/blocks/nethersteel_coilgun_barrel.json
+3ae8689fe62047c1d7b39837da9bf43f010ff321 data/createenergycannons/loot_tables/blocks/nethersteel_rail_screw_breech.json
 bf43ab95529ca8333dd725989668713d6cf85014 data/createenergycannons/loot_tables/blocks/railgun_barrel.json
-63a88d6553eeb94c953b5eae45317298bfb670a5 data/create/tags/blocks/safe_nbt.json
+6619b5786e16a0e0817fe56fd32c7b16feccdd35 data/createenergycannons/loot_tables/blocks/steel_coilgun_barrel.json
+ffd801a169a8eae2a508ac6c32c92793da910dc2 data/createenergycannons/loot_tables/blocks/steel_rail_quickfiring_breech.json
+c6e5520923c888ecebca5aac0ed88ba4a20302d2 data/createenergycannons/loot_tables/blocks/steel_rail_screw_breech.json
+1e37aa7252820c8a3a60357181256eb08dcb7305 data/createenergycannons/loot_tables/blocks/steel_rail_sliding_breech.json
+06b4fd479523cdc5c13e94640376d608d017b96c data/create/tags/blocks/safe_nbt.json
