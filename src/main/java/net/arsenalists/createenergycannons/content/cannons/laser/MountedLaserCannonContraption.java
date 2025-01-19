@@ -8,10 +8,16 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import rbasamoyai.createbigcannons.cannon_control.ControlPitchContraption;
 import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptionType;
@@ -19,11 +25,14 @@ import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCan
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlock;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MountedLaserCannonContraption extends AbstractMountedCannonContraption {
+    public static final AtomicInteger NEXT_BREAKER_ID = new AtomicInteger();
+    protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
+    protected static Map<BlockPos, Float> breakProgress = new HashMap<>();
+
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
         getLaser().ifPresent(laser -> {
@@ -39,8 +48,62 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     }
     @Override
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
-        System.out.println("Firing shot");
+        Vec3 start = anchor.getCenter();
+        float pitch = pitchOrientedContraptionEntity.pitch;
+        float yaw = pitchOrientedContraptionEntity.yaw;
+        int range = 256;
+        int invert = pitchOrientedContraptionEntity.getInitialOrientation().getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
+        Vec3 vecEnd = start.add(Vec3.directionFromRotation(invert * pitch, yaw).scale(range));
+        HitResult result = serverLevel.clip(new ClipContext(start, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
+
+        getLaser().ifPresent(laser -> {
+            laser.setRange((int) (start.distanceTo(result.getLocation())));
+            BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
+        });
+
+
+        AABB laserAABB = new AABB(start, result.getLocation()).inflate(1);
+        Entity closestEntity = null;
+        for (Entity livingEntity : serverLevel.getEntities(pitchOrientedContraptionEntity, laserAABB, entity -> entity instanceof LivingEntity)) {
+            AABB entityAABB = livingEntity.getBoundingBox();
+            if (entityAABB.clip(start, result.getLocation()).isPresent()) {
+                if (closestEntity != null) {
+                    livingEntity.distanceTo(pitchOrientedContraptionEntity);
+                    closestEntity.distanceTo(pitchOrientedContraptionEntity);
+                }
+                closestEntity = livingEntity;
+            }
+        }
+        if (closestEntity != null) {
+            final int newRange = (int) start.distanceTo(closestEntity.position());
+            getLaser().ifPresent(laser -> {
+                laser.setRange(newRange);
+                BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
+            });
+            closestEntity.hurt(serverLevel.damageSources().generic(), 1);
+        } else {
+            if (result.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockHitResult = (BlockHitResult) result;
+                BlockPos blockPos = blockHitResult.getBlockPos();
+                BlockState blockState = serverLevel.getBlockState(blockPos);
+
+                breakProgress.putIfAbsent(blockHitResult.getBlockPos(), 0F);
+                breakProgress.get(blockHitResult.getBlockPos());
+                breakProgress.put(blockHitResult.getBlockPos(), breakProgress.get(blockHitResult.getBlockPos()) + 1 / blockState.getDestroySpeed(serverLevel, blockHitResult.getBlockPos()));
+
+                if (!serverLevel.isClientSide) {
+                    if (breakProgress.get(blockHitResult.getBlockPos()) > 10) {
+                        serverLevel.destroyBlock(blockHitResult.getBlockPos(), false);
+                        breakProgress.put(blockHitResult.getBlockPos(), 0F);
+                        serverLevel.destroyBlockProgress(breakerId, blockHitResult.getBlockPos(), 0);
+
+                    } else
+                        serverLevel.destroyBlockProgress(breakerId, blockHitResult.getBlockPos(), (int) (float) breakProgress.get(blockHitResult.getBlockPos()));
+                }
+            }
+        }
     }
+
 
     @Override
     public void tick(Level level, PitchOrientedContraptionEntity entity) {

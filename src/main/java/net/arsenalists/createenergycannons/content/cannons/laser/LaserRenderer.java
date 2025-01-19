@@ -3,9 +3,9 @@ package net.arsenalists.createenergycannons.content.cannons.laser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
@@ -18,14 +18,17 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
+public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
     public static final ResourceLocation BEAM_LOCATION = new ResourceLocation("textures/entity/beacon_beam.png");
-    public static final int MAX_RENDER_Y = 1024;
 
-    public LaserRenderer(BlockEntityRendererProvider.Context pContext) {
+    public LaserRenderer(BlockEntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void render(LaserBlockEntity pBlockEntity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight, int pPackedOverlay) {
+
+    @Override
+    protected void renderSafe(LaserBlockEntity pBlockEntity, float partialTicks, PoseStack pPoseStack, MultiBufferSource buffer, int light, int overlay) {
+        super.renderSafe(pBlockEntity, partialTicks, pPoseStack, buffer, light, overlay);
         long i = pBlockEntity.getLevel().getGameTime();
         if (pBlockEntity.getFireRate() == 0)
             return;
@@ -51,8 +54,10 @@ public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
             case UP:
                 break;
         }
-        pPoseStack.translate(-0.5D, -0.25D, -0.5D);
-        renderBeaconBeam(pPoseStack, pBuffer, pPartialTick, i, 0, MAX_RENDER_Y, new float[]{colors[0] / 255f, colors[1] / 255f, colors[2] / 255f, 1F});
+        pPoseStack.translate(-0.5D, .25D, -0.5D);
+        pPoseStack.scale(1, 1.1f, 1);
+        renderBeaconBeam(pPoseStack, buffer, partialTicks, i, 0, pBlockEntity.getRange(), new float[]{colors[0] / 255f, colors[1] / 255f, colors[2] / 255f, 1F});
+
     }
 
     private static void renderBeaconBeam(PoseStack pPoseStack, MultiBufferSource pBufferSource, float pPartialTick, long pGameTime, int pYOffset, int pHeight, float[] pColors) {
@@ -125,6 +130,6 @@ public class LaserRenderer implements BlockEntityRenderer<LaserBlockEntity> {
     }
 
     public boolean shouldRender(LaserBlockEntity pBlockEntity, Vec3 pCameraPos) {
-        return Vec3.atCenterOf(pBlockEntity.getBlockPos()).multiply(1.0D, 0.0D, 1.0D).closerThan(pCameraPos.multiply(1.0D, 0.0D, 1.0D), (double) this.getViewDistance());
+        return true;
     }
 }

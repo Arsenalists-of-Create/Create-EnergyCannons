@@ -13,6 +13,7 @@ import java.util.List;
 public class LaserBlockEntity extends SmartBlockEntity {
     private int fireRate = 0;
     private int lastUpdate = 0;
+    private int range = 256;
 
     public LaserBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -44,11 +45,21 @@ public class LaserBlockEntity extends SmartBlockEntity {
         notifyUpdate();
     }
 
+    public void setRange(int range) {
+        this.range = range;
+        notifyUpdate();
+    }
+
+    public int getRange() {
+        return this.range;
+    }
+
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         this.fireRate = tag.getInt("fireRate");
         this.lastUpdate = tag.getInt("lastUpdate");
+        this.range = tag.getInt("range");
     }
 
     @Override
@@ -56,6 +67,7 @@ public class LaserBlockEntity extends SmartBlockEntity {
         super.write(tag, clientPacket);
         tag.putInt("fireRate", this.fireRate);
         tag.putInt("lastUpdate", this.lastUpdate);
+        tag.putInt("range", this.range);
     }
 
     public int getFireRate() {
