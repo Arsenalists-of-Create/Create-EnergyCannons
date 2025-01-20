@@ -81,6 +81,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
             });
             closestEntity.hurt(serverLevel.damageSources().generic(), 1);
+            closestEntity.setSecondsOnFire(2);
         } else {
             if (result.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHitResult = (BlockHitResult) result;

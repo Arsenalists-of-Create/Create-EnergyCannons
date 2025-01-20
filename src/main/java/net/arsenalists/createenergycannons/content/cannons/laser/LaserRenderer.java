@@ -40,10 +40,10 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
                 pPoseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
                 break;
             case NORTH:
-                pPoseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                pPoseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
                 break;
             case SOUTH:
-                pPoseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                pPoseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
                 break;
             case WEST:
                 pPoseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
