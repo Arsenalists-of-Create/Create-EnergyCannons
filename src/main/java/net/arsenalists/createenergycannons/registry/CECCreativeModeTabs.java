@@ -37,14 +37,14 @@ public class CECCreativeModeTabs {
         pOutput.accept(CECBlocks.ENERGY_CANNON_MOUNT);
         pOutput.accept(CECBlocks.BATTERY_BLOCK);
         pOutput.accept(CECBlocks.LASER);
-        pOutput.accept(CECBlocks.NETHERSTEEL_SCREW_BREECH);
-        pOutput.accept(CECBlocks.RAILGUN_BARREL);
-        pOutput.accept(CECBlocks.NETHERSTEEL_COILGUN_BARREL);
-        pOutput.accept(CECBlocks.STEEL_SLIDING_BREECH);
-        pOutput.accept(CECBlocks.STEEL_RAIL_SCREW_BREECH);
-        pOutput.accept(CECBlocks.STEEL_RAIL_QUICKFIRING_BREECH);
-        pOutput.accept(CECBlocks.STEEL_COILGUN_BARREL);
-        pOutput.accept(CECItems.MAGNETIC_SLED);
+        //pOutput.accept(CECBlocks.NETHERSTEEL_SCREW_BREECH);
+        //pOutput.accept(CECBlocks.RAILGUN_BARREL);
+        //pOutput.accept(CECBlocks.NETHERSTEEL_COILGUN_BARREL);
+        //pOutput.accept(CECBlocks.STEEL_SLIDING_BREECH);
+        //pOutput.accept(CECBlocks.STEEL_RAIL_SCREW_BREECH);
+        //pOutput.accept(CECBlocks.STEEL_RAIL_QUICKFIRING_BREECH);
+        //pOutput.accept(CECBlocks.STEEL_COILGUN_BARREL);
+        //pOutput.accept(CECItems.MAGNETIC_SLED);
     }
 
 
