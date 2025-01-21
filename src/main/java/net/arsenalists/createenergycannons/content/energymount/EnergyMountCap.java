@@ -19,8 +19,4 @@ public class EnergyMountCap extends EnergyStorage {
         return received;
     }
 
-    @Override
-    public boolean canExtract() {
-        return false;
-    }
 }

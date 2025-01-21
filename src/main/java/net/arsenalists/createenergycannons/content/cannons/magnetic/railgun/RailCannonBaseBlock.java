@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

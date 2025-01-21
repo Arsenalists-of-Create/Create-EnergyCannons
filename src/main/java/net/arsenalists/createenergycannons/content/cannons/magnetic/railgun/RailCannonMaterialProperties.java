@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 public record RailCannonMaterialProperties(double minimumVelocityPerBarrel, float weight, int maxSafePropellantStress,
                                            rbasamoyai.createbigcannons.cannons.big_cannons.material.BigCannonMaterialProperties.FailureMode failureMode,

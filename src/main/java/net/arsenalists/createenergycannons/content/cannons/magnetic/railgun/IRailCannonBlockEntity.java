@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import com.simibubi.create.AllBlocks;
 import net.minecraft.core.BlockPos;

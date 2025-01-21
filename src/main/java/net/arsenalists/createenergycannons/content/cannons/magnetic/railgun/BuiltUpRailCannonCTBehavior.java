@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
 import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour;
@@ -14,11 +14,11 @@ import javax.annotation.Nullable;
 
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
 
-public class BuiltUpCannonCTBehavior extends ConnectedTextureBehaviour.Base {
+public class BuiltUpRailCannonCTBehavior extends ConnectedTextureBehaviour.Base {
 
     private final CTSpriteShiftEntry shift;
 
-    public BuiltUpCannonCTBehavior(CTSpriteShiftEntry shift) {
+    public BuiltUpRailCannonCTBehavior(CTSpriteShiftEntry shift) {
         this.shift = shift;
     }
 

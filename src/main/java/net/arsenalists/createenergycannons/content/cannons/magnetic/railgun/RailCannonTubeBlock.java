@@ -1,9 +1,9 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.VoxelShaper;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.MountedRailCannonContrpation.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation.MountedRailCannonContraption;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;

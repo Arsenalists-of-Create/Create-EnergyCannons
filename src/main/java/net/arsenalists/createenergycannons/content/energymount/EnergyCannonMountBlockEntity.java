@@ -130,6 +130,14 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
+        if (cap == ForgeCapabilities.ENERGY) {
+            return lazyEnergyHandler.cast();
+        }
+        return super.getCapability(cap);
+    }
+
+    @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         if (tag.contains("energy"))

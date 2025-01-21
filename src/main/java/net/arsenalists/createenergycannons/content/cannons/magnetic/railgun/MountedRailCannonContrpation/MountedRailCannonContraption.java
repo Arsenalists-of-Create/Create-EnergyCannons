@@ -1,10 +1,10 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.MountedRailCannonContrpation;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation;
 
 
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.ContraptionType;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.IRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railcoilgun.RailCannonBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.IRailCannonBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlock;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;

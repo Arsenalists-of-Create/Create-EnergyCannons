@@ -53,6 +53,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         float yaw = pitchOrientedContraptionEntity.yaw;
         int range = 256;
         int invert = pitchOrientedContraptionEntity.getInitialOrientation().getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
+        if (pitchOrientedContraptionEntity.getInitialOrientation().getAxis() == Direction.Axis.Z) {
+            invert = -invert;
+        }
         Vec3 vecEnd = start.add(Vec3.directionFromRotation(invert * pitch, yaw).scale(range));
         HitResult result = serverLevel.clip(new ClipContext(start, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
 
