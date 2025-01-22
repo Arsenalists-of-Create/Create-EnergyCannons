@@ -10,10 +10,7 @@ import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlock;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.BuiltUpRailCannonCTBehavior;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContrpation.MountedRailCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlockItem;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonTubeBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlock;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMount;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -35,16 +32,16 @@ public class CECBlocks {
             .simpleItem()
             .register();
 
-    public static final BlockEntry<RailCannonTubeBlock> RAILGUN_BARREL = CECMod.REGISTRATE
-            .block("railgun_barrel", p -> RailCannonTubeBlock.medium(p, CBCBigCannonMaterials.NETHERSTEEL, MountedRailCannonContraption.TYPE.RAIL_CANNON))
+    public static final BlockEntry<RailGunBlock> RAILGUN_BARREL = CECMod.REGISTRATE
+            .block("railgun_barrel", p -> RailGunBlock.mediumRail(p, CBCBigCannonMaterials.NETHERSTEEL))
             .initialProperties(SharedProperties::softMetal)
             .blockstate((c, p) -> p.directionalBlock(c.getEntry(), AssetLookup.standardModel(c, p)))
             .properties(BlockBehaviour.Properties::noOcclusion)
-            .onRegister(CreateRegistrate.connectedTextures(() -> new BuiltUpRailCannonCTBehavior(CBCSpriteShifts.NETHERSTEEL_CANNON_BARREL)))
+            .onRegister(CreateRegistrate.connectedTextures(() -> new BuiltUpCannonCTBehavior(CBCSpriteShifts.NETHERSTEEL_CANNON_BARREL)))
             .addLayer(() -> RenderType::cutout)
             .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
             .loot(CBCBuilderTransformers.nethersteelScrapLoot(10))
-            .item(RailCannonBlockItem::new).build()
+            .item(BigCannonBlockItem::new).build()
             .register();
 
 

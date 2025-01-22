@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -21,10 +21,10 @@ public class RailGunBlock extends BigCannonTubeBlock {
 
     @Override
     public @NotNull AbstractMountedCannonContraption getCannonContraption() {
-        return new MountedCoilCannonContraption();
+        return new MountedRailCannonContraption();
     }
 
-    public static RailGunBlock mediumCoil(Properties properties, BigCannonMaterial material) {
+    public static RailGunBlock mediumRail(Properties properties, BigCannonMaterial material) {
         return new RailGunBlock(properties, material, () -> CannonCastShape.MEDIUM, Shapes.block());
     }
 

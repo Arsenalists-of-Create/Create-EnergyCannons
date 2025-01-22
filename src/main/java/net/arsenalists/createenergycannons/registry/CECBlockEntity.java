@@ -5,8 +5,6 @@ import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserRenderer;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.LayeredRailCannonBlockEntity;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailCannonBlockEntity;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountInstance;
@@ -27,14 +25,10 @@ public class CECBlockEntity {
             .renderer(() -> CannonMountBlockEntityRenderer::new)
             .register();
 
-    public static final BlockEntityEntry<RailCannonBlockEntity> CANNON = CECMod.REGISTRATE
-            .blockEntity("cannon", RailCannonBlockEntity::new)
-            .validBlocks(CECBlocks.RAILGUN_BARREL)
-            .register();
 
     public static final BlockEntityEntry<BigCannonBlockEntity> BIG_CANNON = CECMod.REGISTRATE
             .blockEntity("big_cannon", BigCannonBlockEntity::new)
-            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL)
+            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL, CECBlocks.RAILGUN_BARREL)
             .register();
 
     public static final BlockEntityEntry<LaserBlockEntity> LASER = CECMod.REGISTRATE
@@ -43,9 +37,6 @@ public class CECBlockEntity {
             .validBlock(CECBlocks.LASER)
             .register();
 
-    public static final BlockEntityEntry<LayeredRailCannonBlockEntity> LAYERED_CANNON = CECMod.REGISTRATE
-            .blockEntity("layered_cannon", LayeredRailCannonBlockEntity::new)
-            .register();
 
     public static void register() {
         CECMod.getLogger().info("Registering Block Entities");

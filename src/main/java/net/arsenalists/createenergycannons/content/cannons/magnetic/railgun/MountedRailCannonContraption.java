@@ -1,4 +1,4 @@
-package net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun;
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.content.contraptions.AssemblyException;
@@ -52,11 +52,11 @@ import rbasamoyai.ritchiesprojectilelib.RitchiesProjectileLib;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class MountedCoilCannonContraption extends MountedBigCannonContraption {
+public class MountedRailCannonContraption extends MountedBigCannonContraption {
 
 
     BigCannonMaterial cannonMaterial;
-    int coilCount;
+    int railCount;
 
     public int getMaxSafeCharges() {
         return 0;
@@ -97,17 +97,17 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
         float minimumSpread = this.cannonMaterial.properties().minimumSpread();
 
         for (BlockEntity be : this.presentBlockEntities.values()) {
-            if (be.getBlockState().getBlock() instanceof CoilGunBlock) {
-                coilCount++;
+            if (be.getBlockState().getBlock() instanceof RailGunBlock) {
+                railCount++;
             }
         }
-        BlockEntity energyBE = controller instanceof BlockEntity ? (BlockEntity) controller : null;
+        BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
         if (energyBE == null) return;
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
-        int energyUsed = energy.extractEnergy(coilCount * 10000, false);
+        int energyUsed = energy.extractEnergy(railCount * 20000, false);
         if (energyBE instanceof SmartBlockEntity smartBE)
             smartBE.notifyUpdate();
-        coilCount = energyUsed / 10000;
+        railCount = energyUsed / 20000;
         while (this.presentBlockEntities.get(currentPos) instanceof IBigCannonBlockEntity cbe) {
             BigCannonBehavior behavior = cbe.cannonBehavior();
             StructureBlockInfo containedBlockInfo = behavior.block();
@@ -115,7 +115,6 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
             if (cannonInfo == null) break;
 
             Block block = containedBlockInfo.state().getBlock();
-
             //todo better sled fail logic
             if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
                 if (canFail) {
@@ -212,7 +211,6 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
                 for (ListIterator<StructureBlockInfo> projIter = projectileBlocks.listIterator(); projIter.hasNext(); ) {
                     int j = projIter.nextIndex();
                     StructureBlockInfo projInfo = projIter.next();
-                    System.out.println(projInfo.nbt());
                     if (projInfo.state().getBlock() instanceof ProjectileBlock<?> cproj1 && cproj1.isValidAddition(copy, projInfo, j, this.initialOrientation))
                         continue;
                     if (canFail) this.fail(currentPos, level, entity, null, (int) propelCtx.chargesUsed);
@@ -250,9 +248,10 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
                 this.fail(currentPos, level, entity, null, (int) propelCtx.chargesUsed);
                 return;
             }
+            float power = railCount * 1.1f; //todo config
             projectile.setPos(spawnPos);
-            projectile.setChargePower(coilCount);
-            projectile.shoot(vec.x, vec.y, vec.z, coilCount, propelCtx.spread);
+            projectile.setChargePower(power);
+            projectile.shoot(vec.x, vec.y, vec.z, power, propelCtx.spread);
             projectile.xRotO = projectile.getXRot();
             projectile.yRotO = projectile.getYRot();
 
