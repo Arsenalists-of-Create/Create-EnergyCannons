@@ -7,7 +7,8 @@ import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntit
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserRenderer;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
-import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountInstance;
+
+import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlockEntity;
 
 
@@ -20,7 +21,7 @@ public class CECBlockEntity {
 
     public static final BlockEntityEntry<EnergyCannonMountBlockEntity> ENERGY_CANNON_MOUNT = CECMod.REGISTRATE
             .blockEntity("energy_cannon_mount", EnergyCannonMountBlockEntity::new)
-            .instance(() -> CannonMountInstance::new)
+            .visual(() -> CannonMountVisual::new)
             .validBlock(CECBlocks.ENERGY_CANNON_MOUNT)
             .renderer(() -> CannonMountBlockEntityRenderer::new)
             .register();

@@ -1,5 +1,6 @@
 package net.arsenalists.createenergycannons.content.battery;
 
+
 import com.simibubi.create.foundation.block.IBE;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.world.level.block.Block;

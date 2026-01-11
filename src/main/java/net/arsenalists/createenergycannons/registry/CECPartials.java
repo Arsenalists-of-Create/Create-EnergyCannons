@@ -1,6 +1,8 @@
 package net.arsenalists.createenergycannons.registry;
 
-import com.jozufozu.flywheel.core.PartialModel;
+
+
+import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.arsenalists.createenergycannons.CECMod;
 
 public class CECPartials {
@@ -12,10 +14,10 @@ public class CECPartials {
     public static final PartialModel LASER_CUBE = block("laser_cube");
 
     private static PartialModel block(String path) {
-        return new PartialModel(CECMod.resource("block/" + path));
+        return PartialModel.of(CECMod.resource("block/" + path));
     }
 
     private static PartialModel entity(String path) {
-        return new PartialModel(CECMod.resource("entity/" + path));
+        return  PartialModel.of(CECMod.resource("entity/" + path));
     }
 }

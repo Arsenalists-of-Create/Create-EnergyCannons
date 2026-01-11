@@ -84,7 +84,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         BlockPos currentPos = this.startPos.immutable();
         int count = 0;
         int maxSafeCharges = this.getMaxSafeCharges();
-        boolean canFail = !CBCConfigs.SERVER.failure.disableAllFailure.get();
+        boolean canFail = !CBCConfigs.server().failure.disableAllFailure.get();
         float spreadSub = this.cannonMaterial.properties().spreadReductionPerBarrel();
         boolean airGapPresent = false;
 
@@ -265,7 +265,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         }
 
         recoilMagnitude += propelCtx.recoil;
-        recoilMagnitude *= CBCConfigs.SERVER.cannons.bigCannonRecoilScale.getF();
+        recoilMagnitude *= CBCConfigs.server().cannons.bigCannonRecoilScale.getF();
         if (controller != null) controller.onRecoil(vec.scale(-recoilMagnitude), entity);
 
         this.hasFired = true;
@@ -273,7 +273,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         float soundPower = Mth.clamp(propelCtx.chargesUsed / 16f, 0, 1);
         float tone = 2 + soundPower * -8 + level.random.nextFloat() * 4f - 2f;
         float pitch = (float) Mth.clamp(Math.pow(2, tone / 12f), 0, 2);
-        double shakeDistance = propelCtx.chargesUsed * CBCConfigs.SERVER.cannons.bigCannonBlastDistanceMultiplier.getF();
+        double shakeDistance = propelCtx.chargesUsed * CBCConfigs.server().cannons.bigCannonBlastDistanceMultiplier.getF();
         float volume = 10 + soundPower * 30;
         Vec3 plumePos = spawnPos.subtract(vec);
         propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
@@ -291,7 +291,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
                 player.connection.send(blastWavePacket);
         }
 
-        if (projectile != null && CBCConfigs.SERVER.munitions.projectilesCanChunkload.get()) {
+        if (projectile != null && CBCConfigs.server().munitions.projectilesCanChunkload.get()) {
             ChunkPos cpos1 = new ChunkPos(BlockPos.containing(projectile.position()));
             RitchiesProjectileLib.queueForceLoad(level, cpos1.x, cpos1.z);
         }

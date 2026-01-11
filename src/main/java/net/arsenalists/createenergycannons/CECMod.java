@@ -28,7 +28,7 @@ public class CECMod {
         CECBlockEntity.register();
         CECCreativeModeTabs.register(modEventBus);
         CECLang.register();
-        CECContraptionTypes.register();
+
         CECCannonContraptionTypes.register();
         CECPartials.register();
         modEventBus.addListener(this::onCommonSetup);

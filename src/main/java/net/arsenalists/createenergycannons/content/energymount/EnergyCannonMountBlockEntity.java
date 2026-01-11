@@ -3,7 +3,7 @@ package net.arsenalists.createenergycannons.content.energymount;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.foundation.utility.Components;
+
 import joptsimple.internal.Strings;
 import net.arsenalists.createenergycannons.mixin.CannonMountBEAccessor;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
@@ -109,14 +109,14 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     private MutableComponent barComponent(int level) {
-        return Components.empty()
+        return Component.empty()
                 .append(bars(Math.max(0, level), ChatFormatting.GREEN))
                 .append(bars(Math.max(0, 50 - level), ChatFormatting.DARK_RED));
 
     }
 
     private MutableComponent bars(int level, ChatFormatting format) {
-        return Components.literal(Strings.repeat('|', level))
+        return Component.literal(Strings.repeat('|', level))
                 .withStyle(format);
     }
 

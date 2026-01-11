@@ -1,5 +1,6 @@
 package net.arsenalists.createenergycannons.content.cannons.laser;
 
+
 import com.simibubi.create.foundation.block.IBE;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.core.Direction;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
 import rbasamoyai.createbigcannons.cannons.CannonContraptionProviderBlock;
 import rbasamoyai.createbigcannons.crafting.casting.CannonCastShape;
+
 
 public class LaserBlock extends DirectionalBlock implements CannonContraptionProviderBlock, IBE<LaserBlockEntity> {
     public LaserBlock(Properties pProperties) {
