@@ -28,8 +28,8 @@ public class RailGunBlock extends BigCannonTubeBlock {
         return new RailGunBlock(properties, material, () -> CannonCastShape.MEDIUM, Shapes.block());
     }
 
-    @Override
-    public BlockEntityType<? extends BigCannonBlockEntity> getBlockEntityType() {
-        return CECBlockEntity.BIG_CANNON.get();
-    }
+//    @Override
+//    public BlockEntityType<? extends BigCannonBlockEntity> getBlockEntityType() {
+//        return CECBlockEntity.BIG_CANNON.get();
+//    }
 }

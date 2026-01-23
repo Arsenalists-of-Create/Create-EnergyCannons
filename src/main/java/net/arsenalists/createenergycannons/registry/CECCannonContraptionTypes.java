@@ -8,7 +8,10 @@ import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptio
 import java.util.Locale;
 
 public enum CECCannonContraptionTypes implements ICannonContraptionType {
-    LASER;
+    LASER,
+    COILGUN,
+    RAIL_CANNON;
+
 
     private final ResourceLocation id;
 

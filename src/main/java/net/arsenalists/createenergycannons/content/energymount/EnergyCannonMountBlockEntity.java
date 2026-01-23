@@ -1,10 +1,15 @@
 package net.arsenalists.createenergycannons.content.energymount;
 
+import com.mojang.logging.LogUtils;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import joptsimple.internal.Strings;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.MountedCoilCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlock;
 import net.arsenalists.createenergycannons.mixin.CannonMountBEAccessor;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.minecraft.ChatFormatting;
@@ -13,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -22,6 +28,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlock;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
@@ -33,6 +40,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
 
     private final EnergyMountCap energyCap = new EnergyMountCap(500000, this::notifyUpdate);
     private LazyOptional<IEnergyStorage> lazyEnergyHandler;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public EnergyCannonMountBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -61,30 +69,41 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     protected void assemble() throws AssemblyException {
-        if (CECBlocks.ENERGY_CANNON_MOUNT.has(this.getBlockState())) {
-            Direction vertical = (Direction) this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
-            BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
-            if (this.getLevel().isOutsideBuildHeight(assemblyPos)) {
-                throw cannonBlockOutsideOfWorld(assemblyPos);
-            } else {
-                AbstractMountedCannonContraption mountedCannon = accessor().getAbstractCannon(assemblyPos);
-                if (mountedCannon != null && mountedCannon.assemble(this.getLevel(), assemblyPos)) {
-                    Direction facing = (Direction) this.getBlockState().getValue(CannonMountBlock.HORIZONTAL_FACING);
-                    Direction facing1 = mountedCannon.initialOrientation();
-                    if (facing.getAxis() == facing1.getAxis() || !facing1.getAxis().isHorizontal()) {
-                        accessor().setRunning(true);
-                        mountedCannon.removeBlocksFromWorld(this.getLevel(), BlockPos.ZERO);
-                        PitchOrientedContraptionEntity contraptionEntity = PitchOrientedContraptionEntity.create(this.getLevel(), mountedCannon, facing1, this);
-                        this.mountedContraption = contraptionEntity;
-                        this.resetContraptionToOffset();
-                        this.getLevel().addFreshEntity(contraptionEntity);
-                        this.sendData();
-                        AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(this.getLevel(), this.worldPosition);
-                    }
-                }
-            }
+        if (!CECBlocks.ENERGY_CANNON_MOUNT.has(this.getBlockState()))
+            return;
+
+        Direction vertical = this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
+        BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
+
+        if (this.getLevel().isOutsideBuildHeight(assemblyPos))
+            throw cannonBlockOutsideOfWorld(assemblyPos);
+
+        // ✅ Always use YOUR contraption class so YOUR fireShot override is used.
+        AbstractMountedCannonContraption mountedCannon = new MountedRailCannonContraption();
+
+        if (mountedCannon != null && mountedCannon.assemble(this.getLevel(), assemblyPos)) {
+            Direction facing = this.getBlockState().getValue(CannonMountBlock.HORIZONTAL_FACING);
+            Direction cannonFacing = mountedCannon.initialOrientation();
+
+            if (facing.getAxis() == cannonFacing.getAxis() || !cannonFacing.getAxis().isHorizontal())
+                return;
+
+            ((CannonMountBEAccessor) this).setRunning(true);
+
+            mountedCannon.removeBlocksFromWorld(this.getLevel(), BlockPos.ZERO);
+
+            PitchOrientedContraptionEntity contraptionEntity =
+                    PitchOrientedContraptionEntity.create(this.getLevel(), mountedCannon, cannonFacing, this);
+
+            this.mountedContraption = contraptionEntity;
+            this.resetContraptionToOffset();
+            this.getLevel().addFreshEntity(contraptionEntity);
+
+            this.sendData();
+            AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(this.getLevel(), this.worldPosition);
         }
     }
+
 
     @Nullable
     @Override

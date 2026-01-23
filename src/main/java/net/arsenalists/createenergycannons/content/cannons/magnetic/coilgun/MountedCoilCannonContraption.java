@@ -1,8 +1,12 @@
 package net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.logging.LogUtils;
+import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
+import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -25,8 +29,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.EmptyEnergyStorage;
 import net.minecraftforge.energy.IEnergyStorage;
+import org.slf4j.Logger;
 import rbasamoyai.createbigcannons.CBCTags;
 import rbasamoyai.createbigcannons.cannon_control.ControlPitchContraption;
+import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptionType;
 import rbasamoyai.createbigcannons.cannon_control.contraption.MountedBigCannonContraption;
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBehavior;
@@ -61,6 +67,7 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
     public int getMaxSafeCharges() {
         return 0;
     }
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
     public boolean assemble(Level level, BlockPos pos) throws AssemblyException {
@@ -70,9 +77,17 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
         return super.assemble(level, pos);
 
     }
-
+    @Override
+    public ICannonContraptionType getCannonType() {
+        return CECCannonContraptionTypes.COILGUN;
+    }
+    @Override
+    public ContraptionType getType() {
+        return CECContraptionTypes.COILGUN;
+    }
     @Override
     public void fireShot(ServerLevel level, PitchOrientedContraptionEntity entity) {
+        LOGGER.warn("bang2?");
         BlockPos endPos = this.startPos.relative(this.initialOrientation.getOpposite());
         if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
             return;
@@ -101,8 +116,15 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
                 coilCount++;
             }
         }
-        BlockEntity energyBE = controller instanceof BlockEntity ? (BlockEntity) controller : null;
+        BlockEntity energyBE = null;
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            if (be.getCapability(ForgeCapabilities.ENERGY).isPresent()) {
+                energyBE = be;
+                break;
+            }
+        }
         if (energyBE == null) return;
+
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
         int energyUsed = energy.extractEnergy(coilCount * 10000, false);
         if (energyBE instanceof SmartBlockEntity smartBE)

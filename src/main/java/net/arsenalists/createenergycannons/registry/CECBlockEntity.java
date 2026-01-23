@@ -10,6 +10,7 @@ import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockE
 
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlockEntity;
+import rbasamoyai.createbigcannons.cannons.big_cannons.cannon_end.BigCannonEndBlockEntity;
 
 
 public class CECBlockEntity {
@@ -27,8 +28,8 @@ public class CECBlockEntity {
             .register();
 
 
-    public static final BlockEntityEntry<BigCannonBlockEntity> BIG_CANNON = CECMod.REGISTRATE
-            .blockEntity("big_cannon", BigCannonBlockEntity::new)
+    public static final BlockEntityEntry<BigCannonEndBlockEntity> BIG_CANNON = CECMod.REGISTRATE
+            .blockEntity("big_cannon", BigCannonEndBlockEntity::new)
             .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL, CECBlocks.RAILGUN_BARREL)
             .register();
 
