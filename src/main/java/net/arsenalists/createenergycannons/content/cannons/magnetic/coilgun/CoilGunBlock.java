@@ -9,17 +9,15 @@ import org.jetbrains.annotations.NotNull;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlockEntity;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonTubeBlock;
-import rbasamoyai.createbigcannons.cannons.big_cannons.cannon_end.BigCannonEndBlock;
-import rbasamoyai.createbigcannons.cannons.big_cannons.cannon_end.BigCannonEndBlockEntity;
 import rbasamoyai.createbigcannons.cannons.big_cannons.material.BigCannonMaterial;
 import rbasamoyai.createbigcannons.crafting.casting.CannonCastShape;
 
 import java.util.function.Supplier;
 
-public class CoilGunBlock extends BigCannonEndBlock {
+public class CoilGunBlock extends BigCannonTubeBlock {  // CHANGED: was BigCannonEndBlock
 
     public CoilGunBlock(Properties properties, BigCannonMaterial material, Supplier<CannonCastShape> cannonShape, VoxelShape base) {
-        super(properties, material);// cannonShape, base);
+        super(properties, material, cannonShape, base);  // CHANGED: added cannonShape back
     }
 
     @Override
@@ -32,7 +30,7 @@ public class CoilGunBlock extends BigCannonEndBlock {
     }
 
     @Override
-    public BlockEntityType<? extends BigCannonEndBlockEntity> getBlockEntityType() {
+    public BlockEntityType<? extends BigCannonBlockEntity> getBlockEntityType() {
         return CECBlockEntity.BIG_CANNON.get();
     }
 }

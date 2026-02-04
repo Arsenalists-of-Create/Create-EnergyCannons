@@ -57,6 +57,7 @@ import rbasamoyai.createbigcannons.munitions.big_cannon.propellant.IntegratedPro
 import rbasamoyai.createbigcannons.munitions.config.BigCannonPropellantCompatibilities;
 import rbasamoyai.createbigcannons.munitions.config.BigCannonPropellantCompatibilityHandler;
 import rbasamoyai.ritchiesprojectilelib.RitchiesProjectileLib;
+import rbasamoyai.createbigcannons.index.CBCBigCannonMaterials;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -79,24 +80,48 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
     public boolean assemble(Level level, BlockPos pos) throws AssemblyException {
         LOGGER.warn("[EnergyContraption] assemble pos={} block={}", pos, level.getBlockState(pos));
         BlockState breech = level.getBlockState(pos);
-        Direction facing = breech.getValue(BlockStateProperties.FACING); // or the property your breech uses
+        Direction facing = breech.getValue(BlockStateProperties.FACING);
         BlockPos next = pos.relative(facing);
         LOGGER.warn("[EnergyContraption] nextPos={} block={}", next, level.getBlockState(next));
 
         boolean ok = super.assemble(level, pos);
-        if (!ok) return false;
+        LOGGER.warn("[EnergyContraption] super.assemble() returned: {}", ok);
+        if (!ok) {
+            LOGGER.error("[EnergyContraption] Assembly failed in parent class!");
+            return false;
+        }
 
-        // Decide mode by scanning assembled blocks/BEs
+        LOGGER.warn("[EnergyContraption] blocks size: {}", this.blocks.size());
+        LOGGER.warn("[EnergyContraption] startPos: {}", this.startPos);
+        LOGGER.warn("[EnergyContraption] initialOrientation: {}", this.initialOrientation);
+
+        // Decide mode by scanning ALL assembled blocks (not just BlockEntities)
         boolean coil = false, rail = false;
+        int coilBlockCount = 0, railBlockCount = 0;
 
-        for (BlockEntity be : this.presentBlockEntities.values()) {
-            Block b = be.getBlockState().getBlock();
-            if (b instanceof CoilGunBlock) coil = true;
-            if (b instanceof RailGunBlock) rail = true;
+        LOGGER.warn("[EnergyContraption] Scanning {} blocks...", this.blocks.size());
+        for (Map.Entry<BlockPos, StructureBlockInfo> entry : this.blocks.entrySet()) {
+            StructureBlockInfo info = entry.getValue();
+            Block b = info.state().getBlock();
+            String blockName = b.getClass().getSimpleName();
+
+
+
+            if (b instanceof CoilGunBlock) {
+                coil = true;
+                coilBlockCount++;
+            }
+            if (b instanceof RailGunBlock) {
+                rail = true;
+                railBlockCount++;
+            }
         }
 
         // priority if both exist
+        Mode oldMode = this.mode;
         this.mode = rail ? Mode.RAIL : (coil ? Mode.COIL : Mode.NORMAL);
+        LOGGER.warn("[EnergyContraption] Mode decision: coilBlocks={}, railBlocks={}", coilBlockCount, railBlockCount);
+        LOGGER.warn("[EnergyContraption] Mode changed from {} to {}", oldMode, this.mode);
         return true;
     }
 
@@ -137,7 +162,6 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         int count = 0;
         int maxSafeCharges = this.getMaxSafeCharges();
         boolean canFail = !CBCConfigs.server().failure.disableAllFailure.get();
-        float spreadSub = this.cannonMaterial.properties().spreadReductionPerBarrel();
         boolean airGapPresent = false;
 
         PropellantContext propelCtx = new PropellantContext();
@@ -145,8 +169,9 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         List<StructureBlockInfo> projectileBlocks = new ArrayList<>();
         AbstractBigCannonProjectile projectile = null;
         BlockPos assemblyPos = null;
-
-        float minimumSpread = this.cannonMaterial.properties().minimumSpread();
+        BigCannonMaterial nethersteelMaterial = CBCBigCannonMaterials.NETHERSTEEL;
+        float spreadSub = nethersteelMaterial.properties().spreadReductionPerBarrel();
+        float minimumSpread = nethersteelMaterial.properties().minimumSpread();
 
         for (BlockEntity be : this.presentBlockEntities.values()) {
             if (be.getBlockState().getBlock() instanceof RailGunBlock) {
@@ -170,7 +195,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             //todo better sled fail logic
             if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
                 if (canFail) {
-                    this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
+                    //this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                     LOGGER.warn("failed");
                     return;
                 }
@@ -194,15 +219,8 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
                     }
                 }
             } else if (block instanceof BigCannonPropellantBlock cpropel && !(block instanceof ProjectileBlock)) {
-                // Initial ignition
-                if (count == 0 && !cpropel.canBeIgnited(containedBlockInfo, this.initialOrientation))
-                    return;
-                // Incompatible propellant
-                if (!propelCtx.addPropellant(cpropel, containedBlockInfo, this.initialOrientation) && canFail) {
-                    this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
-                    return;
-                }
-                this.consumeBlock(behavior, currentPos, cpropel::consumePropellant);
+                // Energy cannons don't use propellant - consume and skip it
+                this.consumeBlock(behavior, currentPos);
                 airGapPresent = false;
             } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                 projectileBlocks.add(containedBlockInfo);
@@ -361,7 +379,6 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             int count = 0;
             int maxSafeCharges = this.getMaxSafeCharges();
             boolean canFail = !CBCConfigs.server().failure.disableAllFailure.get();
-            float spreadSub = this.cannonMaterial.properties().spreadReductionPerBarrel();
             boolean airGapPresent = false;
 
             PropellantContext propelCtx = new PropellantContext();
@@ -369,21 +386,22 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             List<StructureBlockInfo> projectileBlocks = new ArrayList<>();
             AbstractBigCannonProjectile projectile = null;
             BlockPos assemblyPos = null;
-
-            float minimumSpread = this.cannonMaterial.properties().minimumSpread();
+            BigCannonMaterial coilMaterial = CBCBigCannonMaterials.STEEL; //Default
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be.getBlockState().getBlock() instanceof CoilGunBlock coilBlock) {
+                    coilMaterial = coilBlock.getCannonMaterial();
+                    break;
+                }
+            }
+            float spreadSub = coilMaterial.properties().spreadReductionPerBarrel();
+            float minimumSpread = coilMaterial.properties().minimumSpread();
 
             for (BlockEntity be : this.presentBlockEntities.values()) {
                 if (be.getBlockState().getBlock() instanceof CoilGunBlock) {
                     coilCount++;
                 }
             }
-            BlockEntity energyBE = null;
-            for (BlockEntity be : this.presentBlockEntities.values()) {
-                if (be.getCapability(ForgeCapabilities.ENERGY).isPresent()) {
-                    energyBE = be;
-                    break;
-                }
-            }
+            BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
             if (energyBE == null) return;
 
             IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
@@ -402,7 +420,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
                 //todo better sled fail logic
                 if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
                     if (canFail) {
-                        this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
+                        //this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                         return;
                     }
                 }
@@ -425,15 +443,8 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
                         }
                     }
                 } else if (block instanceof BigCannonPropellantBlock cpropel && !(block instanceof ProjectileBlock)) {
-                    // Initial ignition
-                    if (count == 0 && !cpropel.canBeIgnited(containedBlockInfo, this.initialOrientation))
-                        return;
-                    // Incompatible propellant
-                    if (!propelCtx.addPropellant(cpropel, containedBlockInfo, this.initialOrientation) && canFail) {
-                        this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
-                        return;
-                    }
-                    this.consumeBlock(behavior, currentPos, cpropel::consumePropellant);
+                    // Energy cannons don't use propellant - consume and skip it
+                    this.consumeBlock(behavior, currentPos);
                     airGapPresent = false;
                 } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                     projectileBlocks.add(containedBlockInfo);
