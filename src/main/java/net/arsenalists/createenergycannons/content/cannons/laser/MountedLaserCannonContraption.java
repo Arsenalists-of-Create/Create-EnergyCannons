@@ -1,8 +1,10 @@
 package net.arsenalists.createenergycannons.content.cannons.laser;
 
+import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.energy.EmptyEnergyStorage;
+import net.minecraftforge.energy.IEnergyStorage;
+import org.slf4j.Logger;
 import rbasamoyai.createbigcannons.cannon_control.ControlPitchContraption;
 import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptionType;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
@@ -30,10 +36,14 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MountedLaserCannonContraption extends AbstractMountedCannonContraption {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+
     public static final AtomicInteger NEXT_BREAKER_ID = new AtomicInteger();
     protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
     protected static Map<BlockPos, Float> breakProgress = new HashMap<>();
-
+    private static final int LASER_ENERGY_BLOCK = 5;
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
         getLaser().ifPresent(laser -> {
@@ -118,10 +128,37 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
     private void tryFire(Level level, PitchOrientedContraptionEntity entity) {
         if (level.isClientSide) return;
-        if (getLaser().map(laser -> laser.getFireRate() > 0).orElse(false) && level instanceof ServerLevel serverLevel) {
-            fireShot(serverLevel, entity);
+
+        Optional<LaserBlockEntity> laserOpt = getLaser();
+        if (laserOpt.isEmpty()) return;
+
+        LaserBlockEntity laser = laserOpt.get();
+        if (laser.getFireRate() <= 0) return; // nothing to fire
+
+        if (!(level instanceof ServerLevel serverLevel)) return;
+
+        BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
+        if (energyBE == null) return;
+
+        IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
+
+        // Actually check available energy first
+        int energyAvailable = energy.extractEnergy(LASER_ENERGY_BLOCK, true);
+        if (energyAvailable < LASER_ENERGY_BLOCK) {
+            return;
         }
+
+        // Now actually consume the energy
+        int energyUsed = energy.extractEnergy(LASER_ENERGY_BLOCK, false);
+        if (energyUsed < LASER_ENERGY_BLOCK) {
+            return;
+        }
+
+        if (energyBE instanceof SmartBlockEntity smartBE) smartBE.notifyUpdate();
+
+        fireShot(serverLevel, entity);
     }
+
 
     @Override
     public float getWeightForStress() {

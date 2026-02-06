@@ -28,10 +28,12 @@ public class CECBlockEntity {
             .register();
 
 
-    public static final BlockEntityEntry<BigCannonEndBlockEntity> BIG_CANNON = CECMod.REGISTRATE
-            .blockEntity("big_cannon", BigCannonEndBlockEntity::new)
+    public static final BlockEntityEntry<BigCannonBlockEntity> BIG_CANNON = CECMod.REGISTRATE
+            .blockEntity("big_cannon", BigCannonBlockEntity::new)
             .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL, CECBlocks.RAILGUN_BARREL)
             .register();
+
+
 
     public static final BlockEntityEntry<LaserBlockEntity> LASER = CECMod.REGISTRATE
             .blockEntity("laser", LaserBlockEntity::new)

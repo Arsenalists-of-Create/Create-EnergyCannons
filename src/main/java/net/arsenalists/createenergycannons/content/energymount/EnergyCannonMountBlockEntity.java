@@ -6,6 +6,8 @@ import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import joptsimple.internal.Strings;
+import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlock;
+import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.MountedCoilCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContraption;
@@ -69,24 +71,48 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     protected void assemble() throws AssemblyException {
-        if (!CECBlocks.ENERGY_CANNON_MOUNT.has(this.getBlockState()))
+        LOGGER.warn("[EnergyMount] WorldPos: {}", this.worldPosition);
+        LOGGER.warn("[EnergyMount] BlockState: {}", this.getBlockState());
+
+        if (!CECBlocks.ENERGY_CANNON_MOUNT.has(this.getBlockState())) {
             return;
+        }
 
         Direction vertical = this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
+
         BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
+        LOGGER.warn("[EnergyMount] Assembly position: {}", assemblyPos);
+        LOGGER.warn("[EnergyMount] Block at assembly pos: {}", this.getLevel().getBlockState(assemblyPos));
 
-        if (this.getLevel().isOutsideBuildHeight(assemblyPos))
+        if (this.getLevel().isOutsideBuildHeight(assemblyPos)) {
+            LOGGER.error("[EnergyMount] Assembly position outside world bounds!");
             throw cannonBlockOutsideOfWorld(assemblyPos);
+        }
 
-        // ✅ Always use YOUR contraption class so YOUR fireShot override is used.
-        AbstractMountedCannonContraption mountedCannon = new MountedRailCannonContraption();
+        // CHOOSE THE CONTRAPTION
+        AbstractMountedCannonContraption mountedCannon;
+        if (this.getLevel().getBlockState(assemblyPos).getBlock() instanceof LaserBlock) {
+            mountedCannon = new MountedLaserCannonContraption();
+            LOGGER.warn("[EnergyMount] Created MountedLaserCannonContraption");
+        } else {
+            mountedCannon = new MountedRailCannonContraption();
+            LOGGER.warn("[EnergyMount] Created MountedEnergyCannonContraption");
+        }
 
-        if (mountedCannon != null && mountedCannon.assemble(this.getLevel(), assemblyPos)) {
+        LOGGER.warn("[EnergyMount] Calling mountedCannon.assemble()...");
+        boolean assembled = mountedCannon.assemble(this.getLevel(), assemblyPos);
+        LOGGER.warn("[EnergyMount] mountedCannon.assemble() returned: {}", assembled);
+
+        if (mountedCannon != null && assembled) {
+            LOGGER.warn("[EnergyMount] Contraption assembled successfully!");
+
             Direction facing = this.getBlockState().getValue(CannonMountBlock.HORIZONTAL_FACING);
             Direction cannonFacing = mountedCannon.initialOrientation();
 
-            if (facing.getAxis() == cannonFacing.getAxis() || !cannonFacing.getAxis().isHorizontal())
+            if (facing.getAxis() != cannonFacing.getAxis() && cannonFacing.getAxis().isHorizontal()) {
+                LOGGER.warn("[EnergyMount] Cannon axis doesn't match mount axis, returning");
                 return;
+            }
 
             ((CannonMountBEAccessor) this).setRunning(true);
 
