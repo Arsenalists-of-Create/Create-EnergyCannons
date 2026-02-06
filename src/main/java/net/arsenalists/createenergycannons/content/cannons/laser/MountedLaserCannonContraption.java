@@ -5,6 +5,8 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.network.LaserBurnS2CPacket;
+import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
@@ -42,7 +44,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
     public static final AtomicInteger NEXT_BREAKER_ID = new AtomicInteger();
     protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
-    protected static Map<BlockPos, Float> breakProgress = new HashMap<>();
+    protected Map<BlockPos, Float> breakProgress = new HashMap<>();
     private static final int LASER_ENERGY_BLOCK = 5;
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
@@ -102,18 +104,22 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 BlockPos blockPos = blockHitResult.getBlockPos();
                 BlockState blockState = serverLevel.getBlockState(blockPos);
 
-                breakProgress.putIfAbsent(blockHitResult.getBlockPos(), 0F);
-                breakProgress.get(blockHitResult.getBlockPos());
-                breakProgress.put(blockHitResult.getBlockPos(), breakProgress.get(blockHitResult.getBlockPos()) + 1 / blockState.getDestroySpeed(serverLevel, blockHitResult.getBlockPos()));
+                breakProgress.putIfAbsent(blockPos, 0F);
+                float currentProgress = breakProgress.get(blockPos);
+                float progressIncrement = 1 / blockState.getDestroySpeed(serverLevel, blockPos);
+                breakProgress.put(blockPos, currentProgress + progressIncrement);
 
-                if (!serverLevel.isClientSide) {
-                    if (breakProgress.get(blockHitResult.getBlockPos()) > 10) {
-                        serverLevel.destroyBlock(blockHitResult.getBlockPos(), false);
-                        breakProgress.put(blockHitResult.getBlockPos(), 0F);
-                        serverLevel.destroyBlockProgress(breakerId, blockHitResult.getBlockPos(), 0);
+                float progress = breakProgress.get(blockPos);
+                int stage = Math.min((int) progress, 9);
 
-                    } else
-                        serverLevel.destroyBlockProgress(breakerId, blockHitResult.getBlockPos(), (int) (float) breakProgress.get(blockHitResult.getBlockPos()));
+                if (progress >= 10) {
+                    serverLevel.destroyBlock(blockPos, false);
+                    breakProgress.remove(blockPos);
+                    PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
+                            serverLevel, blockPos);
+                } else {
+                    PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
+                            serverLevel, blockPos);
                 }
             }
         }
@@ -145,6 +151,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         // Actually check available energy first
         int energyAvailable = energy.extractEnergy(LASER_ENERGY_BLOCK, true);
         if (energyAvailable < LASER_ENERGY_BLOCK) {
+            laser.setFireRate(0);
             return;
         }
 

@@ -2,6 +2,7 @@ package net.arsenalists.createenergycannons;
 
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -38,6 +39,7 @@ public class CECMod {
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
         CECDefaultCannonMountPropertiesSerializers.init();
+        event.enqueueWork(PacketHandler::register);
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {
