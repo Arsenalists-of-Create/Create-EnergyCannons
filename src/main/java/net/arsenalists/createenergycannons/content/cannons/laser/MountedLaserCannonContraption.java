@@ -9,6 +9,7 @@ import net.arsenalists.createenergycannons.network.LaserBurnS2CPacket;
 import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
+import net.arsenalists.createenergycannons.registry.CECParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -41,11 +42,11 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-
     public static final AtomicInteger NEXT_BREAKER_ID = new AtomicInteger();
     protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
     protected Map<BlockPos, Float> breakProgress = new HashMap<>();
     private static final int LASER_ENERGY_BLOCK = 5;
+
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
         getLaser().ifPresent(laser -> {
@@ -53,12 +54,12 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                     BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
                 }
         );
-
     }
 
     public Optional<LaserBlockEntity> getLaser() {
         return this.presentBlockEntities.entrySet().stream().findFirst().map(entry -> entry.getValue() instanceof LaserBlockEntity laser ? laser : null);
     }
+
     @Override
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
         Vec3 start = anchor.getCenter();
@@ -72,11 +73,13 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         Vec3 vecEnd = start.add(Vec3.directionFromRotation(invert * pitch, yaw).scale(range));
         HitResult result = serverLevel.clip(new ClipContext(start, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
 
+        // Muzzle glow at beam START
+        spawnGlareMuzzle(serverLevel, start);
+
         getLaser().ifPresent(laser -> {
             laser.setRange((int) (start.distanceTo(result.getLocation())));
             BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
         });
-
 
         AABB laserAABB = new AABB(start, result.getLocation()).inflate(1);
         Entity closestEntity = null;
@@ -90,8 +93,13 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 closestEntity = livingEntity;
             }
         }
+
+        Vec3 endPoint;
+
         if (closestEntity != null) {
             final int newRange = (int) start.distanceTo(closestEntity.position());
+            endPoint = closestEntity.position();
+
             getLaser().ifPresent(laser -> {
                 laser.setRange(newRange);
                 BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
@@ -103,6 +111,8 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 BlockHitResult blockHitResult = (BlockHitResult) result;
                 BlockPos blockPos = blockHitResult.getBlockPos();
                 BlockState blockState = serverLevel.getBlockState(blockPos);
+
+                endPoint = result.getLocation();
 
                 breakProgress.putIfAbsent(blockPos, 0F);
                 float currentProgress = breakProgress.get(blockPos);
@@ -121,25 +131,72 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                     PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
                             serverLevel, blockPos);
                 }
+            } else {
+                endPoint = result.getLocation();
             }
         }
+        // Impact glow at beam END
+        spawnGlareImpact(serverLevel, endPoint);
     }
 
+
+    private void spawnGlareMuzzle(ServerLevel level, Vec3 pos) {
+        level.sendParticles(CECParticles.LASER_GLARE.get(),
+                pos.x, pos.y, pos.z, 0, 0, 0, 0, 1.0);
+    }
+
+    private void spawnGlareImpact(ServerLevel level, Vec3 pos) {
+        level.sendParticles(CECParticles.LASER_GLARE.get(),
+                pos.x, pos.y, pos.z, 0, 1, 0, 0, 1.0);
+
+        for (int i = 0; i < 2; i++) {
+            double xVel = (level.random.nextDouble() - 0.5) * 0.02;
+            double yVel = 0.05 + level.random.nextDouble() * 0.02;
+            double zVel = (level.random.nextDouble() - 0.5) * 0.02;
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+                    pos.x, pos.y, pos.z, 0, xVel, yVel, zVel, 1.0);
+        }
+    }
 
     @Override
     public void tick(Level level, PitchOrientedContraptionEntity entity) {
         super.tick(level, entity);
-        tryFire(level, entity);
+
+        if (level.isClientSide) {
+            getLaser().ifPresent(laser -> {
+                if (laser.getFireRate() > 0 && laser.getRange() > 0) {
+                    Vec3 origin = anchor.getCenter();
+                    Direction facing = entity.getInitialOrientation();
+
+                    int invert = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
+                    if (facing.getAxis() == Direction.Axis.Z) {
+                        invert = -invert;
+                    }
+
+                    Vec3 direction = Vec3.directionFromRotation(invert * entity.pitch, entity.yaw);
+
+                    LaserBeamGlobalRenderer.registerMountedBeam(
+                            entity.getId(),
+                            origin,
+                            direction,
+                            laser.getRange(),
+                            level.getGameTime()
+                    );
+                } else {
+                    LaserBeamGlobalRenderer.remove(entity.getId());
+                }
+            });
+        } else {
+            tryFire(level, entity);
+        }
     }
 
     private void tryFire(Level level, PitchOrientedContraptionEntity entity) {
-        if (level.isClientSide) return;
-
         Optional<LaserBlockEntity> laserOpt = getLaser();
         if (laserOpt.isEmpty()) return;
 
         LaserBlockEntity laser = laserOpt.get();
-        if (laser.getFireRate() <= 0) return; // nothing to fire
+        if (laser.getFireRate() <= 0) return;
 
         if (!(level instanceof ServerLevel serverLevel)) return;
 
@@ -148,14 +205,12 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
 
-        // Actually check available energy first
         int energyAvailable = energy.extractEnergy(LASER_ENERGY_BLOCK, true);
         if (energyAvailable < LASER_ENERGY_BLOCK) {
             laser.setFireRate(0);
             return;
         }
 
-        // Now actually consume the energy
         int energyUsed = energy.extractEnergy(LASER_ENERGY_BLOCK, false);
         if (energyUsed < LASER_ENERGY_BLOCK) {
             return;
@@ -165,7 +220,6 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
         fireShot(serverLevel, entity);
     }
-
 
     @Override
     public float getWeightForStress() {

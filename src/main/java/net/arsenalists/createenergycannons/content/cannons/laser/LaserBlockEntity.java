@@ -69,6 +69,10 @@ public class LaserBlockEntity extends SmartBlockEntity {
         tag.putInt("lastUpdate", this.lastUpdate);
         tag.putInt("range", this.range);
     }
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(getBlockPos()).inflate(getRange() + 10);
+    }
 
     public int getFireRate() {
         return this.fireRate;
