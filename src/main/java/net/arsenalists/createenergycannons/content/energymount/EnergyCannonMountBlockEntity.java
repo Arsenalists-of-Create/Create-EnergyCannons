@@ -9,8 +9,7 @@ import joptsimple.internal.Strings;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlock;
 import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.MountedCoilCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedEnergyCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlock;
 import net.arsenalists.createenergycannons.mixin.CannonMountBEAccessor;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
@@ -95,7 +94,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
             mountedCannon = new MountedLaserCannonContraption();
             LOGGER.warn("[EnergyMount] Created MountedLaserCannonContraption");
         } else {
-            mountedCannon = new MountedRailCannonContraption();
+            mountedCannon = new MountedEnergyCannonContraption();
             LOGGER.warn("[EnergyMount] Created MountedEnergyCannonContraption");
         }
 

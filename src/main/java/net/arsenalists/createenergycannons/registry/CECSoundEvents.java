@@ -11,7 +11,7 @@ public class CECSoundEvents {
     public static final DeferredRegister<SoundEvent> SOUNDS =
         DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, CECMod.MODID);
 
-\    public static final RegistryObject<SoundEvent> COILGUN_FIRE = register("coilgun_fire");
+    public static final RegistryObject<SoundEvent> COILGUN_FIRE = register("coilgun_fire");
 
     public static final RegistryObject<SoundEvent> RAILGUN_FIRE = register("railgun_fire");
 

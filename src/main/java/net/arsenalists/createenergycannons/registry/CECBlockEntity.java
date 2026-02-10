@@ -5,6 +5,8 @@ import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserRenderer;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlockEntity;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
 
@@ -28,9 +30,14 @@ public class CECBlockEntity {
             .register();
 
 
-    public static final BlockEntityEntry<BigCannonBlockEntity> BIG_CANNON = CECMod.REGISTRATE
-            .blockEntity("big_cannon", BigCannonBlockEntity::new)
-            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL, CECBlocks.RAILGUN_BARREL)
+    public static final BlockEntityEntry<CoilGunBlockEntity> COILGUN = CECMod.REGISTRATE
+            .blockEntity("coilgun", CoilGunBlockEntity::new)
+            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL)
+            .register();
+
+    public static final BlockEntityEntry<RailGunBlockEntity> RAILGUN = CECMod.REGISTRATE
+            .blockEntity("railgun", RailGunBlockEntity::new)
+            .validBlocks(CECBlocks.RAILGUN_BARREL)
             .register();
 
 

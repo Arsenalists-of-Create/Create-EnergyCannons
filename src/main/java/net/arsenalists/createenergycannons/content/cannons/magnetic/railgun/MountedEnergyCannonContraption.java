@@ -6,7 +6,7 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.MountedCoilCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticleData;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -64,7 +65,7 @@ import rbasamoyai.createbigcannons.index.CBCBigCannonMaterials;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class MountedRailCannonContraption extends MountedBigCannonContraption {
+public class MountedEnergyCannonContraption extends MountedBigCannonContraption {
 
 
     BigCannonMaterial cannonMaterial;
@@ -77,6 +78,9 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
     int coilCount;
     enum Mode { NORMAL, COIL, RAIL }
     private Mode mode = Mode.NORMAL;
+
+    private static final int OVERHEAT_DURATION = 500; // 25 seconds (500 ticks)
+    private Map<BlockPos, Long> coilgunCooldownEndTimes = new HashMap<>();  // Game time when cooling finishes
 
     @Override
     public boolean assemble(Level level, BlockPos pos) throws AssemblyException {
@@ -97,7 +101,6 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         LOGGER.warn("[EnergyContraption] startPos: {}", this.startPos);
         LOGGER.warn("[EnergyContraption] initialOrientation: {}", this.initialOrientation);
 
-        // Decide mode by scanning ALL assembled blocks (not just BlockEntities)
         boolean coil = false, rail = false;
         int coilBlockCount = 0, railBlockCount = 0;
 
@@ -107,11 +110,23 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             Block b = info.state().getBlock();
             String blockName = b.getClass().getSimpleName();
 
-
-
             if (b instanceof CoilGunBlock) {
                 coil = true;
                 coilBlockCount++;
+
+                if (info.state().hasProperty(CoilGunBlock.OVERHEATED) &&
+                    info.state().getValue(CoilGunBlock.OVERHEATED)) {
+                    if (info.nbt() != null && info.nbt().contains("CooldownEndTime")) {
+                        long endTime = info.nbt().getLong("CooldownEndTime");
+                        coilgunCooldownEndTimes.put(entry.getKey(), endTime);
+                        LOGGER.warn("[EnergyContraption] Restored cooldown end time {} for pos {}", endTime, entry.getKey());
+                    } else {
+                        // No NBT data, assume full duration from now
+                        long endTime = level.getGameTime() + OVERHEAT_DURATION;
+                        coilgunCooldownEndTimes.put(entry.getKey(), endTime);
+                        LOGGER.warn("[EnergyContraption] No NBT, set new cooldown end time {} for pos {}", endTime, entry.getKey());
+                    }
+                }
             }
             if (b instanceof RailGunBlock) {
                 rail = true;
@@ -125,6 +140,38 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         LOGGER.warn("[EnergyContraption] Mode decision: coilBlocks={}, railBlocks={}", coilBlockCount, railBlockCount);
         LOGGER.warn("[EnergyContraption] Mode changed from {} to {}", oldMode, this.mode);
         return true;
+    }
+
+    @Override
+    public void tick(Level level, PitchOrientedContraptionEntity entity) {
+        super.tick(level, entity);
+
+        if (!level.isClientSide() && !coilgunCooldownEndTimes.isEmpty()) {
+            long currentTime = level.getGameTime();
+            List<BlockPos> toRemove = new ArrayList<>();
+            for (Map.Entry<BlockPos, Long> entry : coilgunCooldownEndTimes.entrySet()) {
+                BlockPos pos = entry.getKey();
+                long cooldownEndTime = entry.getValue();
+
+                if (currentTime >= cooldownEndTime) {
+                    toRemove.add(pos);
+                    StructureBlockInfo info = this.blocks.get(pos);
+                    if (info != null && info.state().getBlock() instanceof CoilGunBlock) {
+                        // Clear the cooldown time from NBT
+                        CompoundTag nbt = info.nbt() != null ? info.nbt().copy() : new CompoundTag();
+                        nbt.remove("CooldownEndTime");
+
+                        StructureBlockInfo cooledInfo = new StructureBlockInfo(
+                            info.pos(),
+                            info.state().setValue(CoilGunBlock.OVERHEATED, false),
+                            nbt
+                        );
+                        entity.setBlock(pos, cooledInfo);
+                    }
+                }
+            }
+            toRemove.forEach(coilgunCooldownEndTimes::remove);
+        }
     }
 
     @Override
@@ -156,6 +203,17 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
             return;
         if (this.isDropMortar()) return;
+
+        // Check if any railgun is overheated
+        long currentTime = level.getGameTime();
+
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            if (be instanceof RailGunBlockEntity railgunBE && railgunBE.isOverheated(currentTime)) {
+                // Attempted to fire while overheated !
+                this.fail(railgunBE.getBlockPos(), level, entity, null, 10);
+                return;
+            }
+        }
 
         ControlPitchContraption controller = entity.getController();
 
@@ -197,7 +255,6 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             //todo better sled fail logic
             if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
                 if (canFail) {
-                    //this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                     LOGGER.warn("failed");
                     return;
                 }
@@ -351,7 +408,6 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         Vec3 plumePos = spawnPos.subtract(vec);
         propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
-        LOGGER.warn("[fireRail] Reached particle code! railCount={}, plumePos={}", railCount, plumePos);
         float smokeScale = Math.max(2, railCount * 2.0f);  // Increased from 0.5f for more visible spread
         EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, railCount, EnergyMuzzleParticleData.TYPE_RAIL, 10);
         CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
@@ -370,6 +426,26 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             ChunkPos cpos1 = new ChunkPos(BlockPos.containing(projectile.position()));
             RitchiesProjectileLib.queueForceLoad(level, cpos1.x, cpos1.z);
         }
+
+        // Mark all railgun blocks as overheated
+        long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            if (be instanceof RailGunBlockEntity railgunBE) {
+                railgunBE.setCooldownEndTime(cooldownEndTime);
+
+                // Update blockstate in contraption to show overheated
+                StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
+                if (info != null) {
+                    StructureBlockInfo overheatedInfo = new StructureBlockInfo(
+                        info.pos(),
+                        info.state().setValue(RailGunBlock.OVERHEATED, true),
+                        info.nbt()
+                    );
+                    entity.setBlock(railgunBE.getBlockPos(), overheatedInfo);
+                }
+            }
+        }
     }
     public void fireCoil(ServerLevel level, PitchOrientedContraptionEntity entity){
             LOGGER.warn("bang2?");
@@ -377,6 +453,18 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
                 return;
             if (this.isDropMortar()) return;
+
+            // Check if any coilgun is overheated
+            long currentTime = level.getGameTime();
+
+            // Check all coilgun block entities
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof CoilGunBlockEntity coilgunBE && coilgunBE.isOverheated(currentTime)) {
+                    // Attempted to fire while overheated!
+                    this.fail(coilgunBE.getBlockPos(), level, entity, null, 10);
+                    return;
+                }
+            }
             ControlPitchContraption controller = entity.getController();
             RandomSource rand = level.getRandom();
             BlockPos currentPos = this.startPos.immutable();
@@ -591,6 +679,25 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
                     player.connection.send(blastWavePacket);
             }
 
+            // Mark all coilgun blocks as overheated
+            long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof CoilGunBlockEntity coilgunBE) {
+                    coilgunBE.setCooldownEndTime(cooldownEndTime);
+
+                    StructureBlockInfo info = this.blocks.get(coilgunBE.getBlockPos());
+                    if (info != null) {
+                        StructureBlockInfo overheatedInfo = new StructureBlockInfo(
+                            info.pos(),
+                            info.state().setValue(CoilGunBlock.OVERHEATED, true),
+                            info.nbt()
+                        );
+                        entity.setBlock(coilgunBE.getBlockPos(), overheatedInfo);
+                    }
+                }
+            }
+
             if (projectile != null && CBCConfigs.server().munitions.projectilesCanChunkload.get()) {
                 ChunkPos cpos1 = new ChunkPos(BlockPos.containing(projectile.position()));
                 RitchiesProjectileLib.queueForceLoad(level, cpos1.x, cpos1.z);
@@ -677,6 +784,44 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         }
     }
 
+    @Override
+    public void readNBT(Level world, CompoundTag nbt, boolean spawnData) {
+        super.readNBT(world, nbt, spawnData);
+
+        // Read cooldown end times
+        coilgunCooldownEndTimes.clear();
+        if (nbt.contains("CooldownEndTimes")) {
+            CompoundTag timersTag = nbt.getCompound("CooldownEndTimes");
+            for (String key : timersTag.getAllKeys()) {
+                if (key.endsWith("_Pos")) {
+                    String baseKey = key.substring(0, key.length() - 4);
+                    BlockPos pos = NbtUtils.readBlockPos(timersTag.getCompound(key));
+                    long endTime = timersTag.getLong(baseKey);
+                    coilgunCooldownEndTimes.put(pos, endTime);
+                }
+            }
+        }
+    }
+
+    @Override
+    public CompoundTag writeNBT(boolean spawnPacket) {
+        CompoundTag nbt = super.writeNBT(spawnPacket);
+
+        // Write cooldown end times
+        if (!coilgunCooldownEndTimes.isEmpty()) {
+            CompoundTag timersTag = new CompoundTag();
+            int idx = 0;
+            for (Map.Entry<BlockPos, Long> entry : coilgunCooldownEndTimes.entrySet()) {
+                String key = "Timer" + idx;
+                timersTag.put(key + "_Pos", NbtUtils.writeBlockPos(entry.getKey()));
+                timersTag.putLong(key, entry.getValue());
+                idx++;
+            }
+            nbt.put("CooldownEndTimes", timersTag);
+        }
+
+        return nbt;
+    }
 
 
 }

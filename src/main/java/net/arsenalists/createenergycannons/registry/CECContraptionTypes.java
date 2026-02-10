@@ -4,8 +4,7 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.MountedCoilCannonContraption;
-import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedRailCannonContraption;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedEnergyCannonContraption;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -30,11 +29,11 @@ public class CECContraptionTypes {
             helper.register(MOUNTED_LASER_CANNON_ID, MOUNTED_LASER_CANNON);
         });
         event.register(CreateBuiltInRegistries.CONTRAPTION_TYPE.key(), helper -> {
-            COILGUN = new ContraptionType(MountedCoilCannonContraption::new);
+            COILGUN = new ContraptionType(MountedEnergyCannonContraption::new);
             helper.register(COILGUN_ID,COILGUN);
         });
         event.register(CreateBuiltInRegistries.CONTRAPTION_TYPE.key(),helper -> {
-            RAIL_CANNON = new ContraptionType(MountedRailCannonContraption::new);
+            RAIL_CANNON = new ContraptionType(MountedEnergyCannonContraption::new);
             helper.register(RAIL_CANNON_ID,RAIL_CANNON);
         });
     }

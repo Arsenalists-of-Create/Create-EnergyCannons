@@ -1,7 +1,14 @@
 package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -15,13 +22,22 @@ import java.util.function.Supplier;
 
 public class RailGunBlock extends BigCannonTubeBlock {
 
+    public static final BooleanProperty OVERHEATED = BooleanProperty.create("overheated");
+
     public RailGunBlock(Properties properties, BigCannonMaterial material, Supplier<CannonCastShape> cannonShape, VoxelShape base) {
         super(properties, material, cannonShape, base);
+        this.registerDefaultState(this.stateDefinition.any().setValue(OVERHEATED, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(OVERHEATED);
     }
 
     @Override
     public @NotNull AbstractMountedCannonContraption getCannonContraption() {
-        return new MountedRailCannonContraption();
+        return new MountedEnergyCannonContraption();
     }
 
     public static RailGunBlock mediumRail(Properties properties, BigCannonMaterial material) {
@@ -30,6 +46,27 @@ public class RailGunBlock extends BigCannonTubeBlock {
 
     @Override
     public BlockEntityType<? extends BigCannonBlockEntity> getBlockEntityType() {
-        return CECBlockEntity.BIG_CANNON.get();
+        return CECBlockEntity.RAILGUN.get();
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        // Schedule tick for overheated blocks
+        if (state.getValue(OVERHEATED) && !level.isClientSide()) {
+            level.scheduleTick(pos, this, 20);
+        }
+    }
+
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(OVERHEATED) && level.getBlockEntity(pos) instanceof RailGunBlockEntity be) {
+            long currentTime = level.getGameTime();
+            if (!be.isOverheated(currentTime)) {
+                level.setBlock(pos, state.setValue(OVERHEATED, false), 3);
+            } else {
+                level.scheduleTick(pos, this, 20);
+            }
+        }
     }
 }
