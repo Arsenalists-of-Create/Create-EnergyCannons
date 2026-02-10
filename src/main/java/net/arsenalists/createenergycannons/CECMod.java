@@ -43,6 +43,7 @@ public class CECMod {
         CECCannonContraptionTypes.register();
         CECPartials.register();
         CECParticles.register();
+        CECSoundEvents.register();
 
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);

@@ -1,0 +1,44 @@
+{
+  "coilgun_fire": {
+    "subtitle": "subtitles.createenergycannons.coilgun_fire",
+    "sounds": [
+      {
+        "name": "createenergycannons:coilgun/coilgun_fire_0",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:coilgun/coilgun_fire_1",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:coilgun/coilgun_fire_2",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:coilgun/coilgun_fire_3",
+        "stream": false
+      }
+    ]
+  },
+  "railgun_fire": {
+    "subtitle": "subtitles.createenergycannons.railgun_fire",
+    "sounds": [
+      {
+        "name": "createenergycannons:railgun/railgun_fire_0",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:railgun/railgun_fire_1",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:railgun/railgun_fire_2",
+        "stream": false
+      },
+      {
+        "name": "createenergycannons:railgun/railgun_fire_3",
+        "stream": false
+      }
+    ]
+  }
+}

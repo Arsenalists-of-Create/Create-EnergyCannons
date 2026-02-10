@@ -10,6 +10,7 @@ import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.Moun
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticleData;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
+import net.arsenalists.createenergycannons.registry.CECSoundEvents;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -354,7 +355,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
         float smokeScale = Math.max(2, railCount * 2.0f);  // Increased from 0.5f for more visible spread
         EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, railCount, EnergyMuzzleParticleData.TYPE_RAIL, 10);
         CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
-                BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CBCSoundEvents.FIRE_BIG_CANNON.getMainEvent()), SoundSource.BLOCKS,
+                BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.RAILGUN_FIRE.get()), SoundSource.BLOCKS,
                 volume, pitch, 2, propelCtx.chargesUsed);
         Packet<?> blastWavePacket = new ClientboundLevelParticlesPacket(blastEffect, true, plumePos.x, plumePos.y, plumePos.z, 0, 0, 0, 1, 0);
 
@@ -579,7 +580,7 @@ public class MountedRailCannonContraption extends MountedBigCannonContraption {
             float smokeScale = Math.max(2, coilCount * 2.0f);
             EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_COIL, 10);
             CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
-                    BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CBCSoundEvents.FIRE_BIG_CANNON.getMainEvent()), SoundSource.BLOCKS,
+                    BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.COILGUN_FIRE.get()), SoundSource.BLOCKS,
                     volume, pitch, 2, propelCtx.chargesUsed);
             Packet<?> blastWavePacket = new ClientboundLevelParticlesPacket(blastEffect, true, plumePos.x, plumePos.y, plumePos.z, 0, 0, 0, 1, 0);
 
