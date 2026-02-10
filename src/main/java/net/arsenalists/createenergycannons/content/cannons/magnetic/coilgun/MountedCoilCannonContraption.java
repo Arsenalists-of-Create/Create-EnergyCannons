@@ -5,6 +5,8 @@ import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
+import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticleData;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
@@ -43,7 +45,6 @@ import rbasamoyai.createbigcannons.cannons.big_cannons.cannon_end.BigCannonEnd;
 import rbasamoyai.createbigcannons.cannons.big_cannons.material.BigCannonMaterial;
 import rbasamoyai.createbigcannons.config.CBCConfigs;
 import rbasamoyai.createbigcannons.effects.particles.explosions.CannonBlastWaveEffectParticleData;
-import rbasamoyai.createbigcannons.effects.particles.plumes.BigCannonPlumeParticleData;
 import rbasamoyai.createbigcannons.index.CBCEntityTypes;
 import rbasamoyai.createbigcannons.index.CBCSoundEvents;
 import rbasamoyai.createbigcannons.munitions.big_cannon.AbstractBigCannonProjectile;
@@ -301,7 +302,8 @@ public class MountedCoilCannonContraption extends MountedBigCannonContraption {
         Vec3 plumePos = spawnPos.subtract(vec);
         propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
-        BigCannonPlumeParticleData plumeParticle = new BigCannonPlumeParticleData(10, 1, 10);
+        float smokeScale = Math.max(2, coilCount * 2.0f);  // Increased from 0.5f for more visible spread
+        EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_COIL, 10);
         CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
                 BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CBCSoundEvents.FIRE_BIG_CANNON.getMainEvent()), SoundSource.BLOCKS,
                 volume, pitch, 2, propelCtx.chargesUsed);
