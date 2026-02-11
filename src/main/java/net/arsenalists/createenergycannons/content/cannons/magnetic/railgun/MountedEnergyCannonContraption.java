@@ -550,6 +550,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         // Mark all railgun blocks as overheated
         long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
+        BlockEntity mountBE = level.getBlockEntity(this.anchor.below(2));
+        if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
+            energyMountBE.setCannonCooldown(cooldownEndTime);
+        }
+
         // Play overheat sound
         Vec3 soundPos = entity.position();
         level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
@@ -806,6 +811,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
             // Mark all coilgun blocks as overheated
             long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+
+            BlockEntity mountBE = level.getBlockEntity(this.anchor.below(2));
+            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
+                energyMountBE.setCannonCooldown(cooldownEndTime);
+            }
 
             // Play overheat sound
             Vec3 soundPos = entity.position();

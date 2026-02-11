@@ -9,8 +9,10 @@ import joptsimple.internal.Strings;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlock;
 import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.MountedEnergyCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlock;
+import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlockEntity;
 import net.arsenalists.createenergycannons.mixin.CannonMountBEAccessor;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.minecraft.ChatFormatting;
@@ -36,12 +38,15 @@ import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCan
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
 
 import java.util.List;
+import java.util.Map;
 
 public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
 
     private final EnergyMountCap energyCap = new EnergyMountCap(500000, this::notifyUpdate);
     private LazyOptional<IEnergyStorage> lazyEnergyHandler;
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    private long cooldownEndTime = 0;
 
     public EnergyCannonMountBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -149,6 +154,15 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         tooltip.add(Component.literal("Energy ").append(barComponent(energyCap.getEnergyStored() * 50 / energyCap.getMaxEnergyStored())));
+
+        long currentTime = this.level.getGameTime();
+        if (cooldownEndTime > currentTime) {
+            long remaining = cooldownEndTime - currentTime;
+            int cooldownProgress = (int) ((500 - remaining) * 50 / 500);
+            tooltip.add(Component.literal("Cooldown ").append(cooldownBarComponent(cooldownProgress)));
+        } else {
+        }
+
         return true;
     }
 
@@ -157,6 +171,12 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
                 .append(bars(Math.max(0, level), ChatFormatting.GREEN))
                 .append(bars(Math.max(0, 50 - level), ChatFormatting.DARK_RED));
 
+    }
+
+    private MutableComponent cooldownBarComponent(int level) {
+        return Component.empty()
+                .append(bars(Math.max(0, level), ChatFormatting.YELLOW))
+                .append(bars(Math.max(0, 50 - level), ChatFormatting.RED));
     }
 
     private MutableComponent bars(int level, ChatFormatting format) {
@@ -181,17 +201,25 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         return super.getCapability(cap);
     }
 
+    public void setCannonCooldown(long endTime) {
+        this.cooldownEndTime = Math.max(this.cooldownEndTime, endTime);
+        this.setChanged();
+        this.sendData(); // Sync to client
+    }
+
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         if (tag.contains("energy"))
             energyCap.deserializeNBT(tag.get("energy"));
+        cooldownEndTime = tag.getLong("CooldownEndTime");
     }
 
     @Override
     protected void write(CompoundTag tag, boolean clientPacket) {
         super.write(tag, clientPacket);
         tag.put("energy", energyCap.serializeNBT());
+        tag.putLong("CooldownEndTime", cooldownEndTime);
     }
 
     @Override
