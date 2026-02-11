@@ -10,8 +10,12 @@ import net.minecraft.network.FriendlyByteBuf;
 
 public record EnergyMuzzleParticleData(int power, int cannonType) implements ParticleOptions {
 
-    public static final int TYPE_RAIL = 0;
-    public static final int TYPE_COIL = 1;
+    public static final int TYPE_GREEN = 0;
+    public static final int TYPE_RED = 1;
+
+    // Legacy aliases
+    public static final int TYPE_RAIL = TYPE_GREEN;
+    public static final int TYPE_COIL = TYPE_RED;
 
     public static final Codec<EnergyMuzzleParticleData> CODEC = RecordCodecBuilder.create(i ->
         i.group(

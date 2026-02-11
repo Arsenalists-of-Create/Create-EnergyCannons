@@ -207,6 +207,12 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         this.sendData(); // Sync to client
     }
 
+
+    public boolean isReadyToFire() {
+        if (level == null) return false;
+        return level.getGameTime() >= this.cooldownEndTime;
+    }
+
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);

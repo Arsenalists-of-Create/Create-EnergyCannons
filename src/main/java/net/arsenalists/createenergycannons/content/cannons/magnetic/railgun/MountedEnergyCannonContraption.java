@@ -76,6 +76,47 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         return 0;
     }
 
+    /**
+     * Get the current projectile velocity for radar targeting.
+     * This calculates based on available energy and cannon type.
+     *
+     * @param level The server level
+     * @return The muzzle velocity (charge power)
+     */
+    public float getMuzzleVelocity(ServerLevel level) {
+        if (level == null || this.anchor == null) return 0f;
+
+        BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
+        if (energyBE == null) return 0f;
+
+        IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(null);
+        if (energy == null) return 0f;
+
+        // Count barrel blocks
+        int tempRailCount = 0;
+        int tempCoilCount = 0;
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            if (be.getBlockState().getBlock() instanceof RailGunBlock) {
+                tempRailCount++;
+            } else if (be.getBlockState().getBlock() instanceof CoilGunBlock) {
+                tempCoilCount++;
+            }
+        }
+
+        // Calculate based on mode (simulate without actually extracting energy)
+        if (this.mode == Mode.RAIL && tempRailCount > 0) {
+            int availableEnergy = energy.extractEnergy(tempRailCount * 20000, true); // simulate=true
+            int effectiveRailCount = availableEnergy / 20000;
+            return effectiveRailCount * 1.1f;
+        } else if (this.mode == Mode.COIL && tempCoilCount > 0) {
+            int availableEnergy = energy.extractEnergy(tempCoilCount * 10000, true); // simulate=true
+            int effectiveCoilCount = availableEnergy / 10000;
+            return effectiveCoilCount;
+        }
+
+        return 0f;
+    }
+
     int coilCount;
     enum Mode { NORMAL, COIL, RAIL }
     private Mode mode = Mode.NORMAL;
@@ -529,7 +570,24 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
         float smokeScale = Math.max(2, railCount * 2.0f);  // Increased from 0.5f for more visible spread
-        EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, railCount, EnergyMuzzleParticleData.TYPE_RAIL, 10);
+
+        EnergyCannonPlumeParticleData mainPlumeParticle = new EnergyCannonPlumeParticleData(smokeScale, railCount, EnergyMuzzleParticleData.TYPE_GREEN, 10);
+
+        float sideScale = smokeScale * 0.3f;
+        int sidePower = Math.max(1, railCount / 2);
+        EnergyCannonPlumeParticleData sidePlumeParticle = new EnergyCannonPlumeParticleData(sideScale, sidePower, EnergyMuzzleParticleData.TYPE_RED, 8);
+
+        Vec3 up = Math.abs(vec.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
+        Vec3 right = vec.cross(up).normalize();
+        Vec3 actualUp = right.cross(vec).normalize();
+
+        double angle30 = Math.toRadians(30);
+        double cos30 = Math.cos(angle30);
+        double sin30 = Math.sin(angle30);
+
+        Vec3 upperEjection = vec.scale(cos30).add(actualUp.scale(sin30)).normalize();
+        Vec3 lowerEjection = vec.scale(cos30).add(actualUp.scale(-sin30)).normalize();
+
         CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
                 BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.RAILGUN_FIRE.get()), SoundSource.BLOCKS,
                 volume, pitch, 2, propelCtx.chargesUsed);
@@ -537,7 +595,12 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         double blastDistSqr = volume * volume * 256 * 1.21;
         for (ServerPlayer player : level.players()) {
-            level.sendParticles(player, plumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, vec.x, vec.y, vec.z, 1.0f);
+            level.sendParticles(player, mainPlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, vec.x, vec.y, vec.z, 1.0f);
+
+            level.sendParticles(player, sidePlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, upperEjection.x, upperEjection.y, upperEjection.z, 1.0f);
+
+            level.sendParticles(player, sidePlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, lowerEjection.x, lowerEjection.y, lowerEjection.z, 1.0f);
+
             if (player.distanceToSqr(plumePos.x, plumePos.y, plumePos.z) < blastDistSqr)
                 player.connection.send(blastWavePacket);
         }
@@ -796,7 +859,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
             float smokeScale = Math.max(2, coilCount * 2.0f);
-            EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_COIL, 10);
+            EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_RED, 10);
             CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
                     BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.COILGUN_FIRE.get()), SoundSource.BLOCKS,
                     volume, pitch, 2, propelCtx.chargesUsed);
