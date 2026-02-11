@@ -23,16 +23,19 @@ import java.util.function.Supplier;
 public class RailGunBlock extends BigCannonTubeBlock {
 
     public static final BooleanProperty OVERHEATED = BooleanProperty.create("overheated");
+    public static final BooleanProperty CHARGING = BooleanProperty.create("charging");
 
     public RailGunBlock(Properties properties, BigCannonMaterial material, Supplier<CannonCastShape> cannonShape, VoxelShape base) {
         super(properties, material, cannonShape, base);
-        this.registerDefaultState(this.stateDefinition.any().setValue(OVERHEATED, false));
+        this.registerDefaultState(this.stateDefinition.any()
+            .setValue(OVERHEATED, false)
+            .setValue(CHARGING, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(OVERHEATED);
+        builder.add(OVERHEATED, CHARGING);
     }
 
     @Override
@@ -68,5 +71,10 @@ public class RailGunBlock extends BigCannonTubeBlock {
                 level.scheduleTick(pos, this, 20);
             }
         }
+    }
+
+    @Override
+    public int getLightEmission(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos) {
+        return state.getValue(CHARGING) ? 10 : 0;
     }
 }

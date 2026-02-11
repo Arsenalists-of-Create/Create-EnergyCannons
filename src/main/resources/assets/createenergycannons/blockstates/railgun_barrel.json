@@ -1,54 +1,106 @@
 {
   "variants": {
-    "facing=down,overheated=false": {
+    "charging=false,facing=down,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel",
       "x": 180
     },
-    "facing=down,overheated=true": {
+    "charging=false,facing=down,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated",
       "x": 180
     },
-    "facing=east,overheated=false": {
+    "charging=true,facing=down,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 180
+    },
+    "charging=true,facing=down,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 180
+    },
+    "charging=false,facing=east,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel",
       "x": 90,
       "y": 90
     },
-    "facing=east,overheated=true": {
+    "charging=false,facing=east,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated",
       "x": 90,
       "y": 90
     },
-    "facing=north,overheated=false": {
+    "charging=true,facing=east,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90,
+      "y": 90
+    },
+    "charging=true,facing=east,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90,
+      "y": 90
+    },
+    "charging=false,facing=north,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel",
       "x": 90
     },
-    "facing=north,overheated=true": {
+    "charging=false,facing=north,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated",
       "x": 90
     },
-    "facing=south,overheated=false": {
+    "charging=true,facing=north,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90
+    },
+    "charging=true,facing=north,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90
+    },
+    "charging=false,facing=south,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel",
       "x": 90,
       "y": 180
     },
-    "facing=south,overheated=true": {
+    "charging=false,facing=south,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated",
       "x": 90,
       "y": 180
     },
-    "facing=up,overheated=false": {
+    "charging=true,facing=south,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90,
+      "y": 180
+    },
+    "charging=true,facing=south,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90,
+      "y": 180
+    },
+    "charging=false,facing=up,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel"
     },
-    "facing=up,overheated=true": {
+    "charging=false,facing=up,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated"
     },
-    "facing=west,overheated=false": {
+    "charging=true,facing=up,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging"
+    },
+    "charging=true,facing=up,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging"
+    },
+    "charging=false,facing=west,overheated=false": {
       "model": "createenergycannons:block/railgun_barrel",
       "x": 90,
       "y": 270
     },
-    "facing=west,overheated=true": {
+    "charging=false,facing=west,overheated=true": {
       "model": "createenergycannons:block/railgun_barrel_overheated",
+      "x": 90,
+      "y": 270
+    },
+    "charging=true,facing=west,overheated=false": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
+      "x": 90,
+      "y": 270
+    },
+    "charging=true,facing=west,overheated=true": {
+      "model": "createenergycannons:block/railgun_barrel_charging",
       "x": 90,
       "y": 270
     }

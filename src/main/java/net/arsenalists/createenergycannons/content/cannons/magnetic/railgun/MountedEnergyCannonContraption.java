@@ -21,6 +21,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -80,7 +81,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     private Mode mode = Mode.NORMAL;
 
     private static final int OVERHEAT_DURATION = 500; // 25 seconds (500 ticks)
+    private static final int CHARGE_DURATION = 20; // 1 second (20 ticks)
     private Map<BlockPos, Long> coilgunCooldownEndTimes = new HashMap<>();  // Game time when cooling finishes
+    private boolean railgunCharging = false;
 
     @Override
     public boolean assemble(Level level, BlockPos pos) throws AssemblyException {
@@ -146,31 +149,115 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     public void tick(Level level, PitchOrientedContraptionEntity entity) {
         super.tick(level, entity);
 
-        if (!level.isClientSide() && !coilgunCooldownEndTimes.isEmpty()) {
+        // Handle railgun charging
+        if (!level.isClientSide() && railgunCharging) {
             long currentTime = level.getGameTime();
-            List<BlockPos> toRemove = new ArrayList<>();
-            for (Map.Entry<BlockPos, Long> entry : coilgunCooldownEndTimes.entrySet()) {
-                BlockPos pos = entry.getKey();
-                long cooldownEndTime = entry.getValue();
+            boolean allCharged = true;
 
-                if (currentTime >= cooldownEndTime) {
-                    toRemove.add(pos);
-                    StructureBlockInfo info = this.blocks.get(pos);
-                    if (info != null && info.state().getBlock() instanceof CoilGunBlock) {
-                        // Clear the cooldown time from NBT
-                        CompoundTag nbt = info.nbt() != null ? info.nbt().copy() : new CompoundTag();
-                        nbt.remove("CooldownEndTime");
-
-                        StructureBlockInfo cooledInfo = new StructureBlockInfo(
-                            info.pos(),
-                            info.state().setValue(CoilGunBlock.OVERHEATED, false),
-                            nbt
-                        );
-                        entity.setBlock(pos, cooledInfo);
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof RailGunBlockEntity railgunBE) {
+                    if (!railgunBE.isFullyCharged(currentTime)) {
+                        allCharged = false;
+                        break;
                     }
                 }
             }
-            toRemove.forEach(coilgunCooldownEndTimes::remove);
+
+            if (allCharged) {
+                railgunCharging = false;
+                for (BlockEntity be : this.presentBlockEntities.values()) {
+                    if (be instanceof RailGunBlockEntity railgunBE) {
+                        railgunBE.clearCharge();
+                        StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
+                        if (info != null) {
+                            StructureBlockInfo unchargingInfo = new StructureBlockInfo(
+                                info.pos(),
+                                info.state().setValue(RailGunBlock.CHARGING, false),
+                                info.nbt()
+                            );
+                            entity.setBlock(railgunBE.getBlockPos(), unchargingInfo);
+                        }
+                    }
+                }
+                // Actually fire the shot
+                if (level instanceof ServerLevel serverLevel) {
+                    actuallyFireRail(serverLevel, entity);
+                }
+            }
+        }
+
+        // Handle railgun cooldown
+        if (!level.isClientSide()) {
+            long currentTime = level.getGameTime();
+            boolean anyRailgunCooled = false;
+
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof RailGunBlockEntity railgunBE) {
+                    long cooldownEnd = railgunBE.getCooldownEndTime();
+                    if (cooldownEnd > 0 && currentTime >= cooldownEnd) {
+                        railgunBE.setCooldownEndTime(0);
+                        anyRailgunCooled = true;
+
+                        // Update blockstate
+                        StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
+                        if (info != null) {
+                            CompoundTag nbt = info.nbt() != null ? info.nbt().copy() : new CompoundTag();
+                            nbt.putLong("CooldownEndTime", 0);
+
+                            StructureBlockInfo cooledInfo = new StructureBlockInfo(
+                                info.pos(),
+                                info.state().setValue(RailGunBlock.OVERHEATED, false),
+                                nbt
+                            );
+                            entity.setBlock(railgunBE.getBlockPos(), cooledInfo);
+                        }
+                    }
+                }
+            }
+
+            if (anyRailgunCooled) {
+                Vec3 soundPos = entity.position();
+                level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
+                    SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.8f, 1.2f);
+            }
+        }
+
+        // Handle coilgun cooldown
+        if (!level.isClientSide()) {
+            long currentTime = level.getGameTime();
+            boolean anyCoilgunCooled = false;
+
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof CoilGunBlockEntity coilgunBE) {
+                    long cooldownEnd = coilgunBE.getCooldownEndTime();
+                    if (cooldownEnd > 0 && currentTime >= cooldownEnd) {
+                        coilgunBE.setCooldownEndTime(0);
+                        anyCoilgunCooled = true;
+
+                        coilgunCooldownEndTimes.remove(coilgunBE.getBlockPos());
+
+                        // Update blockstate
+                        StructureBlockInfo info = this.blocks.get(coilgunBE.getBlockPos());
+                        if (info != null) {
+                            CompoundTag nbt = info.nbt() != null ? info.nbt().copy() : new CompoundTag();
+                            nbt.putLong("CooldownEndTime", 0);
+
+                            StructureBlockInfo cooledInfo = new StructureBlockInfo(
+                                info.pos(),
+                                info.state().setValue(CoilGunBlock.OVERHEATED, false),
+                                nbt
+                            );
+                            entity.setBlock(coilgunBE.getBlockPos(), cooledInfo);
+                        }
+                    }
+                }
+            }
+
+            if (anyCoilgunCooled) {
+                Vec3 soundPos = entity.position();
+                level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
+                    SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.8f, 1.2f);
+            }
         }
     }
 
@@ -198,22 +285,55 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     }
 
     public void fireRail(ServerLevel level, PitchOrientedContraptionEntity entity) {
-        LOGGER.warn("BOOM");
         BlockPos endPos = this.startPos.relative(this.initialOrientation.getOpposite());
         if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
             return;
         if (this.isDropMortar()) return;
 
-        // Check if any railgun is overheated
         long currentTime = level.getGameTime();
 
         for (BlockEntity be : this.presentBlockEntities.values()) {
             if (be instanceof RailGunBlockEntity railgunBE && railgunBE.isOverheated(currentTime)) {
-                // Attempted to fire while overheated !
                 this.fail(railgunBE.getBlockPos(), level, entity, null, 10);
                 return;
             }
         }
+
+        // Check if already charging
+        if (railgunCharging) {
+            LOGGER.warn("[Railgun] Already charging, ignoring fire command");
+            return;
+        }
+
+        // Start charging sequence
+        LOGGER.warn("[Railgun] Starting charge sequence");
+        railgunCharging = true;
+        long chargeEndTime = currentTime + CHARGE_DURATION;
+
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            if (be instanceof RailGunBlockEntity railgunBE) {
+                railgunBE.setChargeEndTime(chargeEndTime);
+
+                // Update blockstate to show charging
+                StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
+                if (info != null) {
+                    StructureBlockInfo chargingInfo = new StructureBlockInfo(
+                        info.pos(),
+                        info.state().setValue(RailGunBlock.CHARGING, true),
+                        info.nbt()
+                    );
+                    entity.setBlock(railgunBE.getBlockPos(), chargingInfo);
+                }
+            }
+        }
+    }
+
+    private void actuallyFireRail(ServerLevel level, PitchOrientedContraptionEntity entity) {
+        LOGGER.warn("BOOM");
+        BlockPos endPos = this.startPos.relative(this.initialOrientation.getOpposite());
+        if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
+            return;
+        if (this.isDropMortar()) return;
 
         ControlPitchContraption controller = entity.getController();
 
@@ -429,6 +549,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         // Mark all railgun blocks as overheated
         long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+
+        // Play overheat sound
+        Vec3 soundPos = entity.position();
+        level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
+            SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
 
         for (BlockEntity be : this.presentBlockEntities.values()) {
             if (be instanceof RailGunBlockEntity railgunBE) {
@@ -681,6 +806,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
             // Mark all coilgun blocks as overheated
             long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+
+            // Play overheat sound
+            Vec3 soundPos = entity.position();
+            level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
+                SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
 
             for (BlockEntity be : this.presentBlockEntities.values()) {
                 if (be instanceof CoilGunBlockEntity coilgunBE) {
