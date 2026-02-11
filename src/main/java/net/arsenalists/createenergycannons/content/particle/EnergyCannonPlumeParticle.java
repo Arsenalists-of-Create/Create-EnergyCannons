@@ -49,7 +49,7 @@ public class EnergyCannonPlumeParticle extends NoRenderParticle {
 
             int smokeLifetime = 30 + this.random.nextInt(10) + Mth.ceil(10 * progress) + (int) Math.ceil(this.power * this.power) / 2;
 
-            this.level.addParticle(new EnergyMuzzleParticleData((int) this.power, this.cannonType),
+            this.level.addParticle(new EnergyMuzzleParticleData((int) this.power, this.cannonType, smallScale),
                 true, this.x, this.y, this.z, vel.x, vel.y, vel.z);
         }
 

@@ -8,7 +8,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 
-public record EnergyMuzzleParticleData(int power, int cannonType) implements ParticleOptions {
+public record EnergyMuzzleParticleData(int power, int cannonType, float size) implements ParticleOptions {
 
     public static final int TYPE_GREEN = 0;
     public static final int TYPE_RED = 1;
@@ -20,7 +20,8 @@ public record EnergyMuzzleParticleData(int power, int cannonType) implements Par
     public static final Codec<EnergyMuzzleParticleData> CODEC = RecordCodecBuilder.create(i ->
         i.group(
             Codec.INT.fieldOf("power").forGetter(EnergyMuzzleParticleData::power),
-            Codec.INT.fieldOf("cannonType").forGetter(EnergyMuzzleParticleData::cannonType)
+            Codec.INT.fieldOf("cannonType").forGetter(EnergyMuzzleParticleData::cannonType),
+            Codec.FLOAT.fieldOf("size").forGetter(EnergyMuzzleParticleData::size)
         ).apply(i, EnergyMuzzleParticleData::new)
     );
 
@@ -30,13 +31,13 @@ public record EnergyMuzzleParticleData(int power, int cannonType) implements Par
             @Override
             public EnergyMuzzleParticleData fromCommand(ParticleType<EnergyMuzzleParticleData> type,
                                                          StringReader reader) {
-                return new EnergyMuzzleParticleData(1, TYPE_RAIL);
+                return new EnergyMuzzleParticleData(1, TYPE_RAIL, 1.0f);
             }
 
             @Override
             public EnergyMuzzleParticleData fromNetwork(ParticleType<EnergyMuzzleParticleData> type,
                                                          FriendlyByteBuf buf) {
-                return new EnergyMuzzleParticleData(buf.readVarInt(), buf.readVarInt());
+                return new EnergyMuzzleParticleData(buf.readVarInt(), buf.readVarInt(), buf.readFloat());
             }
         };
 
@@ -49,10 +50,11 @@ public record EnergyMuzzleParticleData(int power, int cannonType) implements Par
     public void writeToNetwork(FriendlyByteBuf buf) {
         buf.writeVarInt(power);
         buf.writeVarInt(cannonType);
+        buf.writeFloat(size);
     }
 
     @Override
     public String writeToString() {
-        return "energy_muzzle " + power + " " + cannonType;
+        return "energy_muzzle " + power + " " + cannonType + " " + size;
     }
 }

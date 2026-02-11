@@ -63,19 +63,20 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
 
     protected EnergyMuzzleParticle(ClientLevel level, double x, double y, double z,
                                     double dx, double dy, double dz,
-                                    SpriteSet sprites, int power, int cannonType) {
+                                    SpriteSet sprites, int power, int cannonType, float size) {
         super(level, x, y, z, dx, dy, dz);
         this.sprites = sprites;
         this.power = power;
         this.cannonType = cannonType;
 
         this.lifetime = 40 + level.random.nextInt(20);
-        this.quadSize = 1.5f + level.random.nextFloat() * 0.5f;
-        this.gravity = -0.02f;
+        this.quadSize = size * (0.8f + level.random.nextFloat() * 0.4f);
+        this.gravity = -0.05f;
+        this.friction = 1.0f;
         this.rCol = 1.0f;
         this.gCol = 1.0f;
         this.bCol = 1.0f;
-        this.alpha = 0.8f;
+        this.alpha = 1.0f;
 
         this.xd = dx * 0.3 + (level.random.nextFloat() - 0.5) * 0.05;
         this.yd = dy * 0.3 + level.random.nextFloat() * 0.02;
@@ -87,18 +88,46 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         super.tick();
-        float lifeRatio = (float) this.age / (float) this.lifetime;
-        this.alpha = Mth.lerp(lifeRatio, 0.8f, 0.0f);
-        this.quadSize *= 1.01f;
-        this.xd *= 0.95;
-        this.yd *= 0.95;
-        this.zd *= 0.95;
+        float progress = Mth.clamp((float) this.age / (float) this.lifetime, 0, 1);
+
+        // CBC-style quadratic alpha fade
+        this.alpha = this.lifetime == 0 || this.age >= this.lifetime ? 0 : 1.0f - progress * progress;
+
         this.setSpriteFromAge(sprites);
+    }
+
+    @Override
+    public void setSpriteFromAge(SpriteSet sprite) {
+        float progress = Mth.clamp((float) this.age / (float) this.lifetime * 1.5f, 0, 1);
+        float inv = 1 - progress;
+        float spriteProgress = 1 - inv * inv * inv * inv;
+        if (!this.removed)
+            this.setSprite(sprite.get((int) Math.floor(spriteProgress * this.lifetime), this.lifetime));
+    }
+
+    @Override
+    public float getQuadSize(float partialTicks) {
+        float f = (this.age + partialTicks) / (float) this.lifetime * 32.0F;
+        return this.quadSize * Mth.lerp(f, 0.9f, 1.0f);
     }
 
     @Override
     public ParticleRenderType getRenderType() {
         return cannonType == 0 ? RAIL_RENDER_TYPE : COIL_RENDER_TYPE;
+    }
+
+    @Override
+    public int getLightColor(float partialTick) {
+        float progress = 1 - Mth.clamp((this.age + partialTick) / (float) this.lifetime * 1.5f, 0, 1);
+        float brightness = progress * progress * progress * progress;
+
+        int i = super.getLightColor(partialTick);
+        int j = i & 0xFF;
+        int k = i >> 16 & 0xFF;
+        j += (int)(brightness * 240f);
+        if (j > 240)
+            j = 240;
+        return j | k << 16;
     }
 
     @Override
@@ -175,7 +204,7 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
         public Particle createParticle(EnergyMuzzleParticleData data, ClientLevel level,
                                        double x, double y, double z,
                                        double dx, double dy, double dz) {
-            return new EnergyMuzzleParticle(level, x, y, z, dx, dy, dz, sprites, data.power(), data.cannonType());
+            return new EnergyMuzzleParticle(level, x, y, z, dx, dy, dz, sprites, data.power(), data.cannonType(), data.size());
         }
     }
 }

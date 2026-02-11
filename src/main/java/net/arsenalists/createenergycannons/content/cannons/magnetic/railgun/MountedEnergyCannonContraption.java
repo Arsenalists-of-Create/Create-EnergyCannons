@@ -569,11 +569,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         Vec3 plumePos = spawnPos.subtract(vec);
         propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
-        float smokeScale = Math.max(2, railCount * 2.0f);  // Increased from 0.5f for more visible spread
+        float smokeScale = Math.max(1.0f, railCount * 0.5f);  // Middle ground between CBC typical values
 
         EnergyCannonPlumeParticleData mainPlumeParticle = new EnergyCannonPlumeParticleData(smokeScale, railCount, EnergyMuzzleParticleData.TYPE_GREEN, 10);
 
-        float sideScale = smokeScale * 0.3f;
+        float sideScale = smokeScale * 0.5f;
         int sidePower = Math.max(1, railCount / 2);
         EnergyCannonPlumeParticleData sidePlumeParticle = new EnergyCannonPlumeParticleData(sideScale, sidePower, EnergyMuzzleParticleData.TYPE_RED, 8);
 
@@ -858,7 +858,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             Vec3 plumePos = spawnPos.subtract(vec);
             propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
-            float smokeScale = Math.max(2, coilCount * 2.0f);
+            // Use CBC-style scaling
+            float smokeScale = Math.max(1.0f, coilCount * 0.5f);  // Middle ground between CBC typical values
             EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_RED, 10);
             CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
                     BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.COILGUN_FIRE.get()), SoundSource.BLOCKS,
