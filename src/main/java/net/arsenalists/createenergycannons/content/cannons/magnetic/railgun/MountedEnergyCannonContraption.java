@@ -8,6 +8,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
+import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticleData;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECSoundEvents;
@@ -71,9 +72,14 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
     BigCannonMaterial cannonMaterial;
     int railCount;
+    private BlockPos mountPos = null;
     private static final Logger LOGGER = LogUtils.getLogger();
     public int getMaxSafeCharges() {
         return 0;
+    }
+
+    private BlockPos getMountPos() {
+        return mountPos;
     }
 
     /**
@@ -86,7 +92,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     public float getMuzzleVelocity(ServerLevel level) {
         if (level == null || this.anchor == null) return 0f;
 
-        BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
+        BlockEntity energyBE = level.getBlockEntity(this.getMountPos());
         if (energyBE == null) return 0f;
 
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(null);
@@ -139,6 +145,20 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         if (!ok) {
             LOGGER.error("[EnergyContraption] Assembly failed in parent class!");
             return false;
+        }
+
+        if (this.anchor != null) {
+            BlockPos checkAbove = this.anchor.above(2);
+            BlockPos checkBelow = this.anchor.below(2);
+
+            if (CECBlocks.ENERGY_CANNON_MOUNT.has(level.getBlockState(checkAbove))) {
+                mountPos = checkAbove;
+            } else if (CECBlocks.ENERGY_CANNON_MOUNT.has(level.getBlockState(checkBelow))) {
+                mountPos = checkBelow;
+            } else {
+                LOGGER.error("[EnergyContraption] NO MOUNT FOUND!");
+            }
+        } else {
         }
 
         LOGGER.warn("[EnergyContraption] blocks size: {}", this.blocks.size());
@@ -304,16 +324,20 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
     @Override
     public void fireShot(ServerLevel level, PitchOrientedContraptionEntity entity) {
+        LOGGER.warn("[EnergyContraption] fireShot called! mode={}", this.mode);
         if (this.mode == Mode.NORMAL) {
+            LOGGER.warn("[EnergyContraption] Mode is NORMAL, calling super");
             super.fireShot(level, entity);
             return;
         }
 
         if (this.mode == Mode.COIL) {
+            LOGGER.warn("[EnergyContraption] Mode is COIL, calling fireCoil");
             fireCoil(level, entity);
             return;
         }
 
+        LOGGER.warn("[EnergyContraption] Mode is RAIL, calling fireRail");
         fireRail(level, entity);
     }
     @Override
@@ -399,8 +423,14 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 railCount++;
             }
         }
-        BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
-        if (energyBE == null) return;
+        BlockPos pos = this.getMountPos();
+        LOGGER.warn("[Railgun] Looking for energy at mount pos: {}", pos);
+        BlockEntity energyBE = level.getBlockEntity(pos);
+        if (energyBE == null) {
+            LOGGER.error("[Railgun] No block entity found at mount position!");
+            return;
+        }
+        LOGGER.warn("[Railgun] Found block entity: {}", energyBE.getClass().getSimpleName());
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
         int energyUsed = energy.extractEnergy(railCount * 20000, false);
         if (energyBE instanceof SmartBlockEntity smartBE)
@@ -613,7 +643,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         // Mark all railgun blocks as overheated
         long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
-        BlockEntity mountBE = level.getBlockEntity(this.anchor.below(2));
+        BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
         if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
             energyMountBE.setCannonCooldown(cooldownEndTime);
         }
@@ -686,7 +716,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     coilCount++;
                 }
             }
-            BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
+            BlockEntity energyBE = level.getBlockEntity(this.getMountPos());
             if (energyBE == null) return;
 
             IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
@@ -876,7 +906,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             // Mark all coilgun blocks as overheated
             long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
-            BlockEntity mountBE = level.getBlockEntity(this.anchor.below(2));
+            BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
             if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
                 energyMountBE.setCannonCooldown(cooldownEndTime);
             }
@@ -992,6 +1022,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     public void readNBT(Level world, CompoundTag nbt, boolean spawnData) {
         super.readNBT(world, nbt, spawnData);
 
+        if (nbt.contains("MountPos")) {
+            mountPos = NbtUtils.readBlockPos(nbt.getCompound("MountPos"));
+        }
+
         // Read cooldown end times
         coilgunCooldownEndTimes.clear();
         if (nbt.contains("CooldownEndTimes")) {
@@ -1010,6 +1044,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     @Override
     public CompoundTag writeNBT(boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(spawnPacket);
+
+        if (mountPos != null) {
+            nbt.put("MountPos", NbtUtils.writeBlockPos(mountPos));
+        }
 
         // Write cooldown end times
         if (!coilgunCooldownEndTimes.isEmpty()) {

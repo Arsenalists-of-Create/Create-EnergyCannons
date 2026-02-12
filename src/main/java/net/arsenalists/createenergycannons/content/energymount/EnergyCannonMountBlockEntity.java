@@ -36,6 +36,7 @@ import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlock;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
+import rbasamoyai.createbigcannons.cannons.CannonContraptionProviderBlock;
 
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
 
         Direction vertical = this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
 
-        BlockPos assemblyPos = this.worldPosition.relative(vertical, 2);
+        BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
         LOGGER.warn("[EnergyMount] Assembly position: {}", assemblyPos);
         LOGGER.warn("[EnergyMount] Block at assembly pos: {}", this.getLevel().getBlockState(assemblyPos));
 
@@ -93,9 +94,14 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
             throw cannonBlockOutsideOfWorld(assemblyPos);
         }
 
-        // CHOOSE THE CONTRAPTION
+        BlockState blockAtAssembly = this.getLevel().getBlockState(assemblyPos);
+        if (blockAtAssembly.isAir()) {
+            LOGGER.warn("[EnergyMount] No cannon block found at assembly position");
+            return;
+        }
+
         AbstractMountedCannonContraption mountedCannon;
-        if (this.getLevel().getBlockState(assemblyPos).getBlock() instanceof LaserBlock) {
+        if (blockAtAssembly.getBlock() instanceof LaserBlock) {
             mountedCannon = new MountedLaserCannonContraption();
             LOGGER.warn("[EnergyMount] Created MountedLaserCannonContraption");
         } else {
