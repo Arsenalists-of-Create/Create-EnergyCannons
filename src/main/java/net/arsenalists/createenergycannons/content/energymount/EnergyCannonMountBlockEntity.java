@@ -84,7 +84,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
 
         Direction vertical = this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
 
-        BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
+        BlockPos assemblyPos = this.worldPosition.relative(vertical, 2);
         LOGGER.warn("[EnergyMount] Assembly position: {}", assemblyPos);
         LOGGER.warn("[EnergyMount] Block at assembly pos: {}", this.getLevel().getBlockState(assemblyPos));
 
