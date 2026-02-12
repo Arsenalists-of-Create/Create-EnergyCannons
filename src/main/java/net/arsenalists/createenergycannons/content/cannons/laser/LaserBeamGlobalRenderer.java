@@ -49,7 +49,7 @@ public class LaserBeamGlobalRenderer {
 
     public static void registerMountedBeam(int entityId, Vec3 origin, Vec3 direction,
                                            int range, long gameTick) {
-        if (range <= 0) {
+        if (range <= 0 || origin == null || direction == null || origin.equals(Vec3.ZERO)) {
             ACTIVE_BEAMS.remove(entityId);
             return;
         }

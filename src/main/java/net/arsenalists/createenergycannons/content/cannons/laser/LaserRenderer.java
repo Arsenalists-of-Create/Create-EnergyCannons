@@ -29,10 +29,6 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
     protected void renderSafe(LaserBlockEntity pBlockEntity, float partialTicks, PoseStack pPoseStack, MultiBufferSource buffer, int light, int overlay) {
         super.renderSafe(pBlockEntity, partialTicks, pPoseStack, buffer, light, overlay);
 
-        if (pBlockEntity.getFireRate() == 0 || pBlockEntity.getRange() <= 0)
-            return;
-
-        LaserBeamGlobalRenderer.registerWorldBeam(pBlockEntity);
     }
 
 
