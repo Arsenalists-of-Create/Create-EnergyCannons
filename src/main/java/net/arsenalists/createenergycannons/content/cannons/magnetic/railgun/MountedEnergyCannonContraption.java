@@ -16,6 +16,7 @@ import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
@@ -888,9 +889,25 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             Vec3 plumePos = spawnPos.subtract(vec);
             propelCtx.smokeScale = Math.max(1, propelCtx.smokeScale);
 
-            // Use CBC-style scaling
-            float smokeScale = Math.max(1.0f, coilCount * 0.5f);  // Middle ground between CBC typical values
-            EnergyCannonPlumeParticleData plumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_RED, 10);
+            float smokeScale = Math.max(1.0f, coilCount * 0.5f);
+
+            EnergyCannonPlumeParticleData mainPlumeParticle = new EnergyCannonPlumeParticleData(smokeScale, coilCount, EnergyMuzzleParticleData.TYPE_GREEN, 10);
+
+            float sideScale = smokeScale * 0.5f;
+            int sidePower = Math.max(1, coilCount / 2);
+            EnergyCannonPlumeParticleData sidePlumeParticle = new EnergyCannonPlumeParticleData(sideScale, sidePower, EnergyMuzzleParticleData.TYPE_RED, 8);
+
+            Vec3 up = Math.abs(vec.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
+            Vec3 right = vec.cross(up).normalize();
+            Vec3 actualUp = right.cross(vec).normalize();
+
+            double angle30 = Math.toRadians(30);
+            double cos30 = Math.cos(angle30);
+            double sin30 = Math.sin(angle30);
+
+            Vec3 upperEjection = vec.scale(cos30).add(actualUp.scale(sin30)).normalize();
+            Vec3 lowerEjection = vec.scale(cos30).add(actualUp.scale(-sin30)).normalize();
+
             CannonBlastWaveEffectParticleData blastEffect = new CannonBlastWaveEffectParticleData(shakeDistance,
                     BuiltInRegistries.SOUND_EVENT.wrapAsHolder(CECSoundEvents.COILGUN_FIRE.get()), SoundSource.BLOCKS,
                     volume, pitch, 2, propelCtx.chargesUsed);
@@ -898,9 +915,28 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
             double blastDistSqr = volume * volume * 256 * 1.21;
             for (ServerPlayer player : level.players()) {
-                level.sendParticles(player, plumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, vec.x, vec.y, vec.z, 1.0f);
+                level.sendParticles(player, mainPlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, vec.x, vec.y, vec.z, 1.0f);
+
+                level.sendParticles(player, sidePlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, upperEjection.x, upperEjection.y, upperEjection.z, 1.0f);
+                level.sendParticles(player, sidePlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, lowerEjection.x, lowerEjection.y, lowerEjection.z, 1.0f);
+
+                // Spawn sonic boom particle at each coilgun block
+                for (BlockEntity be : this.presentBlockEntities.values()) {
+                    if (be.getBlockState().getBlock() instanceof CoilGunBlock) {
+                        Vec3 coilPos = entity.toGlobalVector(Vec3.atCenterOf(be.getBlockPos()), 0);
+                        level.sendParticles(player, ParticleTypes.SONIC_BOOM, true,
+                            coilPos.x, coilPos.y, coilPos.z, 0,
+                            vec.x, vec.y, vec.z, 1.0);
+                    }
+                }
+
                 if (player.distanceToSqr(plumePos.x, plumePos.y, plumePos.z) < blastDistSqr)
                     player.connection.send(blastWavePacket);
+            }
+
+            if (projectile != null && CBCConfigs.server().munitions.projectilesCanChunkload.get()) {
+                ChunkPos cpos1 = new ChunkPos(BlockPos.containing(projectile.position()));
+                RitchiesProjectileLib.queueForceLoad(level, cpos1.x, cpos1.z);
             }
 
             // Mark all coilgun blocks as overheated

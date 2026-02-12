@@ -7,6 +7,8 @@ import net.arsenalists.createenergycannons.content.cannons.laser.LaserBurnData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,6 +17,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.joml.Vector3f;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -66,8 +69,12 @@ public class LaserBurnRenderer {
             poseStack.translate(pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z);
 
             PoseStack.Pose pose = poseStack.last();
+            VertexConsumer baseConsumer = buffer.getBuffer(BURN_RENDER_TYPES[stage]);
+
+            VertexConsumer emissiveConsumer = new EmissiveVertexConsumer(baseConsumer);
+
             VertexConsumer consumer = new SheetedDecalTextureGenerator(
-                    buffer.getBuffer(BURN_RENDER_TYPES[stage]),
+                    emissiveConsumer,
                     pose.pose(),
                     pose.normal(),
                     1.0f
@@ -79,5 +86,60 @@ public class LaserBurnRenderer {
         }
 
         buffer.endBatch();
+    }
+
+     // Wraps a VertexConsumer to force full brightness
+    private static class EmissiveVertexConsumer implements VertexConsumer {
+        private final VertexConsumer wrapped;
+        private static final int FULL_LIGHT = 0x00F000F0;
+
+        public EmissiveVertexConsumer(VertexConsumer wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public VertexConsumer vertex(double x, double y, double z) {
+            return wrapped.vertex(x, y, z);
+        }
+
+        @Override
+        public VertexConsumer color(int r, int g, int b, int a) {
+            return wrapped.color(r, g, b, a);
+        }
+
+        @Override
+        public VertexConsumer uv(float u, float v) {
+            return wrapped.uv(u, v);
+        }
+
+        @Override
+        public VertexConsumer overlayCoords(int u, int v) {
+            return wrapped.overlayCoords(u, v);
+        }
+
+        @Override
+        public VertexConsumer uv2(int u, int v) {
+            return wrapped.uv2(FULL_LIGHT);
+        }
+
+        @Override
+        public VertexConsumer normal(float x, float y, float z) {
+            return wrapped.normal(x, y, z);
+        }
+
+        @Override
+        public void endVertex() {
+            wrapped.endVertex();
+        }
+
+        @Override
+        public void defaultColor(int r, int g, int b, int a) {
+            wrapped.defaultColor(r, g, b, a);
+        }
+
+        @Override
+        public void unsetDefaultColor() {
+            wrapped.unsetDefaultColor();
+        }
     }
 }
