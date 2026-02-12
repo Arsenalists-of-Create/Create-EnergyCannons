@@ -2,7 +2,7 @@
   "credit": "Made with Blockbench",
   "textures": {
     "0": "createenergycannons:block/coilgun_nethersteel_barrel",
-    "particle": "createenergycannons:block/coilgun_coilgun_nethersteel_barrel_barrel"
+    "particle": "createenergycannons:block/coilgun_nethersteel_barrel"
   },
   "elements": [
     {
