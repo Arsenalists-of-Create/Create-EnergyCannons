@@ -5,6 +5,7 @@ import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
@@ -554,6 +555,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         Vec3 vec = spawnPos.subtract(entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0)).normalize();
         spawnPos = spawnPos.subtract(vec.scale(2));
 
+        if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+            spawnPos = PhysicsHandler.getWorldVec(level, spawnPos);
+            vec = PhysicsHandler.getWorldVecDirectionTransform(level, entity.blockPosition(), vec);
+        }
+
         if (propelCtx.chargesUsed < minimumSpread) propelCtx.chargesUsed = minimumSpread;
 
         float recoilMagnitude = 0;
@@ -844,6 +850,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             Vec3 vec = spawnPos.subtract(entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0)).normalize();
             spawnPos = spawnPos.subtract(vec.scale(2));
 
+            if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+                spawnPos = PhysicsHandler.getWorldVec(level, spawnPos);
+                vec = PhysicsHandler.getWorldVecDirectionTransform(level, entity.blockPosition(), vec);
+            }
+
             if (propelCtx.chargesUsed < minimumSpread) propelCtx.chargesUsed = minimumSpread;
 
             float recoilMagnitude = 0;
@@ -924,6 +935,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 for (BlockEntity be : this.presentBlockEntities.values()) {
                     if (be.getBlockState().getBlock() instanceof CoilGunBlock) {
                         Vec3 coilPos = entity.toGlobalVector(Vec3.atCenterOf(be.getBlockPos()), 0);
+                        if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+                            coilPos = PhysicsHandler.getWorldVec(level, coilPos);
+                        }
                         level.sendParticles(player, ParticleTypes.SONIC_BOOM, true,
                             coilPos.x, coilPos.y, coilPos.z, 0,
                             vec.x, vec.y, vec.z, 1.0);

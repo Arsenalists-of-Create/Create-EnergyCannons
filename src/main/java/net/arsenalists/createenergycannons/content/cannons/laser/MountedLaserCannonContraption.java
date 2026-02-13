@@ -5,6 +5,7 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
 import net.arsenalists.createenergycannons.network.LaserBurnS2CPacket;
 import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
@@ -70,22 +71,35 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         if (pitchOrientedContraptionEntity.getInitialOrientation().getAxis() == Direction.Axis.Z) {
             invert = -invert;
         }
-        Vec3 vecEnd = start.add(Vec3.directionFromRotation(invert * pitch, yaw).scale(range));
-        HitResult result = serverLevel.clip(new ClipContext(start, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
+
+        boolean onShip = PhysicsHandler.isBlockInShipyard(serverLevel, pitchOrientedContraptionEntity.blockPosition());
+
+        final Vec3 worldStart;
+        Vec3 direction = Vec3.directionFromRotation(invert * pitch, yaw);
+
+        if (onShip) {
+            worldStart = PhysicsHandler.getWorldVec(serverLevel, pitchOrientedContraptionEntity.blockPosition());
+            direction = PhysicsHandler.getWorldVecDirectionTransform(serverLevel, pitchOrientedContraptionEntity.blockPosition(), direction);
+        } else {
+            worldStart = start;
+        }
+
+        Vec3 vecEnd = worldStart.add(direction.scale(range));
+        HitResult result = serverLevel.clip(new ClipContext(worldStart, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
 
         // Muzzle glow at beam START
-        spawnGlareMuzzle(serverLevel, start);
+        spawnGlareMuzzle(serverLevel, worldStart);
 
         getLaser().ifPresent(laser -> {
-            laser.setRange((int) (start.distanceTo(result.getLocation())));
+            laser.setRange((int) (worldStart.distanceTo(result.getLocation())));
             BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
         });
 
-        AABB laserAABB = new AABB(start, result.getLocation()).inflate(1);
+        AABB laserAABB = new AABB(worldStart, result.getLocation()).inflate(1);
         Entity closestEntity = null;
         for (Entity livingEntity : serverLevel.getEntities(pitchOrientedContraptionEntity, laserAABB, entity -> entity instanceof LivingEntity)) {
             AABB entityAABB = livingEntity.getBoundingBox();
-            if (entityAABB.clip(start, result.getLocation()).isPresent()) {
+            if (entityAABB.clip(worldStart, result.getLocation()).isPresent()) {
                 if (closestEntity != null) {
                     livingEntity.distanceTo(pitchOrientedContraptionEntity);
                     closestEntity.distanceTo(pitchOrientedContraptionEntity);
@@ -97,7 +111,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         Vec3 endPoint;
 
         if (closestEntity != null) {
-            final int newRange = (int) start.distanceTo(closestEntity.position());
+            final int newRange = (int) worldStart.distanceTo(closestEntity.position());
             endPoint = closestEntity.position();
 
             getLaser().ifPresent(laser -> {
@@ -174,6 +188,11 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                     }
 
                     Vec3 direction = Vec3.directionFromRotation(invert * entity.pitch, entity.yaw);
+
+                    if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+                        origin = PhysicsHandler.getWorldVec(level, entity.blockPosition());
+                        direction = PhysicsHandler.getWorldVecDirectionTransform(level, entity.blockPosition(), direction);
+                    }
 
                     LaserBeamGlobalRenderer.registerMountedBeam(
                             entity.getId(),
