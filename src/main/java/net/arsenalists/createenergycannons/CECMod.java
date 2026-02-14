@@ -7,7 +7,9 @@ import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumePar
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticle;
 import net.arsenalists.createenergycannons.content.particle.LaserGlareParticle;
 import net.arsenalists.createenergycannons.network.PacketHandler;
+import net.arsenalists.createenergycannons.ponder.CECPonderPlugin;
 import net.arsenalists.createenergycannons.registry.*;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -17,6 +19,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
@@ -60,6 +63,14 @@ public class CECMod {
 
         public static ShaderInstance getEnergyMuzzleParticleShader() {
             return energyMuzzleParticleShader;
+        }
+
+        @SubscribeEvent
+        public static void onClientSetup(FMLClientSetupEvent event) {
+            event.enqueueWork(() -> {
+                // Register ponder plugin
+                PonderIndex.addPlugin(new CECPonderPlugin());
+            });
         }
 
         @SubscribeEvent
