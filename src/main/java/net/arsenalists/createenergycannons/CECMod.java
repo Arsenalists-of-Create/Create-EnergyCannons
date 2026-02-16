@@ -2,6 +2,7 @@ package net.arsenalists.createenergycannons;
 
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import net.arsenalists.createenergycannons.config.CECConfig;
 import net.arsenalists.createenergycannons.content.particle.CECVertexFormats;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticle;
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticle;
@@ -18,6 +19,7 @@ import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -36,6 +38,7 @@ public class CECMod {
     public CECMod() {
         getLogger().info("Initializing Create Energy Cannons!");
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModLoadingContext context = ModLoadingContext.get();
         REGISTRATE.registerEventListeners(modEventBus);
         CECItems.register();
         CECBlocks.register();
@@ -47,6 +50,7 @@ public class CECMod {
         CECPartials.register();
         CECParticles.register();
         CECSoundEvents.register();
+        CECConfig.register(context);
 
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
