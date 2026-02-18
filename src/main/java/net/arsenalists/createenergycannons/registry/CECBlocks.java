@@ -32,12 +32,24 @@ public class CECBlocks {
             .simpleItem()
             .register();
 
-    public static final BlockEntry<RailGunBlock> RAILGUN_BARREL = CECMod.REGISTRATE
-            .block("railgun_barrel", p -> RailGunBlock.mediumRail(p, CBCBigCannonMaterials.NETHERSTEEL))
+    public static final BlockEntry<RailGunBlock> NETHERSTEEL_RAILGUN_BARREL = CECMod.REGISTRATE
+            .block("nethersteel_railgun_barrel", p -> RailGunBlock.mediumRail(p, CBCBigCannonMaterials.NETHERSTEEL))
             .initialProperties(SharedProperties::softMetal)
-            .blockstate((c, p) -> p.directionalBlock(c.getEntry(), AssetLookup.standardModel(c, p)))
+            .blockstate(NonNullBiConsumer.noop())
             .properties(BlockBehaviour.Properties::noOcclusion)
             .onRegister(CreateRegistrate.connectedTextures(() -> new BuiltUpCannonCTBehavior(CBCSpriteShifts.NETHERSTEEL_CANNON_BARREL)))
+            .addLayer(() -> RenderType::cutout)
+            .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
+            .loot(CBCBuilderTransformers.nethersteelScrapLoot(10))
+            .item(BigCannonBlockItem::new).build()
+            .register();
+
+    public static final BlockEntry<RailGunBlock> STEEL_RAILGUN_BARREL = CECMod.REGISTRATE
+            .block("steel_railgun_barrel", p -> RailGunBlock.mediumRail(p, CBCBigCannonMaterials.STEEL))
+            .initialProperties(SharedProperties::softMetal)
+            .blockstate(NonNullBiConsumer.noop())
+            .properties(BlockBehaviour.Properties::noOcclusion)
+            .onRegister(CreateRegistrate.connectedTextures(() -> new BuiltUpCannonCTBehavior(CBCSpriteShifts.STEEL_CANNON_BARREL)))
             .addLayer(() -> RenderType::cutout)
             .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
             .loot(CBCBuilderTransformers.nethersteelScrapLoot(10))

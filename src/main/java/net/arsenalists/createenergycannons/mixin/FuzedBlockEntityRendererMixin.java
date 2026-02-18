@@ -27,6 +27,7 @@ public abstract class FuzedBlockEntityRendererMixin {
             BlockState state = blockEntity.getBlockState();
             Direction facing = state.getValue(BlockStateProperties.FACING);
             SuperByteBuffer sledRender = CachedBuffers.partialFacing(CECPartials.MAGNETIC_SLED, blockEntity.getBlockState(), facing);
+            sledRender.light(packedLight);
             sledRender.renderInto(posestack, buffers.getBuffer(RenderType.cutout()));
         }
     }

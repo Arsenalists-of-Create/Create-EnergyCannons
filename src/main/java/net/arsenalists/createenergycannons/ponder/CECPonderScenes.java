@@ -344,7 +344,7 @@ public class CECPonderScenes {
         // Switch back to railgun
         scene.world().replaceBlocks(
                 util.select().fromTo(3, 4, 2, 3, 4, 5),
-                CECBlocks.RAILGUN_BARREL.get().defaultBlockState()
+                CECBlocks.NETHERSTEEL_RAILGUN_BARREL.get().defaultBlockState()
                         .setValue(BlockStateProperties.FACING, Direction.SOUTH),
                 true);
         scene.idle(30);

@@ -7,7 +7,6 @@ import net.arsenalists.createenergycannons.content.cannons.laser.LaserBurnData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -31,7 +30,7 @@ public class LaserBurnRenderer {
         for (int i = 0; i < 10; i++) {
             ResourceLocation texture = new ResourceLocation("createenergycannons",
                     "textures/block/laser_burn/burn_stage_" + i + ".png");
-            BURN_RENDER_TYPES[i] = RenderType.crumbling(texture);
+            BURN_RENDER_TYPES[i] = RenderType.entityTranslucentCull(texture);
         }
     }
 
@@ -47,17 +46,25 @@ public class LaserBurnRenderer {
 
         PoseStack poseStack = event.getPoseStack();
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
-        MultiBufferSource.BufferSource buffer = mc.renderBuffers().crumblingBufferSource();
+        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
+        long currentTime = level.getGameTime();
 
-        Iterator<Map.Entry<net.minecraft.core.BlockPos, Integer>> iterator =
+        Iterator<Map.Entry<net.minecraft.core.BlockPos, LaserBurnData.BurnEntry>> iterator =
                 LaserBurnData.BURN_STAGES.entrySet().iterator();
 
         while (iterator.hasNext()) {
-            Map.Entry<net.minecraft.core.BlockPos, Integer> entry = iterator.next();
+            Map.Entry<net.minecraft.core.BlockPos, LaserBurnData.BurnEntry> entry = iterator.next();
             net.minecraft.core.BlockPos pos = entry.getKey();
-            int stage = entry.getValue();
+            LaserBurnData.BurnEntry burnEntry = entry.getValue();
+            int stage = burnEntry.stage;
 
             if (stage < 0 || stage > 9) continue;
+
+            float alpha = LaserBurnData.getFadeAlpha(pos, currentTime);
+            if (alpha <= 0) {
+                iterator.remove();
+                continue;
+            }
 
             BlockState state = level.getBlockState(pos);
             if (state.isAir()) {
@@ -71,7 +78,7 @@ public class LaserBurnRenderer {
             PoseStack.Pose pose = poseStack.last();
             VertexConsumer baseConsumer = buffer.getBuffer(BURN_RENDER_TYPES[stage]);
 
-            VertexConsumer emissiveConsumer = new EmissiveVertexConsumer(baseConsumer);
+            VertexConsumer emissiveConsumer = new EmissiveAlphaVertexConsumer(baseConsumer, alpha);
 
             VertexConsumer consumer = new SheetedDecalTextureGenerator(
                     emissiveConsumer,
@@ -88,13 +95,15 @@ public class LaserBurnRenderer {
         buffer.endBatch();
     }
 
-     // Wraps a VertexConsumer to force full brightness
-    private static class EmissiveVertexConsumer implements VertexConsumer {
+    // Wraps a VertexConsumer to force full brightness and support alpha
+    private static class EmissiveAlphaVertexConsumer implements VertexConsumer {
         private final VertexConsumer wrapped;
+        private final float alpha;
         private static final int FULL_LIGHT = 0x00F000F0;
 
-        public EmissiveVertexConsumer(VertexConsumer wrapped) {
+        public EmissiveAlphaVertexConsumer(VertexConsumer wrapped, float alpha) {
             this.wrapped = wrapped;
+            this.alpha = alpha;
         }
 
         @Override
@@ -104,7 +113,7 @@ public class LaserBurnRenderer {
 
         @Override
         public VertexConsumer color(int r, int g, int b, int a) {
-            return wrapped.color(r, g, b, a);
+            return wrapped.color(r, g, b, (int)(a * alpha));
         }
 
         @Override

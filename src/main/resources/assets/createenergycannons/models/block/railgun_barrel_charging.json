@@ -1,9 +1,9 @@
 {
   "credit": "Made with Blockbench",
   "textures": {
-    "1": "createenergycannons:block/railgun_barrel",
+    "1": "createenergycannons:block/nethersteel_railgun_barrel",
     "electricity": "createenergycannons:block/railgun_barrel_charging",
-    "particle": "createenergycannons:block/railgun_barrel"
+    "particle": "createenergycannons:block/nethersteel_railgun_barrel"
   },
   "elements": [
     {

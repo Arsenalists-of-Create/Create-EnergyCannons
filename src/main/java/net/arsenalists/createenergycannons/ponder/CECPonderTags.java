@@ -20,7 +20,8 @@ public class CECPonderTags {
         helper.addToTag(ENERGY_CANNONS)
                 .add(CECBlocks.ENERGY_CANNON_MOUNT.getId())
                 .add(CECBlocks.LASER.getId())
-                .add(CECBlocks.RAILGUN_BARREL.getId())
+                .add(CECBlocks.NETHERSTEEL_RAILGUN_BARREL.getId())
+                .add(CECBlocks.STEEL_RAILGUN_BARREL.getId())
                 .add(CECBlocks.STEEL_COILGUN_BARREL.getId())
                 .add(CECBlocks.NETHERSTEEL_COILGUN_BARREL.getId());
     }

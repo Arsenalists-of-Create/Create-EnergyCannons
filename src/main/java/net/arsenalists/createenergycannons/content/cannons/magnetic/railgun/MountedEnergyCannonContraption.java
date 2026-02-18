@@ -285,6 +285,27 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
         }
 
+        if (level.isClientSide() && level.getGameTime() % 4 == 0) {
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                boolean overheated = false;
+                if (be instanceof RailGunBlockEntity railgunBE) {
+                    overheated = railgunBE.getCooldownEndTime() > 0 && level.getGameTime() < railgunBE.getCooldownEndTime();
+                } else if (be instanceof CoilGunBlockEntity coilgunBE) {
+                    overheated = coilgunBE.getCooldownEndTime() > 0 && level.getGameTime() < coilgunBE.getCooldownEndTime();
+                }
+                if (overheated) {
+                    Vec3 barrelPos = entity.toGlobalVector(Vec3.atCenterOf(be.getBlockPos()), 0);
+                    if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+                        barrelPos = PhysicsHandler.getWorldVec(level, barrelPos);
+                    }
+                    double ox = (level.random.nextDouble() - 0.5) * 0.6;
+                    double oz = (level.random.nextDouble() - 0.5) * 0.6;
+                    level.addParticle(net.minecraft.core.particles.ParticleTypes.POOF,
+                        barrelPos.x + ox, barrelPos.y + 0.6, barrelPos.z + oz, 0, 0.04, 0);
+                }
+            }
+        }
+
         // Handle coilgun cooldown
         if (!level.isClientSide()) {
             long currentTime = level.getGameTime();
@@ -359,17 +380,17 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         long currentTime = level.getGameTime();
 
+        // Check if already charging
+        if (railgunCharging) {
+            LOGGER.warn("[Railgun] Already charging, ignoring fire command");
+            return;
+        }
+
         for (BlockEntity be : this.presentBlockEntities.values()) {
             if (be instanceof RailGunBlockEntity railgunBE && railgunBE.isOverheated(currentTime)) {
                 this.fail(railgunBE.getBlockPos(), level, entity, null, 10);
                 return;
             }
-        }
-
-        // Check if already charging
-        if (railgunCharging) {
-            LOGGER.warn("[Railgun] Already charging, ignoring fire command");
-            return;
         }
 
         // Start charging sequence
@@ -638,6 +659,18 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
             level.sendParticles(player, sidePlumeParticle, true, plumePos.x, plumePos.y, plumePos.z, 0, lowerEjection.x, lowerEjection.y, lowerEjection.z, 1.0f);
 
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof RailGunBlockEntity) {
+                    Vec3 railPos = entity.toGlobalVector(Vec3.atCenterOf(be.getBlockPos()), 0);
+                    if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+                        railPos = PhysicsHandler.getWorldVec(level, railPos);
+                    }
+                    level.sendParticles(player, ParticleTypes.SONIC_BOOM, true,
+                        railPos.x, railPos.y, railPos.z, 0,
+                        vec.x, vec.y, vec.z, 1.0);
+                }
+            }
+
             if (player.distanceToSqr(plumePos.x, plumePos.y, plumePos.z) < blastDistSqr)
                 player.connection.send(blastWavePacket);
         }
@@ -647,32 +680,34 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             RitchiesProjectileLib.queueForceLoad(level, cpos1.x, cpos1.z);
         }
 
-        // Mark all railgun blocks as overheated
-        long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
+        // Only overheat if a shell was actually launched
+        if (projectile != null) {
+            long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
-        BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
-        if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
-            energyMountBE.setCannonCooldown(cooldownEndTime);
-        }
+            BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
+            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
+                energyMountBE.setCannonCooldown(cooldownEndTime);
+            }
 
-        // Play overheat sound
-        Vec3 soundPos = entity.position();
-        level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
-            SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
+            // Play overheat sound
+            Vec3 soundPos = entity.position();
+            level.playSound(null, soundPos.x, soundPos.y, soundPos.z,
+                SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
 
-        for (BlockEntity be : this.presentBlockEntities.values()) {
-            if (be instanceof RailGunBlockEntity railgunBE) {
-                railgunBE.setCooldownEndTime(cooldownEndTime);
+            for (BlockEntity be : this.presentBlockEntities.values()) {
+                if (be instanceof RailGunBlockEntity railgunBE) {
+                    railgunBE.setCooldownEndTime(cooldownEndTime);
 
-                // Update blockstate in contraption to show overheated
-                StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
-                if (info != null) {
-                    StructureBlockInfo overheatedInfo = new StructureBlockInfo(
-                        info.pos(),
-                        info.state().setValue(RailGunBlock.OVERHEATED, true),
-                        info.nbt()
-                    );
-                    entity.setBlock(railgunBE.getBlockPos(), overheatedInfo);
+                    // Update blockstate in contraption to show overheated
+                    StructureBlockInfo info = this.blocks.get(railgunBE.getBlockPos());
+                    if (info != null) {
+                        StructureBlockInfo overheatedInfo = new StructureBlockInfo(
+                            info.pos(),
+                            info.state().setValue(RailGunBlock.OVERHEATED, true),
+                            info.nbt()
+                        );
+                        entity.setBlock(railgunBE.getBlockPos(), overheatedInfo);
+                    }
                 }
             }
         }

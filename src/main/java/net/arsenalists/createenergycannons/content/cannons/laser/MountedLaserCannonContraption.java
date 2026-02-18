@@ -13,8 +13,11 @@ import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
@@ -22,6 +25,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -120,30 +125,48 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
             });
             closestEntity.hurt(serverLevel.damageSources().generic(), 1);
             closestEntity.setSecondsOnFire(2);
+            // Burn sound when hitting entities
+            serverLevel.playSound(null, closestEntity.getX(), closestEntity.getY(), closestEntity.getZ(),
+                SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.4f,
+                1.8f + serverLevel.random.nextFloat() * 0.4f);
         } else {
             if (result.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHitResult = (BlockHitResult) result;
                 BlockPos blockPos = blockHitResult.getBlockPos();
                 BlockState blockState = serverLevel.getBlockState(blockPos);
+                FluidState fluidState = serverLevel.getFluidState(blockPos);
 
                 endPoint = result.getLocation();
 
-                breakProgress.putIfAbsent(blockPos, 0F);
-                float currentProgress = breakProgress.get(blockPos);
-                float progressIncrement = 1 / blockState.getDestroySpeed(serverLevel, blockPos);
-                breakProgress.put(blockPos, currentProgress + progressIncrement);
-
-                float progress = breakProgress.get(blockPos);
-                int stage = Math.min((int) progress, 9);
-
-                if (progress >= 10) {
-                    serverLevel.destroyBlock(blockPos, false);
-                    breakProgress.remove(blockPos);
-                    PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
-                            serverLevel, blockPos);
+                if (!fluidState.isEmpty()) {
+                    serverLevel.playSound(null, endPoint.x, endPoint.y, endPoint.z,
+                        SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.4f,
+                        1.5f + serverLevel.random.nextFloat() * 0.5f);
+                    for (int i = 0; i < 3; i++) {
+                        double xVel = (serverLevel.random.nextDouble() - 0.5) * 0.1;
+                        double yVel = 0.08 + serverLevel.random.nextDouble() * 0.05;
+                        double zVel = (serverLevel.random.nextDouble() - 0.5) * 0.1;
+                        serverLevel.sendParticles(ParticleTypes.CLOUD,
+                            endPoint.x, endPoint.y, endPoint.z, 0, xVel, yVel, zVel, 1.0);
+                    }
                 } else {
-                    PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
-                            serverLevel, blockPos);
+                    breakProgress.putIfAbsent(blockPos, 0F);
+                    float currentProgress = breakProgress.get(blockPos);
+                    float progressIncrement = 1 / blockState.getDestroySpeed(serverLevel, blockPos);
+                    breakProgress.put(blockPos, currentProgress + progressIncrement);
+
+                    float progress = breakProgress.get(blockPos);
+                    int stage = Math.min((int) progress, 9);
+
+                    if (progress >= 10) {
+                        serverLevel.destroyBlock(blockPos, false);
+                        breakProgress.remove(blockPos);
+                        PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
+                                serverLevel, blockPos);
+                    } else {
+                        PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
+                                serverLevel, blockPos);
+                    }
                 }
             } else {
                 endPoint = result.getLocation();

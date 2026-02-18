@@ -37,7 +37,7 @@ public class CECBlockEntity {
 
     public static final BlockEntityEntry<RailGunBlockEntity> RAILGUN = CECMod.REGISTRATE
             .blockEntity("railgun", RailGunBlockEntity::new)
-            .validBlocks(CECBlocks.RAILGUN_BARREL)
+            .validBlocks(CECBlocks.NETHERSTEEL_RAILGUN_BARREL, CECBlocks.STEEL_RAILGUN_BARREL)
             .register();
 
 

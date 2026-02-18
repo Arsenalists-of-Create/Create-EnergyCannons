@@ -1,0 +1,7 @@
+{
+  "parent": "createenergycannons:block/railgun_barrel",
+  "textures": {
+    "1": "createenergycannons:block/nethersteel_railgun_barrel",
+    "particle": "createenergycannons:block/nethersteel_railgun_barrel"
+  }
+}

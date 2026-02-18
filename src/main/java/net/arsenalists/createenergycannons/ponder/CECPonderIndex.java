@@ -23,7 +23,13 @@ public class CECPonderIndex {
                 .addStoryBoard("laser_cannon", CECPonderScenes::laserBasics, CECPonderTags.ENERGY_CANNONS);
 
         // Magnetic Cannons (Railgun & Coilgun combined)
-        HELPER.forComponents(CECBlocks.RAILGUN_BARREL)
+        HELPER.forComponents(CECBlocks.NETHERSTEEL_RAILGUN_BARREL)
+                .addStoryBoard("energy_cannons", CECPonderScenes::magneticCannonBasics, CECPonderTags.ENERGY_CANNONS)
+                .addStoryBoard("magnetic_sleds", CECPonderScenes::magneticSledAssembly, CECPonderTags.ENERGY_CANNONS)
+                .addStoryBoard("energy_cannons", CECPonderScenes::railgunVsCoilgun, CECPonderTags.ENERGY_CANNONS);
+
+        // Railgun - Steel (same scenes)
+        HELPER.forComponents(CECBlocks.STEEL_RAILGUN_BARREL)
                 .addStoryBoard("energy_cannons", CECPonderScenes::magneticCannonBasics, CECPonderTags.ENERGY_CANNONS)
                 .addStoryBoard("magnetic_sleds", CECPonderScenes::magneticSledAssembly, CECPonderTags.ENERGY_CANNONS)
                 .addStoryBoard("energy_cannons", CECPonderScenes::railgunVsCoilgun, CECPonderTags.ENERGY_CANNONS);

@@ -77,4 +77,14 @@ public class RailGunBlock extends BigCannonTubeBlock {
     public int getLightEmission(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos) {
         return state.getValue(CHARGING) ? 10 : 0;
     }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(OVERHEATED)) {
+            double x = pos.getX() + 0.3 + random.nextDouble() * 0.4;
+            double y = pos.getY() + 1.0;
+            double z = pos.getZ() + 0.3 + random.nextDouble() * 0.4;
+            level.addParticle(net.minecraft.core.particles.ParticleTypes.POOF, x, y, z, 0, 0.05 + random.nextDouble() * 0.02, 0);
+        }
+    }
 }
