@@ -6,6 +6,8 @@ import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import joptsimple.internal.Strings;
+import net.arsenalists.createenergycannons.config.CECConfig;
+import net.arsenalists.createenergycannons.config.server.CECServerConfig;
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlock;
 import net.arsenalists.createenergycannons.content.cannons.laser.MountedLaserCannonContraption;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
@@ -42,8 +44,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
-
-    private final EnergyMountCap energyCap = new EnergyMountCap(500000, this::notifyUpdate);
+    private CECServerConfig config = CECConfig.server();
+    private int cooldownTime = config.mountCoolDownTime.get();
+    private final EnergyMountCap energyCap = new EnergyMountCap(config.mountEnergyCapacity.get(), this::notifyUpdate);
     private LazyOptional<IEnergyStorage> lazyEnergyHandler;
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -164,7 +167,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         long currentTime = this.level.getGameTime();
         if (cooldownEndTime > currentTime) {
             long remaining = cooldownEndTime - currentTime;
-            int cooldownProgress = (int) ((500 - remaining) * 50 / 500);
+            int cooldownProgress = (int) (( cooldownTime- remaining) * 50 /cooldownTime);
             tooltip.add(Component.literal("Cooldown ").append(cooldownBarComponent(cooldownProgress)));
         } else {
         }

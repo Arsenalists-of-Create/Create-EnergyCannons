@@ -6,6 +6,7 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
+import net.arsenalists.createenergycannons.config.CECConfig;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
@@ -55,7 +56,6 @@ import rbasamoyai.createbigcannons.cannons.big_cannons.material.BigCannonMateria
 import rbasamoyai.createbigcannons.config.CBCConfigs;
 import rbasamoyai.createbigcannons.effects.particles.explosions.CannonBlastWaveEffectParticleData;
 import rbasamoyai.createbigcannons.index.CBCEntityTypes;
-import rbasamoyai.createbigcannons.index.CBCSoundEvents;
 import rbasamoyai.createbigcannons.munitions.big_cannon.AbstractBigCannonProjectile;
 import rbasamoyai.createbigcannons.munitions.big_cannon.FuzedProjectileBlock;
 import rbasamoyai.createbigcannons.munitions.big_cannon.ProjectileBlock;
@@ -71,7 +71,8 @@ import java.util.function.Consumer;
 
 public class MountedEnergyCannonContraption extends MountedBigCannonContraption {
 
-
+    private int COILGUNCOST = CECConfig.server().coilgunCostPerBlock.get();
+    private int RAILGUNCOST = CECConfig.server().railgunCostPerBlock.get();
     BigCannonMaterial cannonMaterial;
     int railCount;
     private BlockPos mountPos = null;
@@ -113,12 +114,12 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         // Calculate based on mode (simulate without actually extracting energy)
         if (this.mode == Mode.RAIL && tempRailCount > 0) {
-            int availableEnergy = energy.extractEnergy(tempRailCount * 20000, true); // simulate=true
-            int effectiveRailCount = availableEnergy / 20000;
+            int availableEnergy = energy.extractEnergy(tempRailCount * RAILGUNCOST, true); // simulate=true
+            int effectiveRailCount = availableEnergy / RAILGUNCOST;
             return effectiveRailCount * 1.1f;
         } else if (this.mode == Mode.COIL && tempCoilCount > 0) {
-            int availableEnergy = energy.extractEnergy(tempCoilCount * 10000, true); // simulate=true
-            int effectiveCoilCount = availableEnergy / 10000;
+            int availableEnergy = energy.extractEnergy(tempCoilCount * COILGUNCOST, true); // simulate=true
+            int effectiveCoilCount = availableEnergy / COILGUNCOST ;
             return effectiveCoilCount;
         }
 
@@ -129,8 +130,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     enum Mode { NORMAL, COIL, RAIL }
     private Mode mode = Mode.NORMAL;
 
-    private static final int OVERHEAT_DURATION = 500; // 25 seconds (500 ticks)
-    private static final int CHARGE_DURATION = 20; // 1 second (20 ticks)
+    private static  int OVERHEAT_DURATION = CECConfig.server().mountCoolDownTime.get(); // 25 seconds (500 ticks)
+    private static  int CHARGE_DURATION = CECConfig.server().mountChargeTime.get(); // 1 second (20 ticks)
     private Map<BlockPos, Long> coilgunCooldownEndTimes = new HashMap<>();  // Game time when cooling finishes
     private boolean railgunCharging = false;
 
@@ -455,10 +456,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
         LOGGER.warn("[Railgun] Found block entity: {}", energyBE.getClass().getSimpleName());
         IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
-        int energyUsed = energy.extractEnergy(railCount * 20000, false);
+        int energyUsed = energy.extractEnergy(railCount * RAILGUNCOST, false);
         if (energyBE instanceof SmartBlockEntity smartBE)
             smartBE.notifyUpdate();
-        railCount = energyUsed / 20000;
+        railCount = energyUsed / RAILGUNCOST;
         while (this.presentBlockEntities.get(currentPos) instanceof IBigCannonBlockEntity cbe) {
             BigCannonBehavior behavior = cbe.cannonBehavior();
             StructureBlockInfo containedBlockInfo = behavior.block();
@@ -597,7 +598,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 this.fail(currentPos, level, entity, null, (int) propelCtx.chargesUsed);
                 return;
             }
-            float power = railCount * 1.1f; //todo config
+            float power = railCount * CECConfig.server().railgunPowerMultiplier.getF();
             projectile.setPos(spawnPos);
             projectile.setChargePower(power);
             projectile.shoot(vec.x, vec.y, vec.z, power, propelCtx.spread);
@@ -762,10 +763,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             if (energyBE == null) return;
 
             IEnergyStorage energy = energyBE.getCapability(ForgeCapabilities.ENERGY).orElse(EmptyEnergyStorage.INSTANCE);
-            int energyUsed = energy.extractEnergy(coilCount * 10000, false);
+            int energyUsed = energy.extractEnergy(coilCount * COILGUNCOST, false);
             if (energyBE instanceof SmartBlockEntity smartBE)
                 smartBE.notifyUpdate();
-            coilCount = energyUsed / 10000;
+            coilCount = energyUsed / COILGUNCOST;
             while (this.presentBlockEntities.get(currentPos) instanceof IBigCannonBlockEntity cbe) {
                 BigCannonBehavior behavior = cbe.cannonBehavior();
                 StructureBlockInfo containedBlockInfo = behavior.block();
