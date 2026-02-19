@@ -7,7 +7,6 @@ import net.arsenalists.createenergycannons.content.cannons.laser.LaserBurnData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,7 +15,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Vector3f;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -30,7 +28,7 @@ public class LaserBurnRenderer {
         for (int i = 0; i < 10; i++) {
             ResourceLocation texture = new ResourceLocation("createenergycannons",
                     "textures/block/laser_burn/burn_stage_" + i + ".png");
-            BURN_RENDER_TYPES[i] = RenderType.entityTranslucentCull(texture);
+            BURN_RENDER_TYPES[i] = CECRenderTypes.burnDecal(texture);
         }
     }
 

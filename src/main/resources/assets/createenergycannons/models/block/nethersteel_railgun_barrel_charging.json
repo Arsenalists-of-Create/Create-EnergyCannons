@@ -1,0 +1,8 @@
+{
+  "parent": "createenergycannons:block/railgun_barrel_charging",
+  "textures": {
+    "1": "createenergycannons:block/nethersteel_railgun_barrel",
+    "electricity": "createenergycannons:block/railgun_barrel_charging",
+    "particle": "createenergycannons:block/nethersteel_railgun_barrel"
+  }
+}

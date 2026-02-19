@@ -286,13 +286,15 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
         }
 
-        if (level.isClientSide() && level.getGameTime() % 4 == 0) {
+        // Server-side overheat smoke particles — same pattern as sonic boom
+        if (!level.isClientSide() && level instanceof ServerLevel serverLevel && level.getGameTime() % 4 == 0) {
+            long currentTime = level.getGameTime();
             for (BlockEntity be : this.presentBlockEntities.values()) {
                 boolean overheated = false;
                 if (be instanceof RailGunBlockEntity railgunBE) {
-                    overheated = railgunBE.getCooldownEndTime() > 0 && level.getGameTime() < railgunBE.getCooldownEndTime();
+                    overheated = railgunBE.isOverheated(currentTime);
                 } else if (be instanceof CoilGunBlockEntity coilgunBE) {
-                    overheated = coilgunBE.getCooldownEndTime() > 0 && level.getGameTime() < coilgunBE.getCooldownEndTime();
+                    overheated = coilgunBE.isOverheated(currentTime);
                 }
                 if (overheated) {
                     Vec3 barrelPos = entity.toGlobalVector(Vec3.atCenterOf(be.getBlockPos()), 0);
@@ -301,8 +303,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     }
                     double ox = (level.random.nextDouble() - 0.5) * 0.6;
                     double oz = (level.random.nextDouble() - 0.5) * 0.6;
-                    level.addParticle(net.minecraft.core.particles.ParticleTypes.POOF,
-                        barrelPos.x + ox, barrelPos.y + 0.6, barrelPos.z + oz, 0, 0.04, 0);
+                    serverLevel.sendParticles(ParticleTypes.POOF,
+                        barrelPos.x + ox, barrelPos.y + 0.6, barrelPos.z + oz,
+                        1, 0, 0.04, 0, 0);
                 }
             }
         }
@@ -467,12 +470,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             if (cannonInfo == null) break;
 
             Block block = containedBlockInfo.state().getBlock();
-            //todo better sled fail logic
+            // Shells require magnetic sleds
             if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
-                if (canFail) {
-                    LOGGER.warn("failed");
-                    return;
-                }
+                LOGGER.warn("failed: shell requires magnetic sled");
+                return;
             }
 
             if (containedBlockInfo.state().isAir()) {
@@ -497,6 +498,12 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 this.consumeBlock(behavior, currentPos);
                 airGapPresent = false;
             } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
+                // All projectiles require magnetic sleds
+                if (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled")) {
+                    LOGGER.warn("failed: projectile requires magnetic sled");
+                    return;
+                }
+
                 projectileBlocks.add(containedBlockInfo);
                 if (assemblyPos == null) assemblyPos = currentPos.immutable();
 
@@ -775,12 +782,10 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
                 Block block = containedBlockInfo.state().getBlock();
 
-                //todo better sled fail logic
+                // Shells require magnetic sleds
                 if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
-                    if (canFail) {
-                        //this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
-                        return;
-                    }
+                    LOGGER.warn("failed: shell requires magnetic sled");
+                    return;
                 }
 
                 if (containedBlockInfo.state().isAir()) {
@@ -805,6 +810,12 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     this.consumeBlock(behavior, currentPos);
                     airGapPresent = false;
                 } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
+                    // All projectiles require magnetic sleds
+                    if (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled")) {
+                        LOGGER.warn("failed: projectile requires magnetic sled");
+                        return;
+                    }
+
                     projectileBlocks.add(containedBlockInfo);
                     if (assemblyPos == null) assemblyPos = currentPos.immutable();
 

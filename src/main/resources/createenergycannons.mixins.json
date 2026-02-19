@@ -9,7 +9,7 @@
   ],
   "mixins": [
     "CannonMountBEAccessor",
-    "FuzedBlockEntityMixin"
+    "BigCannonProjectileBlockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

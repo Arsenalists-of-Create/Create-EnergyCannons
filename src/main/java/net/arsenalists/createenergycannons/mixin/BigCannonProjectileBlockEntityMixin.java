@@ -1,5 +1,6 @@
 package net.arsenalists.createenergycannons.mixin;
 
+import com.simibubi.create.foundation.blockEntity.SyncedBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.sled.IMagneticSled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,18 +12,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rbasamoyai.createbigcannons.munitions.big_cannon.BigCannonProjectileBlockEntity;
-import rbasamoyai.createbigcannons.munitions.big_cannon.FuzedBlockEntity;
 
 /**
- * Mixin class for the FuzedBlockEntity to implement the IMagneticSled interface.
- * This mixin adds functionality to handle the sled state of the Fuzed Shell for Magnetic-Related Energy Cannons.
+ * This covers every shell type (fused, solid shot, AP, etc.) without individual mixins.
  */
-@Mixin(FuzedBlockEntity.class)
-public abstract class FuzedBlockEntityMixin extends BigCannonProjectileBlockEntity implements IMagneticSled {
+@Mixin(BigCannonProjectileBlockEntity.class)
+public abstract class BigCannonProjectileBlockEntityMixin extends SyncedBlockEntity implements IMagneticSled {
+
     @Unique
     private boolean create_EnergyCannons$sled = false;
 
-    public FuzedBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public BigCannonProjectileBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 

@@ -1,8 +1,8 @@
 {
   "credit": "Made with Blockbench",
   "textures": {
-    "0": "createenergycannons:block/coilgun_barrel_overheated",
-    "particle": "createenergycannons:block/coilgun_barrel_overheated"
+    "0": "createenergycannons:block/coilgun_overheated",
+    "particle": "createenergycannons:block/coilgun_overheated"
   },
   "elements": [
     {
