@@ -13,6 +13,7 @@ import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
 import net.arsenalists.createenergycannons.registry.CECParticles;
+import net.arsenalists.createenergycannons.registry.CECTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -142,39 +143,53 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
                 if (!fluidState.isEmpty()) {
                     serverLevel.playSound(null, endPoint.x, endPoint.y, endPoint.z,
-                        SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.4f,
-                        1.5f + serverLevel.random.nextFloat() * 0.5f);
+                            SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.4f,
+                            1.5f + serverLevel.random.nextFloat() * 0.5f);
+
                     for (int i = 0; i < 3; i++) {
                         double xVel = (serverLevel.random.nextDouble() - 0.5) * 0.1;
                         double yVel = 0.08 + serverLevel.random.nextDouble() * 0.05;
                         double zVel = (serverLevel.random.nextDouble() - 0.5) * 0.1;
                         serverLevel.sendParticles(ParticleTypes.CLOUD,
-                            endPoint.x, endPoint.y, endPoint.z, 0, xVel, yVel, zVel, 1.0);
+                                endPoint.x, endPoint.y, endPoint.z, 0, xVel, yVel, zVel, 1.0);
                     }
+
+                } else if (blockState.is(CECTags.Blocks.LASERPROOF)) {
+                    breakProgress.remove(blockPos);
+                    PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
+                            serverLevel, blockPos);
+
                 } else {
                     breakProgress.putIfAbsent(blockPos, 0F);
                     float currentProgress = breakProgress.get(blockPos);
-                    float progressIncrement = 1 / blockState.getDestroySpeed(serverLevel, blockPos);
-                    breakProgress.put(blockPos, currentProgress + progressIncrement);
 
-                    float progress = breakProgress.get(blockPos);
-                    int stage = Math.min((int) progress, config.laserBlockBreakThreshold.get() -1);
-
-                    if (progress >= config.laserBlockBreakThreshold.get()) {
-                        serverLevel.destroyBlock(blockPos, false);
+                    float hardness = blockState.getDestroySpeed(serverLevel, blockPos);
+                    if (hardness <= 0) {
                         breakProgress.remove(blockPos);
                         PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
                                 serverLevel, blockPos);
                     } else {
-                        PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
-                                serverLevel, blockPos);
+                        float progressIncrement = 1.0f / hardness;
+                        breakProgress.put(blockPos, currentProgress + progressIncrement);
+
+                        float progress = breakProgress.get(blockPos);
+                        int stage = Math.min((int) progress, config.laserBlockBreakThreshold.get() - 1);
+
+                        if (progress >= config.laserBlockBreakThreshold.get()) {
+                            serverLevel.destroyBlock(blockPos, false);
+                            breakProgress.remove(blockPos);
+                            PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
+                                    serverLevel, blockPos);
+                        } else {
+                            PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, stage),
+                                    serverLevel, blockPos);
+                        }
                     }
                 }
             } else {
                 endPoint = result.getLocation();
             }
         }
-        // Impact glow at beam END
         spawnGlareImpact(serverLevel, endPoint);
     }
 

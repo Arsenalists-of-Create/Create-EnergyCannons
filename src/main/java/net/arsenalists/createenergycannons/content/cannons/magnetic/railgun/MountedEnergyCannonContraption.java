@@ -605,7 +605,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 this.fail(currentPos, level, entity, null, (int) propelCtx.chargesUsed);
                 return;
             }
-            float power = railCount * CECConfig.server().railgunPowerMultiplier.getF();
+            float power = railCount * 1.1f;
             projectile.setPos(spawnPos);
             projectile.setChargePower(power);
             projectile.shoot(vec.x, vec.y, vec.z, power, propelCtx.spread);
