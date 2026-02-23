@@ -29,3 +29,15 @@ run
 # Files from Forge MDK
 forge*changelog.txt
 /run-data/
+
+# Build artifacts / extracted jars
+fabric/libs/
+forge/libs/
+META-INF/
+
+# Leaked class files
+/net/
+/rbasamoyai/
+
+# Misc
+.architectury-transformer/
