@@ -1,0 +1,90 @@
+package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
+
+import net.arsenalists.createenergycannons.registry.CECBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
+import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
+import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlockEntity;
+import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonTubeBlock;
+import rbasamoyai.createbigcannons.cannons.big_cannons.material.BigCannonMaterial;
+import rbasamoyai.createbigcannons.crafting.casting.CannonCastShape;
+
+import java.util.function.Supplier;
+
+public class RailGunBlock extends BigCannonTubeBlock {
+
+    public static final BooleanProperty OVERHEATED = BooleanProperty.create("overheated");
+    public static final BooleanProperty CHARGING = BooleanProperty.create("charging");
+
+    public RailGunBlock(Properties properties, BigCannonMaterial material, Supplier<CannonCastShape> cannonShape, VoxelShape base) {
+        super(properties, material, cannonShape, base);
+        this.registerDefaultState(this.stateDefinition.any()
+            .setValue(OVERHEATED, false)
+            .setValue(CHARGING, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(OVERHEATED, CHARGING);
+    }
+
+    @Override
+    public @NotNull AbstractMountedCannonContraption getCannonContraption() {
+        return new MountedEnergyCannonContraption();
+    }
+
+    public static RailGunBlock mediumRail(Properties properties, BigCannonMaterial material) {
+        return new RailGunBlock(properties, material, () -> CannonCastShape.MEDIUM, Shapes.block());
+    }
+
+    @Override
+    public BlockEntityType<? extends BigCannonBlockEntity> getBlockEntityType() {
+        return CECBlockEntity.RAILGUN.get();
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        // Schedule tick for overheated blocks
+        if (state.getValue(OVERHEATED) && !level.isClientSide()) {
+            level.scheduleTick(pos, this, 20);
+        }
+    }
+
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(OVERHEATED) && level.getBlockEntity(pos) instanceof RailGunBlockEntity be) {
+            long currentTime = level.getGameTime();
+            if (!be.isOverheated(currentTime)) {
+                level.setBlock(pos, state.setValue(OVERHEATED, false), 3);
+            } else {
+                level.scheduleTick(pos, this, 20);
+            }
+        }
+    }
+
+    // Forge-only override; on Fabric light level is set via BlockBehaviour.Properties.lightLevel()
+    public int getLightEmission(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos) {
+        return state.getValue(CHARGING) ? 10 : 0;
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(OVERHEATED)) {
+            double x = pos.getX() + 0.3 + random.nextDouble() * 0.4;
+            double y = pos.getY() + 1.0;
+            double z = pos.getZ() + 0.3 + random.nextDouble() * 0.4;
+            level.addParticle(net.minecraft.core.particles.ParticleTypes.POOF, x, y, z, 0, 0.05 + random.nextDouble() * 0.02, 0);
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "createenergycannons:block/railgun_barrel_overheated",
+  "textures": {
+    "1": "createenergycannons:block/railgun_overheated",
+    "particle": "createenergycannons:block/railgun_overheated"
+  }
+}

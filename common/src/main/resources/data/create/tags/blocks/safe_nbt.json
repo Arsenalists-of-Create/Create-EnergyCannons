@@ -1,0 +1,10 @@
+{
+  "values": [
+    "createenergycannons:steel_coilgun_barrel",
+    "createenergycannons:nethersteel_coilgun_barrel",
+    "createenergycannons:nethersteel_railgun_barrel",
+    "createenergycannons:steel_railgun_barrel",
+    "createenergycannons:laser",
+    "createenergycannons:energy_cannon_mount"
+  ]
+}

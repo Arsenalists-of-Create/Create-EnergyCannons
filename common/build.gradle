@@ -1,0 +1,55 @@
+architectury {
+    common rootProject.enabled_platforms.split(',')
+}
+
+// Compile-only stubs for Forge-native interfaces referenced by Create's class hierarchy.
+// These are excluded from the final jar; at runtime Forge provides the real implementations.
+sourceSets {
+    stubs {
+        java { srcDir 'src/stubs/java' }
+    }
+    main {
+        compileClasspath += sourceSets.stubs.output
+    }
+}
+compileJava.dependsOn compileStubsJava
+
+dependencies {
+    // We depend on Fabric Loader here to use the Fabric @Environment annotations,
+    // which get remapped to the correct annotations on each platform.
+    // Do NOT use other classes from Fabric Loader.
+    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+
+    // Architectury API.
+    modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
+
+    // Create (compile only - platform implementations are in forge/fabric subprojects)
+    modCompileOnly("com.simibubi.create:create-${rootProject.minecraft_version}:${rootProject.create_version}:slim") { transitive = false }
+    modCompileOnly("net.createmod.ponder:Ponder-Forge-${rootProject.minecraft_version}:${rootProject.ponder_version}") { transitive = false }
+    modCompileOnly("dev.engine-room.flywheel:flywheel-forge-api-${rootProject.minecraft_version}:${rootProject.flywheel_version}") { transitive = false }
+    modCompileOnly("com.tterrag.registrate:Registrate:${rootProject.registrate_version}") { transitive = false }
+
+    // JSR-305 annotations (ParametersAreNonnullByDefault etc.) referenced by Create/CBC class files
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+
+    // Mixin Extras
+    compileOnly("io.github.llamalad7:mixinextras-common:${rootProject.mixinextras_version}")
+    annotationProcessor("io.github.llamalad7:mixinextras-common:${rootProject.mixinextras_version}")
+
+    // Create Big Cannons (compile only - platform implementations are in forge/fabric subprojects)
+    modCompileOnly("maven.modrinth:create-big-cannons:${rootProject.cbc_fabric_version_id}") { transitive = false }
+    modCompileOnly("maven.modrinth:rpl:${rootProject.rpl_version}") { transitive = false }
+
+    // Valkyrien Skies
+    modCompileOnly("org.joml:joml-primitives:1.10.0") { transitive = false }
+    modCompileOnly("org.valkyrienskies.core:api:${rootProject.vs_core_version}") { transitive = false }
+    modCompileOnly("org.valkyrienskies.core:impl:${rootProject.vs_core_version}") { transitive = false }
+    modCompileOnly("org.valkyrienskies.core:util:${rootProject.vs_core_version}") { transitive = false }
+    modCompileOnly("org.valkyrienskies:valkyrienskies-120-forge:${rootProject.vs2_version}") { transitive = false }
+
+    // JEI API compile only
+    modCompileOnly("mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}") { transitive = false }
+
+    // ForgeConfigSpec available cross-platform via forge-config-api-port
+    modCompileOnly("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${rootProject.forge_config_api_port_version}") { transitive = false }
+}

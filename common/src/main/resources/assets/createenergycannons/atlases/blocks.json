@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "directory",
+      "source": "laser_burn",
+      "prefix": "laser_burn/"
+    }
+  ]
+}

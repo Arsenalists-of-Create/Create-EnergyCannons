@@ -1,0 +1,400 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+import org.objectweb.asm.*
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+
+    // TinyRemapper CLI — resolved separately to avoid classpath conflicts with Loom
+    tinyRemapperCli {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+
+    // Fabric API
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+
+    // Architectury API
+    modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+
+    // Create Fabric — single dependency, everything else pulled in transitively
+    // (porting_lib, flywheel, ponder, registrate, forge-config-api-port, milk-lib, etc.)
+    modImplementation("com.simibubi.create:create-fabric:${rootProject.create_fabric_version}")
+
+    // Create Big Cannons (Fabric)
+    modImplementation("maven.modrinth:create-big-cannons:${rootProject.cbc_fabric_version_id}")
+    // RPL is JiJ'd in CBC but Loom doesn't extract JiJ jars for dev — must declare explicitly
+    modRuntimeOnly("com.rbasamoyai:ritchiesprojectilelib:${rootProject.rpl_fabric_version}") { transitive = false }
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+
+    tinyRemapperCli 'net.fabricmc:tiny-remapper:0.10.3'
+}
+// very hacky fix
+// Patch CBC's remapped jar to fix un-remapped Fabric intermediary names.
+// Loom 1.3.355's TinyRemapper fails to remap method/field references that
+// require hierarchy traversal through Create's classes (which are already in
+// named form on TinyRemapper's classpath). This task fixes them post-remap.
+def intermediaryMethodMap = [
+    'method_10123': 'newBlockEntity',
+    'method_10321': 'getName',
+    'method_10997': 'getLevel',
+    'method_11002': 'hasLevel',
+    'method_11007': 'saveAdditional',
+    'method_11010': 'getBlockState',
+    'method_11012': 'setRemoved',
+    'method_11014': 'load',
+    'method_11015': 'isRemoved',
+    'method_11016': 'getBlockPos',
+    'method_11017': 'getType',
+    'method_15434': 'getSerializedName',
+    'method_18798': 'getDeltaMovement',
+    'method_19538': 'position',
+    'method_22987': 'removeProgress',
+    'method_23317': 'getX',
+    'method_23318': 'getY',
+    'method_23321': 'getZ',
+    'method_2380' : 'renderTooltip',
+    'method_2389' : 'renderBg',
+    'method_24515': 'blockPosition',
+    'method_24829': 'getDismountLocationForPassenger',
+    'method_24921': 'getOwner',
+    'method_25394': 'render',
+    'method_25396': 'children',
+    'method_25419': 'onClose',
+    'method_25426': 'init',
+    'method_25432': 'removed',
+    'method_25931': 'reload',
+    'method_26958': 'canHitEntity',
+    'method_31472': 'discard',
+    'method_31481': 'isRemoved',
+    'method_31483': 'getFirstPassenger',
+    'method_31662': 'setLevel',
+    'method_31664': 'setBlockState',
+    'method_31977': 'renderTextureOverlay',
+    'method_33574': 'setPos',
+    'method_33892': 'shouldRender',
+    'method_3563' : 'shouldRenderOffScreen',
+    'method_36454': 'getYRot',
+    'method_36455': 'getXRot',
+    'method_36456': 'setYRot',
+    'method_36457': 'setXRot',
+    'method_37063': 'addRenderableWidget',
+    'method_37432': 'containerTick',
+    'method_37908': 'level',
+    'method_38242': 'saveWithFullMetadata',
+    'method_3931' : 'getTextureLocation',
+    'method_45977': 'applyExplosionDecay',
+    'method_45978': 'applyExplosionCondition',
+    'method_45984': 'createSingleItemTableWithSilkTouch',
+    'method_45988': 'add',
+    'method_46006': 'dropOther',
+    'method_5431' : 'setChanged',
+    'method_5626' : 'hasPassenger',
+    'method_5627' : 'addPassenger',
+    'method_5628' : 'getId',
+    'method_5642' : 'getControllingPassenger',
+    'method_5652' : 'addAdditionalSaveData',
+    'method_5659' : 'ignoreExplosion',
+    'method_5662' : 'save',
+    'method_5674' : 'onSyncedDataUpdated',
+    'method_5693' : 'defineSynchedData',
+    'method_5695' : 'getViewXRot',
+    'method_5705' : 'getViewYRot',
+    'method_5749' : 'readAdditionalSaveData',
+    'method_5765' : 'isPassenger',
+    'method_5773' : 'tick',
+    'method_5804' : 'startRiding',
+    'method_5805' : 'isAlive',
+    'method_5814' : 'setPos',
+    'method_5829' : 'getBoundingBox',
+    'method_5848' : 'stopRiding',
+    'method_5854' : 'getVehicle',
+    'method_5865' : 'positionRider',
+    'method_6898' : 'showBreakingParticles',
+    'method_6920' : 'playBrokenSound',
+    'method_8321' : 'getBlockEntity',
+    'method_9515' : 'createBlockStateDefinition',
+    'method_9516' : 'isPathfindable',
+    'method_9517' : 'updateIndirectNeighbourShapes',
+    'method_9530' : 'getShape',
+    'method_9536' : 'onRemove',
+    'method_9541' : 'box',
+    'method_9545' : 'getFluidState',
+    'method_9559' : 'updateShape',
+    'method_9564' : 'defaultBlockState',
+    'method_9569' : 'mirror',
+    'method_9574' : 'getCloneItemStack',
+    'method_9576' : 'playerWillDestroy',
+    'method_9588' : 'tick',
+    'method_9590' : 'registerDefaultState',
+    'method_9595' : 'getStateDefinition',
+    'method_9598' : 'rotate',
+    'method_9605' : 'getStateForPlacement',
+    'method_9612' : 'neighborChanged',
+    'method_9615' : 'onPlace',
+]
+
+def intermediaryFieldMap = [
+    'field_10647': 'stateDefinition',
+    'field_10927': 'FACING',
+    'field_11863': 'level',
+    'field_11865': 'remove',
+    'field_11867': 'worldPosition',
+    'field_14049': 'entity',
+    'field_2035' : 'minecraft',
+    'field_20950': 'destructionProgress',
+    'field_22785': 'title',
+    'field_22793': 'font',
+    'field_2776' : 'leftPos',
+    'field_2779' : 'imageHeight',
+    'field_2787' : 'hoveredSlot',
+    'field_2792' : 'imageWidth',
+    'field_2797' : 'menu',
+    'field_2800' : 'topPos',
+    'field_3394' : 'hat',
+    'field_4073' : 'ticks',
+    'field_4676' : 'entityRenderDispatcher',
+    'field_5982' : 'yRotO',
+    'field_6004' : 'xRotO',
+    'field_6011' : 'entityData',
+    'field_9187' : 'level',
+]
+
+task patchRemappedCbc {
+    description = 'Patches un-remapped Fabric intermediary names in CBC jar'
+    // Run every time
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def remappedDir = new File(rootProject.projectDir, ".gradle/loom-cache/remapped_mods")
+        if (!remappedDir.exists()) {
+            logger.lifecycle("No remapped_mods directory found, skipping CBC patching")
+            return
+        }
+
+        // Find CBC jar(s) in the Fabric remapped mods cache (non-Forge dirs)
+        def cbcJars = []
+        remappedDir.eachDirRecurse { dir ->
+            if (dir.path.contains('forge')) return
+            dir.eachFileMatch(~"create-big-cannons-${rootProject.cbc_fabric_version_id}\\.jar") { f ->
+                cbcJars << f
+            }
+        }
+
+        if (cbcJars.isEmpty()) {
+            logger.lifecycle("No remapped CBC jar found, skipping patching")
+            return
+        }
+
+        cbcJars.each { jarFile ->
+            // Check if patching is needed (any method_XXXXX references left?)
+            boolean needsPatch = false
+            new java.util.zip.ZipInputStream(jarFile.newInputStream()).withCloseable { checkZis ->
+                java.util.zip.ZipEntry e
+                while ((e = checkZis.nextEntry) != null) {
+                    if (e.name.endsWith('.class')) {
+                        def data = checkZis.readAllBytes()
+                        def str = new String(data, java.nio.charset.StandardCharsets.ISO_8859_1)
+                        if (str.contains('method_') || str.contains('field_')) {
+                            // Verify it's an intermediary name we know about
+                            for (def key : intermediaryMethodMap.keySet()) {
+                                if (str.contains(key)) { needsPatch = true; break }
+                            }
+                            if (!needsPatch) {
+                                for (def key : intermediaryFieldMap.keySet()) {
+                                    if (str.contains(key)) { needsPatch = true; break }
+                                }
+                            }
+                        }
+                    }
+                    if (needsPatch) break
+                }
+            }
+
+            if (!needsPatch) {
+                logger.lifecycle("CBC jar already patched, skipping: ${jarFile.name}")
+                return
+            }
+
+            logger.lifecycle("Patching un-remapped intermediary names in: ${jarFile.name}")
+            def tempJar = new File(jarFile.parentFile, jarFile.name + ".patching")
+            int patchedMethods = 0
+            int patchedFields = 0
+
+            new java.util.zip.ZipInputStream(jarFile.newInputStream()).withCloseable { zis ->
+                new java.util.zip.ZipOutputStream(tempJar.newOutputStream()).withCloseable { zos ->
+                    java.util.zip.ZipEntry entry
+                    while ((entry = zis.nextEntry) != null) {
+                        def newEntry = new java.util.zip.ZipEntry(entry.name)
+                        if (entry.isDirectory()) {
+                            zos.putNextEntry(newEntry)
+                            zos.closeEntry()
+                            continue
+                        }
+
+                        def bytes = zis.readAllBytes()
+                        zos.putNextEntry(newEntry)
+
+                        if (entry.name.endsWith('.class')) {
+                            try {
+                                def cr = new ClassReader(bytes)
+                                def cw = new ClassWriter(0)
+                                def cv = new ClassVisitor(Opcodes.ASM9, cw) {
+                                    @Override
+                                    MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                                        // Rename method declarations
+                                        def mappedName = intermediaryMethodMap[name]
+                                        if (mappedName != null) { patchedMethods++; name = mappedName }
+                                        def mv = super.visitMethod(access, name, descriptor, signature, exceptions)
+                                        return new MethodVisitor(Opcodes.ASM9, mv) {
+                                            @Override
+                                            void visitMethodInsn(int opcode, String owner, String mName, String desc, boolean isInterface) {
+                                                def mapped = intermediaryMethodMap[mName]
+                                                if (mapped != null) { patchedMethods++; mName = mapped }
+                                                super.visitMethodInsn(opcode, owner, mName, desc, isInterface)
+                                            }
+                                            @Override
+                                            void visitFieldInsn(int opcode, String owner, String fName, String desc) {
+                                                def mapped = intermediaryFieldMap[fName]
+                                                if (mapped != null) { patchedFields++; fName = mapped }
+                                                super.visitFieldInsn(opcode, owner, fName, desc)
+                                            }
+                                            @Override
+                                            void visitInvokeDynamicInsn(String idName, String idDesc, Handle bsm, Object... bsmArgs) {
+                                                def newArgs = new Object[bsmArgs.length]
+                                                for (int i = 0; i < bsmArgs.length; i++) {
+                                                    if (bsmArgs[i] instanceof Handle) {
+                                                        def h = (Handle) bsmArgs[i]
+                                                        def mapped = intermediaryMethodMap[h.name]
+                                                        if (mapped != null) {
+                                                            patchedMethods++
+                                                            newArgs[i] = new Handle(h.tag, h.owner, mapped, h.desc, h.isInterface)
+                                                        } else {
+                                                            newArgs[i] = h
+                                                        }
+                                                    } else {
+                                                        newArgs[i] = bsmArgs[i]
+                                                    }
+                                                }
+                                                super.visitInvokeDynamicInsn(idName, idDesc, bsm, newArgs)
+                                            }
+                                        }
+                                    }
+                                    @Override
+                                    FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                                        // Rename field declarations
+                                        def mappedName = intermediaryFieldMap[name]
+                                        if (mappedName != null) { patchedFields++; name = mappedName }
+                                        return super.visitField(access, name, descriptor, signature, value)
+                                    }
+                                }
+                                cr.accept(cv, 0)
+                                zos.write(cw.toByteArray())
+                            } catch (Exception ex) {
+                                // If ASM fails on a class, copy it unmodified
+                                logger.warn("Failed to patch class ${entry.name}: ${ex.message}")
+                                zos.write(bytes)
+                            }
+                        } else {
+                            zos.write(bytes)
+                        }
+                        zos.closeEntry()
+                    }
+                }
+            }
+
+            // Atomic replace
+            jarFile.delete()
+            tempJar.renameTo(jarFile)
+            logger.lifecycle("Patched CBC: ${patchedMethods} method refs, ${patchedFields} field refs")
+        }
+    }
+}
+
+// Ensure patching runs before any compilation or runtime usage
+tasks.named('compileJava') { dependsOn patchRemappedCbc }
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('fabric.mod.json') {
+        expand version: inputs.properties.version
+    }
+}
+
+shadowJar {
+    exclude "architectury.common.json"
+    exclude "architectury.common.marker"
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
+}
+//another janky work around
+// Loom 1.3.355 bug
+// Jar.copy() and RemapJarTask.run() @TaskAction methods. On this JVM,
+// copy() consistently runs last, overwriting remapped output with empty content.
+// Fix: disable remapJar, use TinyRemapper CLI directly with proper hierarchy resolution.
+remapJar.enabled = false
+
+task remapShadowJar {
+    dependsOn shadowJar
+    description = 'Remaps shadow jar from named to intermediary via TinyRemapper CLI'
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def inputJar = shadowJar.archiveFile.get().asFile
+        def outputJar = new File(layout.buildDirectory.dir('libs').get().asFile,
+            "${base.archivesName.get()}-${project.version}.jar")
+        outputJar.parentFile.mkdirs()
+        if (outputJar.exists()) outputJar.delete()
+
+        def mappingsFile = new File(gradle.gradleUserHomeDir,
+            "caches/fabric-loom/${rootProject.minecraft_version}/loom.mappings.1_20_1.layered+hash.40359-v2/mappings.tiny")
+        if (!mappingsFile.exists()) {
+            throw new GradleException("Mappings file not found: ${mappingsFile}")
+        }
+
+        // Collect classpath jars for hierarchy resolution (MC + all mod deps)
+        def cpJars = configurations.compileClasspath.files.collect { it.absolutePath }
+
+        def remapArgs = [
+            inputJar.absolutePath,
+            outputJar.absolutePath,
+            mappingsFile.absolutePath,
+            'named',        // from namespace
+            'intermediary'  // to namespace
+        ] + cpJars
+
+        project.javaexec {
+            classpath = configurations.tinyRemapperCli
+            mainClass = 'net.fabricmc.tinyremapper.Main'
+            args = remapArgs
+        }
+
+        logger.lifecycle("Remapped ${inputJar.name} -> ${outputJar.name} (${outputJar.length()} bytes)")
+    }
+}
+tasks.named('assemble') { dependsOn 'remapShadowJar' }

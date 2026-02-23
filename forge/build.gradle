@@ -1,0 +1,151 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+loom {
+    forge {
+        mixinConfig "createenergycannons.mixins.json"
+    }
+}
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+
+    // TinyRemapper CLI — resolved separately to avoid classpath conflicts with Loom
+    tinyRemapperCli {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    forge "net.minecraftforge:forge:$rootProject.forge_version"
+
+    modImplementation "dev.architectury:architectury-forge:$rootProject.architectury_api_version"
+
+    // Create (Forge)
+    modImplementation("com.simibubi.create:create-${rootProject.minecraft_version}:${rootProject.create_version}:slim") { transitive = false }
+    modImplementation("net.createmod.ponder:Ponder-Forge-${rootProject.minecraft_version}:${rootProject.ponder_version}") { transitive = false }
+    modCompileOnly("dev.engine-room.flywheel:flywheel-forge-api-${rootProject.minecraft_version}:${rootProject.flywheel_version}") { transitive = false }
+    modRuntimeOnly("dev.engine-room.flywheel:flywheel-forge-${rootProject.minecraft_version}:${rootProject.flywheel_version}") { transitive = false }
+    modImplementation("com.tterrag.registrate:Registrate:${rootProject.registrate_version}") { transitive = false }
+
+    // Mixin Extras (Forge variant)
+    implementation("io.github.llamalad7:mixinextras-forge:${rootProject.mixinextras_version}") { transitive = false }
+
+    // Create Big Cannons (Forge)
+    modImplementation("maven.modrinth:create-big-cannons:${rootProject.cbc_version}") { transitive = false }
+    modImplementation("maven.modrinth:rpl:${rootProject.rpl_version}") { transitive = false }
+
+    // Valkyrien Skies (Forge) - matches Eureka's proven Architectury setup
+    modApi("org.valkyrienskies:valkyrienskies-120-forge:${rootProject.vs2_version}") { transitive = false }
+    implementation("org.valkyrienskies.core:api:${rootProject.vs_core_version}")
+    implementation("org.valkyrienskies.core:impl:${rootProject.vs_core_version}")
+    implementation("org.valkyrienskies.core:util:${rootProject.vs_core_version}")
+    implementation("org.joml:joml-primitives:1.10.0") { transitive = false }
+    implementation("thedarkcolour:kotlinforforge:${rootProject.forge_kotlin_version}")
+
+    // JEI (Forge)
+    modCompileOnly("mezz.jei:jei-${rootProject.minecraft_version}-forge-api:${rootProject.jei_version}") { transitive = false }
+    modRuntimeOnly("mezz.jei:jei-${rootProject.minecraft_version}-forge:${rootProject.jei_version}") { transitive = false }
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+
+    tinyRemapperCli 'net.fabricmc:tiny-remapper:0.10.3'
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('META-INF/mods.toml') {
+        expand version: inputs.properties.version
+    }
+}
+
+shadowJar {
+    exclude "architectury.common.json"
+    exclude "architectury.common.marker"
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
+}
+// yep this is janky
+// Loom 1.3.355 bug
+// Jar.copy() and RemapJarTask.run() @TaskAction methods. On this JVM,
+// copy() consistently runs last, overwriting remapped output with empty content.
+// Fix: disable remapJar, use TinyRemapper CLI directly with proper hierarchy resolution.
+remapJar.enabled = false
+
+task remapShadowJar {
+    dependsOn shadowJar
+    description = 'Remaps shadow jar from named to SRG via TinyRemapper CLI'
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def inputJar = shadowJar.archiveFile.get().asFile
+        def outputJar = new File(layout.buildDirectory.dir('libs').get().asFile,
+            "${base.archivesName.get()}-${project.version}.jar")
+        outputJar.parentFile.mkdirs()
+        if (outputJar.exists()) outputJar.delete()
+
+        def mappingsFile = new File(gradle.gradleUserHomeDir,
+            "caches/fabric-loom/${rootProject.minecraft_version}/loom.mappings.1_20_1.layered+hash.40359-v2-forge-${rootProject.forge_version}/mappings-srg.tiny")
+        if (!mappingsFile.exists()) {
+            throw new GradleException("Mappings file not found: ${mappingsFile}")
+        }
+
+        // Collect classpath jars for hierarchy resolution (MC + all mod deps)
+        def cpJars = configurations.compileClasspath.files.collect { it.absolutePath }
+
+        def remapArgs = [
+            inputJar.absolutePath,
+            outputJar.absolutePath,
+            mappingsFile.absolutePath,
+            'named',  // from namespace
+            'srg'     // to namespace
+        ] + cpJars
+
+        project.javaexec {
+            classpath = configurations.tinyRemapperCli
+            mainClass = 'net.fabricmc.tinyremapper.Main'
+            args = remapArgs
+        }
+
+        // Strip the Fabric intermediary refmap from the Forge jar.
+        // On Forge (SRG), class names match Mojang names, so mixin descriptors
+        // work without remapping. The intermediary refmap would incorrectly remap them.
+        def tempJar = new File(outputJar.parentFile, outputJar.name + ".tmp")
+        new java.util.zip.ZipInputStream(outputJar.newInputStream()).withCloseable { zis ->
+            new java.util.zip.ZipOutputStream(tempJar.newOutputStream()).withCloseable { zos ->
+                java.util.zip.ZipEntry entry
+                while ((entry = zis.nextEntry) != null) {
+                    if (entry.name == 'createenergycannons-common-common-refmap.json') continue
+                    zos.putNextEntry(new java.util.zip.ZipEntry(entry.name))
+                    if (!entry.isDirectory()) zos.write(zis.readAllBytes())
+                    zos.closeEntry()
+                }
+            }
+        }
+        outputJar.delete()
+        tempJar.renameTo(outputJar)
+
+        logger.lifecycle("Remapped ${inputJar.name} -> ${outputJar.name} (${outputJar.length()} bytes)")
+    }
+}
+tasks.named('assemble') { dependsOn 'remapShadowJar' }
