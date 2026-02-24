@@ -76,6 +76,8 @@ public class LaserBeamGlobalRenderer {
 
             renderBeam(poseStack, bufferSource, cam, beam, partialTick, gameTime);
         }
+
+        bufferSource.endBatch();
     }
 
     private static void renderBeam(PoseStack ps, MultiBufferSource buffer,

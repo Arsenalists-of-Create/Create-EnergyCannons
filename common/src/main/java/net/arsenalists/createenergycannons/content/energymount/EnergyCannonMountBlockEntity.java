@@ -40,15 +40,22 @@ import java.util.List;
 import java.util.Map;
 
 public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
-    private CECServerConfig config = CECConfig.server();
-    private int cooldownTime = config.mountCoolDownTime.get();
-    private final EnergyMountCap energyCap = new EnergyMountCap(config.mountEnergyCapacity.get(), this::notifyUpdate);
     private static final Logger LOGGER = LogUtils.getLogger();
+    private final EnergyMountCap energyCap;
 
     private long cooldownEndTime = 0;
 
     public EnergyCannonMountBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
+        // Read config lazily — config values may not be loaded yet during world loading
+        int capacity;
+        try {
+            capacity = CECConfig.server().mountEnergyCapacity.get();
+        } catch (Exception e) {
+            capacity = 500000; // fallback default
+            LOGGER.warn("Config not yet loaded, using default energy capacity");
+        }
+        this.energyCap = new EnergyMountCap(capacity, this::notifyUpdate);
         if (CECBlocks.ENERGY_CANNON_MOUNT.has(state)) {
             accessor().setCannonYaw(state.getValue(EnergyCannonMount.HORIZONTAL_FACING).toYRot());
         }
@@ -166,6 +173,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         long currentTime = this.level.getGameTime();
         if (cooldownEndTime > currentTime) {
             long remaining = cooldownEndTime - currentTime;
+            int cooldownTime = getCooldownTime();
             int cooldownProgress = (int) (( cooldownTime- remaining) * 50 /cooldownTime);
             tooltip.add(Component.literal("Cooldown ").append(cooldownBarComponent(cooldownProgress)));
         }
@@ -189,6 +197,14 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     private MutableComponent bars(int level, ChatFormatting format) {
         return Component.literal(Strings.repeat('|', level))
                 .withStyle(format);
+    }
+
+    private int getCooldownTime() {
+        try {
+            return CECConfig.server().mountCoolDownTime.get();
+        } catch (Exception e) {
+            return 500; // fallback default
+        }
     }
 
     public void setCannonCooldown(long endTime) {

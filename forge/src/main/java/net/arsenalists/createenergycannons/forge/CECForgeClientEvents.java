@@ -13,6 +13,7 @@ import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticle
 import net.arsenalists.createenergycannons.content.particle.LaserGlareParticle;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.arsenalists.createenergycannons.registry.CECParticles;
+import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.level.Level;
@@ -24,7 +25,6 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 
 @Mod.EventBusSubscriber(modid = CECMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CECForgeClientEvents {

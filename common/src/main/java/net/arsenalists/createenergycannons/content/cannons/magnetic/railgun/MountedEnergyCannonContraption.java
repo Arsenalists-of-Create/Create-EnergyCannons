@@ -7,6 +7,7 @@ import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
 import net.arsenalists.createenergycannons.config.CECConfig;
+import net.arsenalists.createenergycannons.config.server.CECServerConfig;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlock;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticleData;
@@ -70,8 +71,8 @@ import java.util.function.Consumer;
 
 public class MountedEnergyCannonContraption extends MountedBigCannonContraption {
 
-    private int COILGUNCOST = CECConfig.server().coilgunCostPerBlock.get();
-    private int RAILGUNCOST = CECConfig.server().railgunCostPerBlock.get();
+    private int COILGUNCOST;
+    private int RAILGUNCOST;
     BigCannonMaterial cannonMaterial;
     int railCount;
     private BlockPos mountPos = null;
@@ -129,13 +130,25 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     enum Mode { NORMAL, COIL, RAIL }
     private Mode mode = Mode.NORMAL;
 
-    private static  int OVERHEAT_DURATION = CECConfig.server().mountCoolDownTime.get(); // 25 seconds (500 ticks)
-    private static  int CHARGE_DURATION = CECConfig.server().mountChargeTime.get(); // 1 second (20 ticks)
+    private static int OVERHEAT_DURATION = 500; // default, updated from config at assembly
+    private static int CHARGE_DURATION = 20; // default, updated from config at assembly
     private Map<BlockPos, Long> coilgunCooldownEndTimes = new HashMap<>();  // Game time when cooling finishes
     private boolean railgunCharging = false;
 
     @Override
     public boolean assemble(Level level, BlockPos pos) throws AssemblyException {
+        // Load config values here where config is guaranteed to be available
+        try {
+            CECServerConfig config = CECConfig.server();
+            COILGUNCOST = config.coilgunCostPerBlock.get();
+            RAILGUNCOST = config.railgunCostPerBlock.get();
+            OVERHEAT_DURATION = config.mountCoolDownTime.get();
+            CHARGE_DURATION = config.mountChargeTime.get();
+        } catch (Exception e) {
+            LOGGER.warn("Config not loaded, using defaults for energy cannon costs");
+            COILGUNCOST = 10000;
+            RAILGUNCOST = 20000;
+        }
         LOGGER.warn("[EnergyContraption] assemble pos={} block={}", pos, level.getBlockState(pos));
         BlockState breech = level.getBlockState(pos);
         Direction facing = breech.getValue(BlockStateProperties.FACING);

@@ -3,12 +3,13 @@ package net.arsenalists.createenergycannons.fabric.client;
 import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.arsenalists.createenergycannons.CECMod;
+import net.arsenalists.createenergycannons.registry.CECBlockEntity;
+import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 import net.arsenalists.createenergycannons.client.CECClientShaders;
 import net.arsenalists.createenergycannons.content.particle.CECVertexFormats;
 import net.arsenalists.createenergycannons.content.particle.EnergyCannonPlumeParticle;
 import net.arsenalists.createenergycannons.content.particle.EnergyMuzzleParticle;
 import net.arsenalists.createenergycannons.content.particle.LaserGlareParticle;
-import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.arsenalists.createenergycannons.registry.CECParticles;
 import net.fabricmc.api.ClientModInitializer;
@@ -22,7 +23,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountVisual;
 
 public final class CECModFabricClient implements ClientModInitializer {
     @Override

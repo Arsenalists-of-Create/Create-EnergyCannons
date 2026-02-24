@@ -9,20 +9,20 @@ import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import rbasamoyai.createbigcannons.munitions.big_cannon.FuzedBlockEntity;
 import rbasamoyai.createbigcannons.munitions.big_cannon.FuzedBlockEntityRenderer;
 
 @Mixin(FuzedBlockEntityRenderer.class)
 public abstract class FuzedBlockEntityRendererMixin {
     //adds sled model to the fuzed shell
-    @Inject(method = "renderSafe(Lnet/minecraft/world/level/block/entity/BlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V", at = @At("HEAD"))
-    private void renderSled(BlockEntity blockEntity, float partialTicks, PoseStack posestack, MultiBufferSource buffers, int packedLight, int packedOverlay, CallbackInfo ci) {
+    @Inject(method = "renderSafe(Lrbasamoyai/createbigcannons/munitions/big_cannon/FuzedBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V", at = @At("HEAD"))
+    private void renderSled(FuzedBlockEntity blockEntity, float partialTicks, PoseStack posestack, MultiBufferSource buffers, int packedLight, int packedOverlay, CallbackInfo ci) {
         if (blockEntity instanceof IMagneticSled sledBlockEntity && sledBlockEntity.isSled()) {
             BlockState state = blockEntity.getBlockState();
             Direction facing = state.getValue(BlockStateProperties.FACING);

@@ -7,7 +7,7 @@ import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
 import net.arsenalists.createenergycannons.config.CECConfig;
-import net.arsenalists.createenergycannons.config.server.CECServerConfig;
+
 import net.arsenalists.createenergycannons.network.LaserBurnS2CPacket;
 import net.arsenalists.createenergycannons.network.PacketHandler;
 import net.arsenalists.createenergycannons.registry.CECCannonContraptionTypes;
@@ -53,8 +53,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     public static final AtomicInteger NEXT_BREAKER_ID = new AtomicInteger();
     protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
     protected Map<BlockPos, Float> breakProgress = new HashMap<>();
-    private CECServerConfig config = CECConfig.server();
-    private static int LASER_ENERGY_BLOCK = CECConfig.server().laserPowerConsumption.get();
+    private static int LASER_ENERGY_BLOCK = 500; // default, updated from config at runtime
 
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
@@ -71,6 +70,8 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
     @Override
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
+        // Refresh config values at runtime
+        try { LASER_ENERGY_BLOCK = CECConfig.server().laserPowerConsumption.get(); } catch (Exception ignored) {}
         Vec3 start = anchor.getCenter();
         float pitch = pitchOrientedContraptionEntity.pitch;
         float yaw = pitchOrientedContraptionEntity.yaw;
@@ -126,8 +127,8 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 laser.setRange(newRange);
                 BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
             });
-            closestEntity.hurt(serverLevel.damageSources().generic(), config.laserDamage.get());
-            closestEntity.setSecondsOnFire(config.laserBurnTime.get());
+            closestEntity.hurt(serverLevel.damageSources().generic(), CECConfig.server().laserDamage.get());
+            closestEntity.setSecondsOnFire(CECConfig.server().laserBurnTime.get());
             serverLevel.playSound(null, closestEntity.getX(), closestEntity.getY(), closestEntity.getZ(),
                     SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.4f,
                     1.8f + serverLevel.random.nextFloat() * 0.4f);
@@ -172,9 +173,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                         breakProgress.put(blockPos, currentProgress + progressIncrement);
 
                         float progress = breakProgress.get(blockPos);
-                        int stage = Math.min((int) progress, config.laserBlockBreakThreshold.get() - 1);
+                        int stage = Math.min((int) progress, CECConfig.server().laserBlockBreakThreshold.get() - 1);
 
-                        if (progress >= config.laserBlockBreakThreshold.get()) {
+                        if (progress >= CECConfig.server().laserBlockBreakThreshold.get()) {
                             serverLevel.destroyBlock(blockPos, false);
                             breakProgress.remove(blockPos);
                             PacketHandler.sendToAllTracking(new LaserBurnS2CPacket(blockPos, -1),
