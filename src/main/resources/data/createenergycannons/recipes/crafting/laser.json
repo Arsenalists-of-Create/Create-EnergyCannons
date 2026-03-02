@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "minecraft:glass"
+    },
+    "B": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "C": {
+      "item": "create:electron_tube"
+    },
+    "D": {
+      "item": "create:precision_mechanism"
+    }
+  },
+  "pattern": [
+    "AAA",
+    "BBB",
+    "CDC"
+  ],
+  "result": {
+    "item": "createenergycannons:laser"
+  },
+  "show_notification": true
+}

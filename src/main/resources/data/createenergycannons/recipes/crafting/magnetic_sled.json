@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create:iron_sheet"
+    }
+  },
+  "pattern": [
+    "A A"
+  ],
+  "result": {
+    "item": "createenergycannons:energy_cannon_mount"
+  },
+  "show_notification": true
+}
