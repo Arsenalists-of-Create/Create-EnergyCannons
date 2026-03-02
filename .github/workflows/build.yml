@@ -59,16 +59,16 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           message-title: Building mod from branch ${{ steps.get_branch.outputs.branch }}
 
-      - name: Send Forge jar to discord
-        uses: sinshutu/upload-to-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: ./forge/build/libs/*.*
+      - name: Collect release jars
+        run: |
+          mkdir -p release
+          cp forge/build/libs/createenergycannons-forge-*.jar release/
+          cp fabric/build/libs/createenergycannons-fabric-*.jar release/
+          cd release && rm -f *-dev-shadow.jar *-sources.jar
 
-      - name: Send Fabric jar to discord
+      - name: Send jars to discord
         uses: sinshutu/upload-to-discord@master
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: ./fabric/build/libs/*.*
+          args: ./release/*.*
