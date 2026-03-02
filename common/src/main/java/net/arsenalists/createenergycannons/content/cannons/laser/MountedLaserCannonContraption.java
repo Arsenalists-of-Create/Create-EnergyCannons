@@ -26,6 +26,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.material.FluidState;
@@ -94,7 +96,19 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         }
 
         Vec3 vecEnd = worldStart.add(direction.scale(range));
-        HitResult result = serverLevel.clip(new ClipContext(worldStart, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
+        // Clip through fire blocks so the laser can still break the block behind them
+        HitResult clipResult = serverLevel.clip(new ClipContext(worldStart, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
+        while (clipResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockHitResult) clipResult).getBlockPos();
+            BlockState hitState = serverLevel.getBlockState(hitPos);
+            if (hitState.is(Blocks.FIRE) || hitState.is(Blocks.SOUL_FIRE)) {
+                Vec3 past = clipResult.getLocation().add(direction.scale(0.01));
+                clipResult = serverLevel.clip(new ClipContext(past, vecEnd, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, pitchOrientedContraptionEntity));
+            } else {
+                break;
+            }
+        }
+        final HitResult result = clipResult;
 
         // Muzzle glow at beam START
         spawnGlareMuzzle(serverLevel, worldStart);
@@ -160,6 +174,12 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                             serverLevel, blockPos);
 
                 } else {
+                    // Set fire on the hit face of the block
+                    BlockPos firePos = blockPos.relative(blockHitResult.getDirection());
+                    if (BaseFireBlock.canBePlacedAt(serverLevel, firePos, blockHitResult.getDirection())) {
+                        serverLevel.setBlockAndUpdate(firePos, BaseFireBlock.getState(serverLevel, firePos));
+                    }
+
                     breakProgress.putIfAbsent(blockPos, 0F);
                     float currentProgress = breakProgress.get(blockPos);
 

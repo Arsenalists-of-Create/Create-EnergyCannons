@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create:iron_sheet"
+    }
+  },
+  "pattern": [
+    "A A"
+  ],
+  "result": {
+    "item": "createenergycannons:magnetic_sled"
+  },
+  "show_notification": true
+}
