@@ -32,7 +32,7 @@ public class LaserGlareParticle extends TextureSheetParticle {
     }
 
     protected LaserGlareParticle(ClientLevel world, double x, double y, double z,
-                                 Layer layer, SpriteSet sprites) {
+                                 Layer layer, int colorTint, SpriteSet sprites) {
         super(world, x, y, z, 0, 0, 0);
 
         this.lifetime = 1;
@@ -46,9 +46,16 @@ public class LaserGlareParticle extends TextureSheetParticle {
         this.quadSize = layer.scale * jitter;
 
         this.alpha = layer.alpha;
-        this.rCol = layer.r;
-        this.gCol = layer.g;
-        this.bCol = layer.b;
+
+        if (colorTint >= 0) {
+            this.rCol = ((colorTint >> 16) & 0xFF) / 255.0f;
+            this.gCol = ((colorTint >> 8) & 0xFF) / 255.0f;
+            this.bCol = (colorTint & 0xFF) / 255.0f;
+        } else {
+            this.rCol = layer.r;
+            this.gCol = layer.g;
+            this.bCol = layer.b;
+        }
 
         this.roll = 0;
         this.oRoll = 0;
@@ -90,7 +97,9 @@ public class LaserGlareParticle extends TextureSheetParticle {
             int index = Mth.clamp(Math.round((float) vx), 0,
                     Layer.values().length - 1);
             Layer layer = Layer.values()[index];
-            return new LaserGlareParticle(world, x, y, z, layer, sprites);
+            int colorTint = (int) vy;
+            if (colorTint == 0) colorTint = -1;
+            return new LaserGlareParticle(world, x, y, z, layer, colorTint, sprites);
         }
     }
 }

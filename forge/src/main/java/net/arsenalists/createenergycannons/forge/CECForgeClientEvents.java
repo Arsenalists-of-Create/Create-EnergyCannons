@@ -49,6 +49,14 @@ public class CECForgeClientEvents {
                 ),
                 shader -> CECClientShaders.energyMuzzleParticleShader = shader
             );
+            event.registerShader(
+                new ShaderInstance(
+                    event.getResourceProvider(),
+                    "createenergycannons:laser_beam",
+                    CECVertexFormats.PARTICLE_WITH_OVERLAY
+                ),
+                shader -> CECClientShaders.laserBeamShader = shader
+            );
         } catch (java.io.IOException e) {
             throw new RuntimeException("Failed to register CEC shaders", e);
         }

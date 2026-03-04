@@ -51,6 +51,11 @@ public final class CECModFabricClient implements ClientModInitializer {
                 CECVertexFormats.PARTICLE_WITH_OVERLAY,
                 shader -> CECClientShaders.energyMuzzleParticleShader = shader
             );
+            ctx.register(
+                CECMod.resource("laser_beam"),
+                CECVertexFormats.PARTICLE_WITH_OVERLAY,
+                shader -> CECClientShaders.laserBeamShader = shader
+            );
         });
 
         // Register particle factories

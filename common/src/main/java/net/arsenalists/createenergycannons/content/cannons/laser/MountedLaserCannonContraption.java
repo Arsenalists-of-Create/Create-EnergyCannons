@@ -111,7 +111,8 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         final HitResult result = clipResult;
 
         // Muzzle glow at beam START
-        spawnGlareMuzzle(serverLevel, worldStart);
+        int glareTint = getLaser().map(l -> LaserBeamGlobalRenderer.dyeColorToTint(l.getLensColor())).orElse(-1);
+        spawnGlareMuzzle(serverLevel, worldStart, glareTint);
 
         getLaser().ifPresent(laser -> {
             laser.setRange((int) (worldStart.distanceTo(result.getLocation())));
@@ -210,18 +211,18 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                 endPoint = result.getLocation();
             }
         }
-        spawnGlareImpact(serverLevel, endPoint);
+        spawnGlareImpact(serverLevel, endPoint, glareTint);
     }
 
 
-    private void spawnGlareMuzzle(ServerLevel level, Vec3 pos) {
+    private void spawnGlareMuzzle(ServerLevel level, Vec3 pos, int colorTint) {
         level.sendParticles(CECParticles.LASER_GLARE.get(),
-                pos.x, pos.y, pos.z, 0, 0, 0, 0, 1.0);
+                pos.x, pos.y, pos.z, 0, 0, colorTint, 0, 1.0);
     }
 
-    private void spawnGlareImpact(ServerLevel level, Vec3 pos) {
+    private void spawnGlareImpact(ServerLevel level, Vec3 pos, int colorTint) {
         level.sendParticles(CECParticles.LASER_GLARE.get(),
-                pos.x, pos.y, pos.z, 0, 1, 0, 0, 1.0);
+                pos.x, pos.y, pos.z, 0, 1, colorTint, 0, 1.0);
 
         for (int i = 0; i < 2; i++) {
             double xVel = (level.random.nextDouble() - 0.5) * 0.02;
@@ -259,7 +260,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                             origin,
                             direction,
                             laser.getRange(),
-                            level.getGameTime()
+                            laser.getFireRate(),
+                            level.getGameTime(),
+                            LaserBeamGlobalRenderer.dyeColorToTint(laser.getLensColor())
                     );
                 } else {
                     LaserBeamGlobalRenderer.remove(entity.getId());
