@@ -34,6 +34,7 @@ forge*changelog.txt
 fabric/libs/
 forge/libs/
 META-INF/
+!**/src/**/META-INF/mods.toml
 
 # Leaked class files
 /net/

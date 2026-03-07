@@ -16,6 +16,7 @@ import net.fabricmc.api.Environment;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+
 @Environment(EnvType.CLIENT)
 public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
 
@@ -36,46 +37,49 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
 
         Direction facing = be.getBlockState().getValue(LaserBlock.FACING);
 
-        ps.pushPose();
-
-        // Move to center of block, then to front face
-        ps.translate(0.5, 0.5, 0.5);
-        applyFacingRotation(ps, facing);
-        ps.translate(0, 0, 0.5625); //avoid z fighting
-
         float half = 6.0f / 16.0f;
+        float offset = 0.5625f; // 9/16, avoid z-fighting
 
+        // Compute quad position directly from facing vectors (platform-independent)
+        Vec3 n = Vec3.atLowerCornerOf(facing.getNormal());
+        Vec3 rightVec, upVec;
+        if (facing.getAxis() == Direction.Axis.Y) {
+            rightVec = new Vec3(1, 0, 0);
+            upVec = new Vec3(0, 0, facing == Direction.UP ? -1 : 1);
+        } else {
+            rightVec = new Vec3(-facing.getClockWise().getStepX(), 0, -facing.getClockWise().getStepZ());
+            upVec = new Vec3(0, 1, 0);
+        }
+
+        // Center of front face
+        Vec3 center = new Vec3(0.5 + n.x * offset, 0.5 + n.y * offset, 0.5 + n.z * offset);
+
+        Vec3 v0 = center.add(rightVec.scale(-half)).add(upVec.scale(-half));
+        Vec3 v1 = center.add(rightVec.scale(half)).add(upVec.scale(-half));
+        Vec3 v2 = center.add(rightVec.scale(half)).add(upVec.scale(half));
+        Vec3 v3 = center.add(rightVec.scale(-half)).add(upVec.scale(half));
+
+        ps.pushPose();
         Matrix4f pose = ps.last().pose();
         Matrix3f normal = ps.last().normal();
 
         VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(getStainedGlassTexture(lensColor)));
-        float alpha = 1.0f;
 
-        vc.vertex(pose, -half, -half, 0).color(1.0f, 1.0f, 1.0f, alpha)
+        float nx = (float) n.x, ny = (float) n.y, nz = (float) n.z;
+        vc.vertex(pose, (float) v0.x, (float) v0.y, (float) v0.z).color(1f, 1f, 1f, 1f)
                 .uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(normal, 0, 0, 1).endVertex();
-        vc.vertex(pose, half, -half, 0).color(1.0f, 1.0f, 1.0f, alpha)
+                .normal(normal, nx, ny, nz).endVertex();
+        vc.vertex(pose, (float) v1.x, (float) v1.y, (float) v1.z).color(1f, 1f, 1f, 1f)
                 .uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(normal, 0, 0, 1).endVertex();
-        vc.vertex(pose, half, half, 0).color(1.0f, 1.0f, 1.0f, alpha)
+                .normal(normal, nx, ny, nz).endVertex();
+        vc.vertex(pose, (float) v2.x, (float) v2.y, (float) v2.z).color(1f, 1f, 1f, 1f)
                 .uv(1, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(normal, 0, 0, 1).endVertex();
-        vc.vertex(pose, -half, half, 0).color(1.0f, 1.0f, 1.0f, alpha)
+                .normal(normal, nx, ny, nz).endVertex();
+        vc.vertex(pose, (float) v3.x, (float) v3.y, (float) v3.z).color(1f, 1f, 1f, 1f)
                 .uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(normal, 0, 0, 1).endVertex();
+                .normal(normal, nx, ny, nz).endVertex();
 
         ps.popPose();
-    }
-
-    private static void applyFacingRotation(PoseStack ps, Direction facing) {
-        switch (facing) {
-            case SOUTH -> {}
-            case NORTH -> ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180));
-            case EAST -> ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-90));
-            case WEST -> ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90));
-            case UP -> ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90));
-            case DOWN -> ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(90));
-        }
     }
 
     @Override
