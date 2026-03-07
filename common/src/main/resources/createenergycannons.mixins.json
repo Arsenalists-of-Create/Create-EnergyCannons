@@ -3,7 +3,6 @@
   "package": "net.arsenalists.createenergycannons.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
-  "refmap": "createenergycannons-common-common-refmap.json",
   "client": [
     "FuzedBlockEntityRendererMixin"
   ],
