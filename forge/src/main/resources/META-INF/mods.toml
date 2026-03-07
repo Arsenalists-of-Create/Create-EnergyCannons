@@ -1,0 +1,35 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+[[mods]]
+modId = "createenergycannons"
+version = "${version}"
+displayName = "Create Energy Cannons"
+authors = "HappySG, CeoOfGoogle"
+
+description = '''This mod adds Energy Cannons to Create using CBC.'''
+
+[[dependencies.createenergycannons]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.createenergycannons]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.21)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.createenergycannons]]
+modId = "create"
+mandatory = true
+versionRange = "[6.0.0,6.1.0)"
+ordering = "BEFORE"
+side = "BOTH"
+[[dependencies.createenergycannons]]
+modId = "createbigcannons"
+mandatory = true
+versionRange = "[5.10.0,)"
+ordering = "BEFORE"
+side = "BOTH"
