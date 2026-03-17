@@ -1,0 +1,11 @@
+{
+  "parent": "createbigcannons:block/solid_shot",
+  "overrides": [
+    {
+      "predicate": {
+        "createenergycannons:has_sled": 1.0
+      },
+      "model": "createenergycannons:item/solid_shot_sled"
+    }
+  ]
+}

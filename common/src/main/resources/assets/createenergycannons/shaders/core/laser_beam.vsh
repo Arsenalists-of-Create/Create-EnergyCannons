@@ -1,5 +1,4 @@
 #version 150
-#moj_import <fog.glsl>
 
 in vec3 Position;
 in vec2 UV0;
@@ -17,9 +16,20 @@ out vec4 vertexColor;
 flat out int layerIndex;
 flat out int cannonPower;
 
+// Inlined fog to avoid #moj_import <fog.glsl> which Iris/OptiFine patches
+float cec_fog_distance(mat4 modelViewMat, vec3 pos, int shape) {
+    if (shape == 0) {
+        return length((modelViewMat * vec4(pos, 1.0)).xyz);
+    } else {
+        float distXZ = length((modelViewMat * vec4(pos, 1.0)).xz);
+        float distY = abs((modelViewMat * vec4(pos, 1.0)).y);
+        return max(distXZ, distY);
+    }
+}
+
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
-    vertexDistance = fog_distance(ModelViewMat, Position, FogShape);
+    vertexDistance = cec_fog_distance(ModelViewMat, Position, FogShape);
     texCoord0 = UV0;
     vertexColor = Color;
     layerIndex = UV1.x;

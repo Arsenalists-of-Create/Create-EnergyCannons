@@ -1,0 +1,9 @@
+{
+  "parent": "createenergycannons:block/projectile_block_with_sled",
+  "textures": {
+    "bottom": "createbigcannons:block/projectile/solid_shot_bottom",
+    "particle": "createbigcannons:block/projectile/solid_shot_top",
+    "side": "createbigcannons:block/projectile/solid_shot",
+    "top": "createbigcannons:block/projectile/solid_shot_top"
+  }
+}

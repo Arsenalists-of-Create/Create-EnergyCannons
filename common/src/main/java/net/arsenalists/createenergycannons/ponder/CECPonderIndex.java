@@ -20,7 +20,8 @@ public class CECPonderIndex {
 
         // Laser Cannon
         HELPER.forComponents(CECBlocks.LASER)
-                .addStoryBoard("laser_cannon", CECPonderScenes::laserBasics, CECPonderTags.ENERGY_CANNONS);
+                .addStoryBoard("laser_cannon", CECPonderScenes::laserBasics, CECPonderTags.ENERGY_CANNONS)
+                .addStoryBoard("laser_cannon", CECPonderScenes::laserLensColor, CECPonderTags.ENERGY_CANNONS);
 
         // Magnetic Cannons (Railgun and Coilgun combined)
         HELPER.forComponents(CECBlocks.NETHERSTEEL_RAILGUN_BARREL)

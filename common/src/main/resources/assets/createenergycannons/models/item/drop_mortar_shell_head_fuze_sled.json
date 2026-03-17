@@ -1,0 +1,9 @@
+{
+  "parent": "createenergycannons:block/projectile_block_fuze_head_with_sled",
+  "textures": {
+    "bottom": "createbigcannons:block/projectile/drop_mortar_shell_bottom",
+    "particle": "createbigcannons:block/projectile/drop_mortar_shell_top",
+    "side": "createbigcannons:block/projectile/drop_mortar_shell",
+    "top": "createbigcannons:block/projectile/drop_mortar_shell_top"
+  }
+}

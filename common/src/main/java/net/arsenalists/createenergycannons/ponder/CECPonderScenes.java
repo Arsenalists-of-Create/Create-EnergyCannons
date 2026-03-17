@@ -281,6 +281,73 @@ public class CECPonderScenes {
         scene.markAsFinished();
     }
 
+    public static void laserLensColor(SceneBuilder scene, SceneBuildingUtil util) {
+        scene.title("laser_lens_color", "Laser Lens Color");
+        scene.configureBasePlate(0, 0, 7);
+        scene.showBasePlate();
+
+        scene.world().showSection(util.select().fromTo(2, 1, 1, 3, 2, 2), Direction.DOWN);
+        scene.idle(10);
+
+        BlockPos laserPos = new BlockPos(3, 4, 1);
+        scene.world().showSection(util.select().position(laserPos), Direction.DOWN);
+        scene.idle(20);
+
+        scene.overlay().showText(80)
+                .text("Lasers can be tinted with colored lenses!")
+                .colored(PonderPalette.GREEN)
+                .placeNearTarget()
+                .pointAt(util.vector().topOf(laserPos))
+                .attachKeyFrame();
+        scene.idle(90);
+
+        // Point at the filter slot on the back of the laser
+        Vec3 backSlot = util.vector().centerOf(laserPos);
+        scene.overlay().showText(80)
+                .text("The back of the laser has a filter slot")
+                .placeNearTarget()
+                .pointAt(backSlot)
+                .attachKeyFrame();
+        scene.idle(90);
+
+        // Show stained glass pane being placed
+        scene.overlay().showControls(backSlot, Pointing.RIGHT, 60)
+                .withItem(new ItemStack(net.minecraft.world.level.block.Blocks.RED_STAINED_GLASS_PANE));
+        scene.idle(10);
+
+        scene.overlay().showText(80)
+                .text("Place any Stained Glass Pane in the slot to set the beam color")
+                .colored(PonderPalette.BLUE)
+                .placeNearTarget()
+                .pointAt(backSlot)
+                .attachKeyFrame();
+        scene.idle(90);
+
+        // Show different color options
+        scene.overlay().showControls(backSlot, Pointing.RIGHT, 40)
+                .withItem(new ItemStack(net.minecraft.world.level.block.Blocks.BLUE_STAINED_GLASS_PANE));
+        scene.idle(50);
+
+        scene.overlay().showControls(backSlot, Pointing.RIGHT, 40)
+                .withItem(new ItemStack(net.minecraft.world.level.block.Blocks.LIME_STAINED_GLASS_PANE));
+        scene.idle(50);
+
+        scene.overlay().showText(60)
+                .text("All 16 dye colors are supported!")
+                .placeNearTarget()
+                .pointAt(backSlot);
+        scene.idle(70);
+
+        scene.overlay().showText(80)
+                .text("Without a lens, the beam uses its default white color")
+                .placeNearTarget()
+                .pointAt(backSlot)
+                .attachKeyFrame();
+        scene.idle(90);
+
+        scene.markAsFinished();
+    }
+
 
     public static void magneticCannonBasics(SceneBuilder scene, SceneBuildingUtil util) {
         scene.title("magnetic_cannon_basics", "Magnetic Cannon Basics");

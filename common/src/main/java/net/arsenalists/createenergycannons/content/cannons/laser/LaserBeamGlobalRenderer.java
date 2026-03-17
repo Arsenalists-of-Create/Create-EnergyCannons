@@ -1,6 +1,7 @@
 package net.arsenalists.createenergycannons.content.cannons.laser;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.arsenalists.createenergycannons.CECMod;
@@ -8,15 +9,18 @@ import net.arsenalists.createenergycannons.client.CECClientShaders;
 import net.arsenalists.createenergycannons.content.particle.CECVertexFormats;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -60,6 +64,54 @@ public class LaserBeamGlobalRenderer {
     ) {}
 
     private static final Map<Integer, BeamData> ACTIVE_BEAMS = new ConcurrentHashMap<>();
+
+    private static float[][][] gradientColors = null; // [x][y] = {r, g, b}
+
+    private static void ensureGradientLoaded() {
+        if (gradientColors != null) return;
+        try {
+            Optional<Resource> opt = Minecraft.getInstance().getResourceManager().getResource(GRADIENT_TEXTURE);
+            if (opt.isPresent()) {
+                try (var is = opt.get().open()) {
+                    NativeImage img = NativeImage.read(is);
+                    int w = img.getWidth();
+                    int h = img.getHeight();
+                    gradientColors = new float[w][h][3];
+                    for (int x = 0; x < w; x++) {
+                        for (int y = 0; y < h; y++) {
+                            int pixel = img.getPixelRGBA(x, y);
+                            gradientColors[x][y][0] = (pixel & 0xFF) / 255.0f;
+                            gradientColors[x][y][1] = ((pixel >> 8) & 0xFF) / 255.0f;
+                            gradientColors[x][y][2] = ((pixel >> 16) & 0xFF) / 255.0f;
+                        }
+                    }
+                    img.close();
+                }
+            }
+        } catch (Exception e) {
+            CECMod.getLogger().warn("Failed to load laser beam gradient texture for CPU lookup", e);
+        }
+        if (gradientColors == null) {
+            // Default: white for all entries
+            gradientColors = new float[5][16][3];
+            for (int x = 0; x < 5; x++) {
+                for (int y = 0; y < 16; y++) {
+                    gradientColors[x][y] = new float[]{1.0f, 1.0f, 1.0f};
+                }
+            }
+        }
+    }
+
+    private static float[] getGradientColor(int layerIndex, int power) {
+        ensureGradientLoaded();
+        int x = Math.max(0, Math.min(layerIndex, gradientColors.length - 1));
+        int y = Math.max(0, Math.min(power - 1, gradientColors[0].length - 1));
+        return gradientColors[x][y];
+    }
+
+    public static void clearGradientCache() {
+        gradientColors = null;
+    }
 
     public static int dyeColorToTint(@Nullable DyeColor color) {
         if (color == null) return -1;
@@ -153,7 +205,7 @@ public class LaserBeamGlobalRenderer {
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         RenderSystem.disableCull();
         RenderSystem.setShader(() -> shader);
-        RenderSystem.setShaderTexture(3, GRADIENT_TEXTURE);
+        // Gradient colors are now pre-computed on CPU (no Sampler3 needed)
 
         poseStack.pushPose();
         poseStack.translate(
@@ -166,76 +218,98 @@ public class LaserBeamGlobalRenderer {
         RenderSystem.applyModelViewMatrix();
         poseStack.popPose();
 
-        if (shader.GAME_TIME != null) {
-            shader.GAME_TIME.set(((float) (gameTime % 24000) + partialTick) / 24000.0f);
+        try {
+            if (shader.GAME_TIME != null) {
+                shader.GAME_TIME.set(((float) (gameTime % 24000) + partialTick) / 24000.0f);
+            }
+
+            int power = Math.max(1, Math.min(16, beam.power));
+            // Power scaling to size
+            float powerScale = 0.65f + 0.55f * (power / 16.0f);
+
+            // Get tint color
+            float tintR, tintG, tintB;
+            if (beam.colorTint >= 0) {
+                tintR = ((beam.colorTint >> 16) & 0xFF) / 255.0f;
+                tintG = ((beam.colorTint >> 8) & 0xFF) / 255.0f;
+                tintB = (beam.colorTint & 0xFF) / 255.0f;
+            } else {
+                tintR = 1.0f;
+                tintG = 1.0f;
+                tintB = 1.0f;
+            }
+
+            Vec3 originRel = Vec3.ZERO;
+            Vec3 endRel = beamDir.scale(beam.range);
+
+            // Pre-compute gradient * tint per layer (replaces GPU-side Sampler3 lookup)
+            float[] gradOuter = getGradientColor(LAYER_OUTER, power);
+            float[] gradFlicker = getGradientColor(LAYER_FLICKER, power);
+            float[] gradTendril = getGradientColor(LAYER_TENDRIL, power);
+            float[] gradInner = getGradientColor(LAYER_INNER, power);
+            float[] gradCore = getGradientColor(LAYER_CORE, power);
+
+            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
+                    LAYER_OUTER, OUTER_RADIUS * powerScale, OUTER_ALPHA, power,
+                    gradOuter[0] * tintR, gradOuter[1] * tintG, gradOuter[2] * tintB, shader);
+            renderFlickerLayer(originRel, endRel, right, up,
+                    FLICKER_RADIUS * powerScale, FLICKER_ALPHA, power,
+                    gradFlicker[0] * tintR, gradFlicker[1] * tintG, gradFlicker[2] * tintB, shader);
+            renderTendrils(originRel, endRel, right, up, beamDir,
+                    TENDRIL_ALPHA, power, powerScale, gameTime, beamHash,
+                    gradTendril[0] * tintR, gradTendril[1] * tintG, gradTendril[2] * tintB, shader);
+            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
+                    LAYER_INNER, INNER_RADIUS * powerScale, INNER_ALPHA, power,
+                    gradInner[0] * tintR, gradInner[1] * tintG, gradInner[2] * tintB, shader);
+            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
+                    LAYER_CORE, CORE_RADIUS * powerScale, CORE_ALPHA, power,
+                    gradCore[0] * tintR, gradCore[1] * tintG, gradCore[2] * tintB, shader);
+        } catch (Exception e) {
+            CECMod.getLogger().error("Error rendering laser beam", e);
+        } finally {
+            // Always restore GL state even if rendering crashed
+            RenderSystem.getModelViewStack().popPose();
+            RenderSystem.applyModelViewMatrix();
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
+            RenderSystem.enableCull();
+            RenderSystem.defaultBlendFunc();
         }
-
-        int power = Math.max(1, Math.min(16, beam.power));
-        // Power scaling to size
-        float powerScale = 0.65f + 0.55f * (power / 16.0f);
-
-        // Get tint color
-        float tintR, tintG, tintB;
-        if (beam.colorTint >= 0) {
-            tintR = ((beam.colorTint >> 16) & 0xFF) / 255.0f;
-            tintG = ((beam.colorTint >> 8) & 0xFF) / 255.0f;
-            tintB = (beam.colorTint & 0xFF) / 255.0f;
-        } else {
-            tintR = 1.0f;
-            tintG = 1.0f;
-            tintB = 1.0f;
-        }
-
-        Vec3 originRel = Vec3.ZERO;
-        Vec3 endRel = beamDir.scale(beam.range);
-
-        renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                LAYER_OUTER, OUTER_RADIUS * powerScale, OUTER_ALPHA, power, tintR, tintG, tintB, shader);
-        renderFlickerLayer(originRel, endRel, right, up,
-                FLICKER_RADIUS * powerScale, FLICKER_ALPHA, power, tintR, tintG, tintB, shader);
-        renderTendrils(originRel, endRel, right, up, beamDir,
-                TENDRIL_ALPHA, power, powerScale, gameTime, beamHash, tintR, tintG, tintB, shader);
-        renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                LAYER_INNER, INNER_RADIUS * powerScale, INNER_ALPHA, power, tintR, tintG, tintB, shader);
-        renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                LAYER_CORE, CORE_RADIUS * powerScale, CORE_ALPHA, power, tintR, tintG, tintB, shader);
-
-        // Restore state
-        RenderSystem.getModelViewStack().popPose();
-        RenderSystem.applyModelViewMatrix();
-        RenderSystem.depthMask(true);
-        RenderSystem.disableBlend();
-        RenderSystem.enableCull();
-        RenderSystem.defaultBlendFunc();
     }
 
 
     private static void renderCrossBillboardLayer(Vec3 originRel, Vec3 endRel, Vec3 right, Vec3 up,
                                                    Vec3 beamDir, int layerIndex, float radius, float alpha,
-                                                   int power, float tintR, float tintG, float tintB, ShaderInstance shader) {
+                                                   int power, float colorR, float colorG, float colorB, ShaderInstance shader) {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        try {
+            builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
 
-        for (double angle : CROSS_ANGLES) {
-            // Rotate the offset vector around the beam axis
-            Vec3 offset = right.scale(Math.cos(angle) * radius)
-                    .add(up.scale(Math.sin(angle) * radius));
+            for (double angle : CROSS_ANGLES) {
+                // Rotate the offset vector around the beam axis
+                Vec3 offset = right.scale(Math.cos(angle) * radius)
+                        .add(up.scale(Math.sin(angle) * radius));
 
-            Vec3 v0 = originRel.subtract(offset);
-            Vec3 v1 = originRel.add(offset);
-            Vec3 v2 = endRel.add(offset);
-            Vec3 v3 = endRel.subtract(offset);
+                Vec3 v0 = originRel.subtract(offset);
+                Vec3 v1 = originRel.add(offset);
+                Vec3 v2 = endRel.add(offset);
+                Vec3 v3 = endRel.subtract(offset);
 
-            addVertex(builder, v0, 0.0f, 0.0f, layerIndex, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v1, 0.0f, 1.0f, layerIndex, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v2, 1.0f, 1.0f, layerIndex, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v3, 1.0f, 0.0f, layerIndex, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v0, 0.0f, 0.0f, layerIndex, power, alpha, colorR, colorG, colorB);
+                addVertex(builder, v1, 0.0f, 1.0f, layerIndex, power, alpha, colorR, colorG, colorB);
+                addVertex(builder, v2, 1.0f, 1.0f, layerIndex, power, alpha, colorR, colorG, colorB);
+                addVertex(builder, v3, 1.0f, 0.0f, layerIndex, power, alpha, colorR, colorG, colorB);
+            }
+
+            shader.apply();
+            BufferUploader.drawWithShader(builder.end());
+            shader.clear();
+        } catch (Exception e) {
+            // Discard the buffer if it's still building to prevent cascading failures
+            try { builder.end(); } catch (Exception ignored) {}
+            throw e;
         }
-
-        shader.apply();
-        BufferUploader.drawWithShader(builder.end());
-        shader.clear();
     }
 
     /**
@@ -245,25 +319,29 @@ public class LaserBeamGlobalRenderer {
                                            float radius, float alpha, int power, float tintR, float tintG, float tintB, ShaderInstance shader) {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        try {
+            builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
 
-        // Two quads at 0 and 90 degrees
-        Vec3[] offsets = {right.scale(radius), up.scale(radius)};
-        for (Vec3 offset : offsets) {
-            Vec3 v0 = originRel.subtract(offset);
-            Vec3 v1 = originRel.add(offset);
-            Vec3 v2 = endRel.add(offset);
-            Vec3 v3 = endRel.subtract(offset);
+            Vec3[] offsets = {right.scale(radius), up.scale(radius)};
+            for (Vec3 offset : offsets) {
+                Vec3 v0 = originRel.subtract(offset);
+                Vec3 v1 = originRel.add(offset);
+                Vec3 v2 = endRel.add(offset);
+                Vec3 v3 = endRel.subtract(offset);
 
-            addVertex(builder, v0, 0.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v1, 0.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v2, 1.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v3, 1.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v0, 0.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v1, 0.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v2, 1.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v3, 1.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+            }
+
+            shader.apply();
+            BufferUploader.drawWithShader(builder.end());
+            shader.clear();
+        } catch (Exception e) {
+            try { builder.end(); } catch (Exception ignored) {}
+            throw e;
         }
-
-        shader.apply();
-        BufferUploader.drawWithShader(builder.end());
-        shader.clear();
     }
 
     /**
@@ -273,60 +351,56 @@ public class LaserBeamGlobalRenderer {
     private static void renderTendrils(Vec3 originRel, Vec3 endRel, Vec3 right, Vec3 up,
                                        Vec3 beamDir, float alpha, int power, float powerScale,
                                        long gameTime, int beamHash, float tintR, float tintG, float tintB, ShaderInstance shader) {
-        // Seed changes every 3 ticks for persistent arc shapes
         long seed = beamHash ^ ((gameTime / 3) * 31L);
         Random rand = new Random(seed);
 
-        // Power-scaled count: 6 at power 1, 16 at power 16
         int tendrilCount = 6 + (int) ((power - 1) / 15.0f * 10);
 
         Vec3 beamVec = endRel.subtract(originRel);
-        float beamLength = (float) beamVec.length();
 
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.getBuilder();
-        builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        try {
+            builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
 
-        for (int i = 0; i < tendrilCount; i++) {
-            // Arc start position along beam (0.0 to 0.7)
-            float tStart = rand.nextFloat() * 0.7f;
-            // Arc length: 10-30% of beam length
-            float arcFraction = 0.1f + rand.nextFloat() * 0.2f;
-            float tEnd = Math.min(1.0f, tStart + arcFraction);
+            for (int i = 0; i < tendrilCount; i++) {
+                float tStart = rand.nextFloat() * 0.7f;
+                float arcFraction = 0.1f + rand.nextFloat() * 0.2f;
+                float tEnd = Math.min(1.0f, tStart + arcFraction);
 
-            Vec3 arcStart = originRel.add(beamVec.scale(tStart));
-            Vec3 arcEnd = originRel.add(beamVec.scale(tEnd));
+                Vec3 arcStart = originRel.add(beamVec.scale(tStart));
+                Vec3 arcEnd = originRel.add(beamVec.scale(tEnd));
 
-            // Radial position on beam surface
-            float angle = rand.nextFloat() * (float) (Math.PI * 2.0);
-            float radialDist = (0.12f + rand.nextFloat() * 0.22f) * powerScale;
-            Vec3 offset = right.scale(Math.cos(angle) * radialDist)
-                    .add(up.scale(Math.sin(angle) * radialDist));
+                float angle = rand.nextFloat() * (float) (Math.PI * 2.0);
+                float radialDist = (0.12f + rand.nextFloat() * 0.22f) * powerScale;
+                Vec3 offset = right.scale(Math.cos(angle) * radialDist)
+                        .add(up.scale(Math.sin(angle) * radialDist));
 
-            // Strip width
-            float stripWidth = 0.018f + rand.nextFloat() * 0.025f;
-            // Use a tangent perpendicular to both beam and offset direction
-            Vec3 offsetNorm = offset.normalize();
-            Vec3 tangent = beamDir.cross(offsetNorm).normalize().scale(stripWidth);
+                float stripWidth = 0.018f + rand.nextFloat() * 0.025f;
+                Vec3 offsetNorm = offset.normalize();
+                Vec3 tangent = beamDir.cross(offsetNorm).normalize().scale(stripWidth);
 
-            Vec3 v0 = arcStart.add(offset).subtract(tangent);
-            Vec3 v1 = arcStart.add(offset).add(tangent);
-            Vec3 v2 = arcEnd.add(offset).add(tangent);
-            Vec3 v3 = arcEnd.add(offset).subtract(tangent);
+                Vec3 v0 = arcStart.add(offset).subtract(tangent);
+                Vec3 v1 = arcStart.add(offset).add(tangent);
+                Vec3 v2 = arcEnd.add(offset).add(tangent);
+                Vec3 v3 = arcEnd.add(offset).subtract(tangent);
 
-            // UV: u maps along arc length, v maps across strip width
-            float uStart = tStart;
-            float uEnd = tEnd;
+                float uStart = tStart;
+                float uEnd = tEnd;
 
-            addVertex(builder, v0, uStart, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v1, uStart, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v2, uEnd, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-            addVertex(builder, v3, uEnd, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v0, uStart, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v1, uStart, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v2, uEnd, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+                addVertex(builder, v3, uEnd, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+            }
+
+            shader.apply();
+            BufferUploader.drawWithShader(builder.end());
+            shader.clear();
+        } catch (Exception e) {
+            try { builder.end(); } catch (Exception ignored) {}
+            throw e;
         }
-
-        shader.apply();
-        BufferUploader.drawWithShader(builder.end());
-        shader.clear();
     }
 
     private static void addVertex(BufferBuilder builder, Vec3 pos, float u, float v,

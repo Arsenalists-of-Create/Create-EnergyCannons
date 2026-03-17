@@ -21,7 +21,7 @@ import rbasamoyai.createbigcannons.munitions.big_cannon.FuzedBlockEntityRenderer
 @Mixin(FuzedBlockEntityRenderer.class)
 public abstract class FuzedBlockEntityRendererMixin {
     //adds sled model to the fuzed shell
-    @Inject(method = "renderSafe(Lrbasamoyai/createbigcannons/munitions/big_cannon/FuzedBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V", at = @At("HEAD"))
+    @Inject(method = "renderSafe", at = @At("HEAD"), remap = false, require = 1)
     private void renderSled(FuzedBlockEntity blockEntity, float partialTicks, PoseStack posestack, MultiBufferSource buffers, int packedLight, int packedOverlay, CallbackInfo ci) {
         if (blockEntity instanceof IMagneticSled sledBlockEntity && sledBlockEntity.isSled()) {
             BlockState state = blockEntity.getBlockState();

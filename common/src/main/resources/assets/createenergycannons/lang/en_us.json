@@ -11,6 +11,7 @@
   "block.createenergycannons.steel_rail_screw_breech": "Steel Rail Screw Breech",
   "block.createenergycannons.steel_rail_sliding_breech": "Steel Rail Sliding Breech",
   "item.createenergycannons.magnetic_sled": "Magnetic Sled",
+  "tooltip.createenergycannons.magnetic_sled": "Magnetic Sled Attached",
   "itemGroup.createenergycannons.createenergycannons": "Create Energy Cannons",
 
   "createenergycannons.ponder.tag.energy_cannons": "Energy Cannons",
@@ -38,6 +39,13 @@
   "createenergycannons.ponder.laser_basics.text_3": "The beam breaks blocks in its path!",
   "createenergycannons.ponder.laser_basics.text_4": "It also damages entities in the beam!",
   "createenergycannons.ponder.laser_basics.text_5": "Use CBC controls to aim the laser",
+
+  "createenergycannons.ponder.laser_lens_color.header": "Laser Lens Color",
+  "createenergycannons.ponder.laser_lens_color.text_1": "Lasers can be tinted with colored lenses!",
+  "createenergycannons.ponder.laser_lens_color.text_2": "The back of the laser has a filter slot",
+  "createenergycannons.ponder.laser_lens_color.text_3": "Place any Stained Glass Pane in the slot to set the beam color",
+  "createenergycannons.ponder.laser_lens_color.text_4": "All 16 dye colors are supported!",
+  "createenergycannons.ponder.laser_lens_color.text_5": "Without a lens, the beam uses its default white color",
 
   "createenergycannons.ponder.magnetic_cannon_basics.header": "Magnetic Cannon Basics",
   "createenergycannons.ponder.magnetic_cannon_basics.text_1": "Magnetic cannons use electromagnetic acceleration instead of powder",

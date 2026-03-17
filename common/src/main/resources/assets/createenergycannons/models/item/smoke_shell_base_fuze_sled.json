@@ -1,0 +1,9 @@
+{
+  "parent": "createenergycannons:block/projectile_block_fuze_base_with_sled",
+  "textures": {
+    "bottom": "createbigcannons:block/projectile/smoke_shell_bottom",
+    "particle": "createbigcannons:block/projectile/smoke_shell_top",
+    "side": "createbigcannons:block/projectile/smoke_shell",
+    "top": "createbigcannons:block/projectile/smoke_shell_top"
+  }
+}

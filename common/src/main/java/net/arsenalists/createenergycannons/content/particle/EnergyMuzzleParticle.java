@@ -45,11 +45,12 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                 if (shader != null) {
                     RenderSystem.setShaderTexture(3, gradient);
                     RenderSystem.setShader(() -> shader);
+                    builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
                 } else {
-                    // Fallback to vanilla particle shader if custom shader not loaded yet
+                    // Fallback to vanilla particle shader with matching vertex format
                     RenderSystem.setShader(GameRenderer::getParticleShader);
+                    builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                 }
-                builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
             }
 
             @Override
@@ -60,6 +61,10 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
             @Override
             public String toString() { return name; }
         };
+    }
+
+    private static boolean useCustomShader() {
+        return CECClientShaders.getEnergyMuzzleParticleShader() != null;
     }
 
     static final ParticleRenderType RAIL_RENDER_TYPE = makeRenderType(
@@ -175,32 +180,56 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
         float n = this.getV0();
         float o = this.getV1();
         int p = this.getLightColor(partialTicks);
-        int cannonPower = this.power;
 
-        buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
-            .uv(m, o)
-            .overlayCoords(0, cannonPower)
-            .color(this.rCol, this.gCol, this.bCol, this.alpha)
-            .uv2(p)
-            .endVertex();
-        buffer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z())
-            .uv(m, n)
-            .overlayCoords(0, cannonPower)
-            .color(this.rCol, this.gCol, this.bCol, this.alpha)
-            .uv2(p)
-            .endVertex();
-        buffer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z())
-            .uv(l, n)
-            .overlayCoords(0, cannonPower)
-            .color(this.rCol, this.gCol, this.bCol, this.alpha)
-            .uv2(p)
-            .endVertex();
-        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z())
-            .uv(l, o)
-            .overlayCoords(0, cannonPower)
-            .color(this.rCol, this.gCol, this.bCol, this.alpha)
-            .uv2(p)
-            .endVertex();
+        if (useCustomShader()) {
+            int cannonPower = this.power;
+            buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+                .uv(m, o)
+                .overlayCoords(0, cannonPower)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z())
+                .uv(m, n)
+                .overlayCoords(0, cannonPower)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z())
+                .uv(l, n)
+                .overlayCoords(0, cannonPower)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z())
+                .uv(l, o)
+                .overlayCoords(0, cannonPower)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+        } else {
+            // Vanilla fallback: standard PARTICLE format
+            buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+                .uv(m, o)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z())
+                .uv(m, n)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z())
+                .uv(l, n)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+            buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z())
+                .uv(l, o)
+                .color(this.rCol, this.gCol, this.bCol, this.alpha)
+                .uv2(p)
+                .endVertex();
+        }
     }
 
     public static class Provider implements ParticleProvider<EnergyMuzzleParticleData> {

@@ -92,7 +92,6 @@ public class CECMod {
     public static void clientInit() {
         PonderIndex.addPlugin(new CECPonderPlugin());
     }
-
     public static Logger getLogger() {
         return LOGGER;
     }

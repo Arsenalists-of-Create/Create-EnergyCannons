@@ -402,6 +402,14 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             return;
         }
 
+        // Check if there's actually a shell loaded before doing overheat checks
+        BlockPos firstPos = this.startPos.immutable();
+        if (this.presentBlockEntities.get(firstPos) instanceof IBigCannonBlockEntity firstCbe) {
+            if (firstCbe.cannonBehavior().block().state().isAir()) return;
+        } else {
+            return;
+        }
+
         for (BlockEntity be : this.presentBlockEntities.values()) {
             if (be instanceof RailGunBlockEntity railgunBE && railgunBE.isOverheated(currentTime)) {
                 this.fail(railgunBE.getBlockPos(), level, entity, null, 10);
@@ -740,8 +748,14 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 return;
             if (this.isDropMortar()) return;
 
-            // Check if any coilgun is overheated
+            // Check if there's actually a shell loaded before doing overheat checks
             long currentTime = level.getGameTime();
+            BlockPos firstPos = this.startPos.immutable();
+            if (this.presentBlockEntities.get(firstPos) instanceof IBigCannonBlockEntity firstCbe) {
+                if (firstCbe.cannonBehavior().block().state().isAir()) return;
+            } else {
+                return;
+            }
 
             // Check all coilgun block entities
             for (BlockEntity be : this.presentBlockEntities.values()) {

@@ -1,0 +1,11 @@
+{
+  "parent": "createbigcannons:block/ap_shot",
+  "overrides": [
+    {
+      "predicate": {
+        "createenergycannons:has_sled": 1.0
+      },
+      "model": "createenergycannons:item/ap_shot_sled"
+    }
+  ]
+}

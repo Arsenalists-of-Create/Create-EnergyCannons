@@ -36,12 +36,13 @@ public abstract class BigCannonProjectileBlockEntityMixin extends SyncedBlockEnt
         return this.create_EnergyCannons$sled;
     }
 
-    @Inject(method = "saveAdditional", at = @At("TAIL"), require = 0)
+
+    @Inject(method = {"saveAdditional", "method_11007"}, at = @At("TAIL"), remap = false, require = 1)
     private void saveSledState(CompoundTag tag, CallbackInfo ci) {
         tag.putBoolean("Sled", this.create_EnergyCannons$sled);
     }
 
-    @Inject(method = "load", at = @At("TAIL"), require = 0)
+    @Inject(method = {"load", "method_11014"}, at = @At("TAIL"), remap = false, require = 1)
     private void loadSledState(CompoundTag tag, CallbackInfo ci) {
         this.create_EnergyCannons$sled = tag.getBoolean("Sled");
     }

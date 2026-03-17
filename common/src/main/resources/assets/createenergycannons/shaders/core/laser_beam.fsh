@@ -1,7 +1,5 @@
 #version 150
-#moj_import <fog.glsl>
 
-uniform sampler2D Sampler3;
 uniform vec4 ColorModulator;
 uniform float FogStart;
 uniform float FogEnd;
@@ -15,6 +13,15 @@ flat in int layerIndex;
 flat in int cannonPower;
 
 out vec4 fragColor;
+
+// Inlined fog to avoid #moj_import <fog.glsl> which Iris/OptiFine patches
+vec4 cec_linear_fog(vec4 inColor, float vertexDistance, float fogStart, float fogEnd, vec4 fogColor) {
+    if (vertexDistance <= fogStart) {
+        return inColor;
+    }
+    float fogValue = vertexDistance < fogEnd ? smoothstep(fogEnd, fogStart, vertexDistance) : 0.0;
+    return vec4(mix(fogColor.rgb, inColor.rgb, fogValue) * inColor.a, inColor.a);
+}
 
 // noise
 
@@ -102,9 +109,8 @@ void main() {
     distortedDist = clamp(distortedDist, 0.0, 1.0);
     float distortedThickness = cylinderThickness(clamp(distortedDist, 0.0, 0.999));
 
-    // Gradient LUT lookup
-    int powerRow = clamp(cannonPower - 1, 0, textureSize(Sampler3, 0).y - 1);
-    vec4 gradientColor = texelFetch(Sampler3, ivec2(layerIndex, powerRow), 0);
+    // Gradient color is now pre-computed on CPU and passed via vertexColor
+    // (removes Sampler3 dependency for shader mod compatibility)
 
     float animatedAlpha = 1.0;
     float whiteHot = 0.0;
@@ -218,10 +224,11 @@ void main() {
 
     // Final composition ---
     // White-hot: center of beam desaturates toward pure white light
-    vec3 finalColor = mix(gradientColor.rgb, vec3(1.0), clamp(whiteHot, 0.0, 0.85)) * vertexColor.rgb;
+    // vertexColor.rgb now carries gradient * tint (pre-computed on CPU)
+    vec3 finalColor = mix(vertexColor.rgb, vec3(1.0), clamp(whiteHot, 0.0, 0.85));
 
     float finalAlpha = vertexColor.a * animatedAlpha;
 
     vec4 color = vec4(finalColor, finalAlpha) * ColorModulator;
-    fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
+    fragColor = cec_linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
 }

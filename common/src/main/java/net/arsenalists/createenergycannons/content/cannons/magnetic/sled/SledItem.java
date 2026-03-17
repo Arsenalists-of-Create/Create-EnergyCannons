@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class SledItem extends Item {
     public SledItem(Properties pProperties) {
@@ -17,9 +18,11 @@ public class SledItem extends Item {
     public InteractionResult useOn(UseOnContext pContext) {
         Level level = pContext.getLevel();
         BlockPos blockPos = pContext.getClickedPos();
-        if (level.getBlockEntity(blockPos) instanceof IMagneticSled sled) {
+        BlockEntity be = level.getBlockEntity(blockPos);
+        if (be instanceof IMagneticSled sled) {
             if (!sled.isSled()) {
                 sled.setSled(true);
+                be.setChanged();
                 level.playSound(null, blockPos, SoundEvents.ANVIL_PLACE, SoundSource.BLOCKS, 0.5f, 1.0f);
                 if (pContext.getPlayer() != null && !pContext.getPlayer().isCreative())
                     pContext.getItemInHand().shrink(1);

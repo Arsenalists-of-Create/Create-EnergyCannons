@@ -21,6 +21,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -66,9 +71,27 @@ public final class CECModFabricClient implements ClientModInitializer {
         ParticleFactoryRegistry.getInstance().register(
             CECParticles.ENERGY_CANNON_PLUME.get(), spriteProvider -> new EnergyCannonPlumeParticle.Provider());
 
+        // Register sled item property for model overrides
+        registerSledItemProperty();
+
         // Register render events
         WorldRenderEvents.AFTER_TRANSLUCENT.register(CECModFabricClient::renderAfterTranslucent);
         WorldRenderEvents.AFTER_ENTITIES.register(CECModFabricClient::renderAfterEntities);
+    }
+
+    private static void registerSledItemProperty() {
+        ResourceLocation sledProp = new ResourceLocation(CECMod.MODID, "has_sled");
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof rbasamoyai.createbigcannons.munitions.big_cannon.ProjectileBlockItem) {
+                ItemProperties.register(item, sledProp, (stack, level, entity, seed) -> {
+                    CompoundTag tag = stack.getTag();
+                    if (tag != null && tag.contains("BlockEntityTag")) {
+                        return tag.getCompound("BlockEntityTag").getBoolean("Sled") ? 1.0f : 0.0f;
+                    }
+                    return 0.0f;
+                });
+            }
+        }
     }
 
     private static void renderAfterTranslucent(WorldRenderContext ctx) {

@@ -1,0 +1,37 @@
+{
+  "parent": "createbigcannons:block/he_shell",
+  "overrides": [
+    {
+      "predicate": {
+        "createbigcannons:fuze_state": 1.0
+      },
+      "model": "createbigcannons:item/he_shell_head_fuze"
+    },
+    {
+      "predicate": {
+        "createbigcannons:fuze_state": 2.0
+      },
+      "model": "createbigcannons:item/he_shell_base_fuze"
+    },
+    {
+      "predicate": {
+        "createenergycannons:has_sled": 1.0
+      },
+      "model": "createenergycannons:item/he_shell_sled"
+    },
+    {
+      "predicate": {
+        "createbigcannons:fuze_state": 1.0,
+        "createenergycannons:has_sled": 1.0
+      },
+      "model": "createenergycannons:item/he_shell_head_fuze_sled"
+    },
+    {
+      "predicate": {
+        "createbigcannons:fuze_state": 2.0,
+        "createenergycannons:has_sled": 1.0
+      },
+      "model": "createenergycannons:item/he_shell_base_fuze_sled"
+    }
+  ]
+}
