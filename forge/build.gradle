@@ -128,8 +128,7 @@ task remapShadowJar {
         }
 
         // Strip the Fabric intermediary refmap from the Forge jar.
-        // On Forge (SRG), class names match Mojang names, so mixin descriptors
-        // work without remapping. The intermediary refmap would incorrectly remap them.
+        // listed in the method arrays, so no refmap is needed.
         def tempJar = new File(outputJar.parentFile, outputJar.name + ".tmp")
         new java.util.zip.ZipInputStream(outputJar.newInputStream()).withCloseable { zis ->
             new java.util.zip.ZipOutputStream(tempJar.newOutputStream()).withCloseable { zos ->

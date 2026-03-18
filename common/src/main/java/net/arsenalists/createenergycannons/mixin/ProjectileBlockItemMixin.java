@@ -17,7 +17,7 @@ import java.util.List;
 @Mixin(ProjectileBlockItem.class)
 public abstract class ProjectileBlockItemMixin {
 
-    @Inject(method = {"appendHoverText", "method_7851"}, at = @At("TAIL"), remap = false, require = 1)
+    @Inject(method = {"appendHoverText", "method_7851", "m_7373_"}, at = @At("TAIL"), remap = false, require = 1)
     private void addSledTooltip(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag, CallbackInfo ci) {
         CompoundTag beTag = stack.getOrCreateTag().getCompound("BlockEntityTag");
         if (beTag.getBoolean("Sled")) {
