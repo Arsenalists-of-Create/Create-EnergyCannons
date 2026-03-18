@@ -24,7 +24,7 @@ public abstract class BlockDropsMixin {
 
     @Inject(method = {"getDrops(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;",
                        "method_9609"},
-            at = @At("RETURN"), remap = false, require = 1)
+            at = @At("RETURN"), remap = false, require = 0)
     private static void addSledToDrops(BlockState state, ServerLevel level, BlockPos pos,
                                        BlockEntity blockEntity, Entity entity, ItemStack tool,
                                        CallbackInfoReturnable<List<ItemStack>> cir) {
