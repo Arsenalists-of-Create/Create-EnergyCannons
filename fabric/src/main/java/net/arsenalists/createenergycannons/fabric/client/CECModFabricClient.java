@@ -58,7 +58,7 @@ public final class CECModFabricClient implements ClientModInitializer {
             );
             ctx.register(
                 CECMod.resource("laser_beam"),
-                CECVertexFormats.PARTICLE_WITH_OVERLAY,
+                net.arsenalists.createenergycannons.content.particle.CECVertexFormats.PARTICLE_WITH_OVERLAY,
                 shader -> CECClientShaders.laserBeamShader = shader
             );
         });
@@ -100,11 +100,15 @@ public final class CECModFabricClient implements ClientModInitializer {
         Level level = mc.level;
         if (level == null) return;
 
+
+        net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource =
+                (net.minecraft.client.renderer.MultiBufferSource.BufferSource) ctx.consumers();
+
         Vec3 cam = ctx.camera().getPosition();
         net.arsenalists.createenergycannons.client.LaserBurnRenderer.renderLaserBurns(
-            ctx.matrixStack(), mc.renderBuffers().bufferSource(), cam, level);
+            ctx.matrixStack(), bufferSource, cam, level);
         net.arsenalists.createenergycannons.content.cannons.laser.LaserBeamGlobalRenderer.renderFrame(
-            ctx.matrixStack(), mc.renderBuffers().bufferSource(),
+            ctx.matrixStack(),
             cam, ctx.tickDelta(), level.getGameTime());
     }
 
@@ -114,8 +118,11 @@ public final class CECModFabricClient implements ClientModInitializer {
         Level level = mc.level;
         if (level == null) return;
 
+        net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource =
+                (net.minecraft.client.renderer.MultiBufferSource.BufferSource) ctx.consumers();
+
         Vec3 cam = ctx.camera().getPosition();
         net.arsenalists.createenergycannons.client.MagneticSledWorldRenderer.renderSleds(
-            ctx.matrixStack(), mc.renderBuffers().bufferSource(), cam, level);
+            ctx.matrixStack(), bufferSource, cam, level);
     }
 }

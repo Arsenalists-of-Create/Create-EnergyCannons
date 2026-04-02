@@ -79,7 +79,11 @@ public class LaserBurnRenderer {
             poseStack.popPose();
         }
 
-        buffer.endBatch();
+        // Flush only our burn decal batches, not all batches
+        // (flushing all batches can break Iris's deferred rendering pipeline)
+        for (RenderType rt : BURN_RENDER_TYPES) {
+            buffer.endBatch(rt);
+        }
     }
 
     // Wraps a VertexConsumer to force full brightness and support alpha

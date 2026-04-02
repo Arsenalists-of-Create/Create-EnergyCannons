@@ -6,15 +6,20 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.client.CECClientShaders;
+import net.arsenalists.createenergycannons.client.CECRenderTypes;
 import net.arsenalists.createenergycannons.content.particle.CECVertexFormats;
+import net.createmod.catnip.render.DefaultSuperRenderTypeBuffer;
+import net.createmod.catnip.render.SuperRenderTypeBuffer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 @Environment(EnvType.CLIENT)
 public class LaserBeamGlobalRenderer {
@@ -41,31 +47,32 @@ public class LaserBeamGlobalRenderer {
     private static final float OUTER_RADIUS = 0.65f;
     private static final float FLICKER_RADIUS = 1.05f;
 
-    // Alpha values per layer (using addiditive blending)
     private static final float CORE_ALPHA = 0.65f;
     private static final float INNER_ALPHA = 0.40f;
     private static final float OUTER_ALPHA = 0.10f;
     private static final float TENDRIL_ALPHA = 0.80f;
     private static final float FLICKER_ALPHA = 0.06f;
 
-    // circular sorta shape
+    // Fallback alphas (lower because no per-pixel noise modulation)
+    private static final float FB_CORE_ALPHA = 0.45f;
+    private static final float FB_INNER_ALPHA = 0.25f;
+    private static final float FB_OUTER_ALPHA = 0.12f;
+    private static final float FB_TENDRIL_ALPHA = 0.65f;
+    private static final float FB_FLICKER_ALPHA = 0.05f;
+
     private static final double[] CROSS_ANGLES = {
             0.0, Math.PI / 5.0, 2.0 * Math.PI / 5.0, 3.0 * Math.PI / 5.0, 4.0 * Math.PI / 5.0
     };
 
     public record BeamData(
-            Vec3 origin,
-            Vec3 direction,
-            int range,
-            int power,
-            boolean isMounted,
-            long lastUpdateTick,
-            int colorTint
+            Vec3 origin, Vec3 direction, int range, int power,
+            boolean isMounted, long lastUpdateTick, int colorTint
     ) {}
 
     private static final Map<Integer, BeamData> ACTIVE_BEAMS = new ConcurrentHashMap<>();
 
-    private static float[][][] gradientColors = null; // [x][y] = {r, g, b}
+    // CPU-side gradient cache
+    private static float[][][] gradientColors = null;
 
     private static void ensureGradientLoaded() {
         if (gradientColors != null) return;
@@ -89,16 +96,13 @@ public class LaserBeamGlobalRenderer {
                 }
             }
         } catch (Exception e) {
-            CECMod.getLogger().warn("Failed to load laser beam gradient texture for CPU lookup", e);
+            CECMod.getLogger().warn("Failed to load laser beam gradient texture", e);
         }
         if (gradientColors == null) {
-            // Default: white for all entries
             gradientColors = new float[5][16][3];
-            for (int x = 0; x < 5; x++) {
-                for (int y = 0; y < 16; y++) {
+            for (int x = 0; x < 5; x++)
+                for (int y = 0; y < 16; y++)
                     gradientColors[x][y] = new float[]{1.0f, 1.0f, 1.0f};
-                }
-            }
         }
     }
 
@@ -109,17 +113,12 @@ public class LaserBeamGlobalRenderer {
         return gradientColors[x][y];
     }
 
-    public static void clearGradientCache() {
-        gradientColors = null;
-    }
+    public static void clearGradientCache() { gradientColors = null; }
 
     public static int dyeColorToTint(@Nullable DyeColor color) {
         if (color == null) return -1;
         float[] rgb = color.getTextureDiffuseColors();
-        int r = (int) (rgb[0] * 255);
-        int g = (int) (rgb[1] * 255);
-        int b = (int) (rgb[2] * 255);
-        return (r << 16) | (g << 8) | b;
+        return ((int)(rgb[0]*255) << 16) | ((int)(rgb[1]*255) << 8) | (int)(rgb[2]*255);
     }
 
     public static void registerWorldBeam(LaserBlockEntity be) {
@@ -129,17 +128,10 @@ public class LaserBeamGlobalRenderer {
             return;
         }
         Direction dir = be.getBlockState().getValue(LaserBlock.FACING);
-        Vec3 direction = Vec3.atLowerCornerOf(dir.getNormal());
-
         ACTIVE_BEAMS.put(be.getBlockPos().hashCode(), new BeamData(
-                Vec3.atCenterOf(be.getBlockPos()),
-                direction,
-                be.getRange(),
-                be.getFireRate(),
-                false,
-                be.getLevel().getGameTime(),
-                dyeColorToTint(be.getLensColor())
-        ));
+                Vec3.atCenterOf(be.getBlockPos()), Vec3.atLowerCornerOf(dir.getNormal()),
+                be.getRange(), be.getFireRate(), false,
+                be.getLevel().getGameTime(), dyeColorToTint(be.getLensColor())));
     }
 
     public static void registerMountedBeam(int entityId, Vec3 origin, Vec3 direction,
@@ -151,123 +143,143 @@ public class LaserBeamGlobalRenderer {
         ACTIVE_BEAMS.put(entityId, new BeamData(origin, direction, range, power, true, gameTick, colorTint));
     }
 
-    public static void remove(int key) {
-        ACTIVE_BEAMS.remove(key);
+    public static void remove(int key) { ACTIVE_BEAMS.remove(key); }
+    public static void clear() { ACTIVE_BEAMS.clear(); }
+
+    private static Boolean shaderModPresent = null;
+
+
+    private static boolean isShaderModPresent() {
+        if (shaderModPresent != null) return shaderModPresent;
+        shaderModPresent = false;
+        // Iris (Fabric)
+        try { Class.forName("net.irisshaders.iris.api.v0.IrisApi"); shaderModPresent = true; } catch (Exception ignored) {}
+        // Oculus (Forge port of Iris)
+        if (!shaderModPresent) try { Class.forName("net.irisshaders.iris.Iris"); shaderModPresent = true; } catch (Exception ignored) {}
+        // OptiFine
+        if (!shaderModPresent) try { Class.forName("net.optifine.shaders.Shaders"); shaderModPresent = true; } catch (Exception ignored) {}
+        // Embeddium/Rubidium shaders extension
+        if (!shaderModPresent) try { Class.forName("org.embeddedt.embeddium.api.EmbeddiumApi"); shaderModPresent = true; } catch (Exception ignored) {}
+        return shaderModPresent;
     }
 
-    public static void clear() {
-        ACTIVE_BEAMS.clear();
+    /**
+     * Checks if a shader pack is actually active (not just mod installed).
+     * Falls back to mod-presence check if API isn't available.
+     */
+    private static boolean isShaderPackActive() {
+        try {
+            // Iris/Oculus API: check if shader pack is in use
+            Class<?> irisApi = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            Object instance = irisApi.getMethod("getInstance").invoke(null);
+            return (boolean) irisApi.getMethod("isShaderPackInUse").invoke(instance);
+        } catch (Exception e) {
+            // No Iris API available - fall back to OptiFine check
+            try {
+                Class<?> shaders = Class.forName("net.optifine.shaders.Shaders");
+                Object currentPack = shaders.getField("currentShaderName").get(null);
+                return currentPack != null && !"OFF".equals(currentPack) && !"".equals(currentPack);
+            } catch (Exception ignored) {}
+            // Can't determine - if shader mod is present, assume active
+            return isShaderModPresent();
+        }
     }
 
-    public static void renderFrame(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
-                                   Vec3 cam, float partialTick, long gameTime) {
+    // ==================== ENTRY POINT ====================
+
+    /**
+     * Main render entry point. Uses custom shader when no shader pack is active,
+     * falls back to Create's pipeline when Iris/Oculus has shaders enabled.
+     */
+    public static void renderFrame(PoseStack poseStack, Vec3 cam, float partialTick, long gameTime) {
         if (ACTIVE_BEAMS.isEmpty()) return;
+
+        boolean shaderLoaded = CECClientShaders.getLaserBeamShader() != null;
+        boolean shaderPackOn = isShaderPackActive();
+        boolean useCustomShader = shaderLoaded && !shaderPackOn;
+
+        if (gameTime % 100 == 0) {
+            CECMod.getLogger().info("[LaserBeam] beams={} shaderLoaded={} shaderPackOn={} useCustom={}",
+                    ACTIVE_BEAMS.size(), shaderLoaded, shaderPackOn, useCustomShader);
+        }
 
         var it = ACTIVE_BEAMS.entrySet().iterator();
         while (it.hasNext()) {
             var entry = it.next();
             BeamData beam = entry.getValue();
+            if (gameTime - beam.lastUpdateTick > 5) { it.remove(); continue; }
 
-            if (gameTime - beam.lastUpdateTick > 5) {
-                it.remove();
-                continue;
+            if (useCustomShader) {
+                shaderRenderBeam(poseStack, cam, beam, partialTick, gameTime, entry.getKey());
+            } else {
+                // Accumulate into Create's buffer - drawn after loop
+                fallbackRenderBeam(poseStack, cam, beam, partialTick, gameTime, entry.getKey());
             }
+        }
 
-            renderBeamLayers(poseStack, cam, beam, partialTick, gameTime, entry.getKey());
+        if (!useCustomShader) {
+            // Flush Create's buffer
+            fallbackFlush();
         }
     }
 
-    private static void renderBeamLayers(PoseStack poseStack, Vec3 camera, BeamData beam,
-                                         float partialTick, long gameTime, int beamHash) {
-        Vec3 beamDir = beam.direction.normalize();
 
-        // Billboard basis vectors
+    private static void shaderRenderBeam(PoseStack poseStack, Vec3 camera, BeamData beam,
+                                          float partialTick, long gameTime, int beamHash) {
+        Vec3 beamDir = beam.direction.normalize();
         Vec3 beamMid = beam.origin.add(beamDir.scale(beam.range * 0.5));
         Vec3 toCamera = camera.subtract(beamMid).normalize();
         Vec3 right = beamDir.cross(toCamera).normalize();
-
         if (right.lengthSqr() < 0.001) {
             right = beamDir.cross(new Vec3(0, 1, 0)).normalize();
-            if (right.lengthSqr() < 0.001) {
+            if (right.lengthSqr() < 0.001)
                 right = beamDir.cross(new Vec3(1, 0, 0)).normalize();
-            }
         }
-
         Vec3 up = right.cross(beamDir).normalize();
 
         ShaderInstance shader = CECClientShaders.getLaserBeamShader();
         if (shader == null) return;
 
-        // state setup
         RenderSystem.depthMask(false);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         RenderSystem.disableCull();
         RenderSystem.setShader(() -> shader);
-        // Gradient colors are now pre-computed on CPU (no Sampler3 needed)
 
         poseStack.pushPose();
-        poseStack.translate(
-                beam.origin.x - camera.x,
-                beam.origin.y - camera.y,
-                beam.origin.z - camera.z
-        );
+        poseStack.translate(beam.origin.x - camera.x, beam.origin.y - camera.y, beam.origin.z - camera.z);
         RenderSystem.getModelViewStack().pushPose();
         RenderSystem.getModelViewStack().mulPoseMatrix(poseStack.last().pose());
         RenderSystem.applyModelViewMatrix();
         poseStack.popPose();
 
         try {
-            if (shader.GAME_TIME != null) {
-                shader.GAME_TIME.set(((float) (gameTime % 24000) + partialTick) / 24000.0f);
-            }
+            if (shader.GAME_TIME != null)
+                shader.GAME_TIME.set(((float)(gameTime % 24000) + partialTick) / 24000.0f);
 
             int power = Math.max(1, Math.min(16, beam.power));
-            // Power scaling to size
             float powerScale = 0.65f + 0.55f * (power / 16.0f);
-
-            // Get tint color
-            float tintR, tintG, tintB;
+            float tintR = 1, tintG = 1, tintB = 1;
             if (beam.colorTint >= 0) {
                 tintR = ((beam.colorTint >> 16) & 0xFF) / 255.0f;
                 tintG = ((beam.colorTint >> 8) & 0xFF) / 255.0f;
                 tintB = (beam.colorTint & 0xFF) / 255.0f;
-            } else {
-                tintR = 1.0f;
-                tintG = 1.0f;
-                tintB = 1.0f;
             }
 
-            Vec3 originRel = Vec3.ZERO;
-            Vec3 endRel = beamDir.scale(beam.range);
+            Vec3 o = Vec3.ZERO, e = beamDir.scale(beam.range);
+            float[] gO = getGradientColor(LAYER_OUTER, power), gF = getGradientColor(LAYER_FLICKER, power);
+            float[] gT = getGradientColor(LAYER_TENDRIL, power), gI = getGradientColor(LAYER_INNER, power);
+            float[] gC = getGradientColor(LAYER_CORE, power);
 
-            // Pre-compute gradient * tint per layer (replaces GPU-side Sampler3 lookup)
-            float[] gradOuter = getGradientColor(LAYER_OUTER, power);
-            float[] gradFlicker = getGradientColor(LAYER_FLICKER, power);
-            float[] gradTendril = getGradientColor(LAYER_TENDRIL, power);
-            float[] gradInner = getGradientColor(LAYER_INNER, power);
-            float[] gradCore = getGradientColor(LAYER_CORE, power);
-
-            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                    LAYER_OUTER, OUTER_RADIUS * powerScale, OUTER_ALPHA, power,
-                    gradOuter[0] * tintR, gradOuter[1] * tintG, gradOuter[2] * tintB, shader);
-            renderFlickerLayer(originRel, endRel, right, up,
-                    FLICKER_RADIUS * powerScale, FLICKER_ALPHA, power,
-                    gradFlicker[0] * tintR, gradFlicker[1] * tintG, gradFlicker[2] * tintB, shader);
-            renderTendrils(originRel, endRel, right, up, beamDir,
-                    TENDRIL_ALPHA, power, powerScale, gameTime, beamHash,
-                    gradTendril[0] * tintR, gradTendril[1] * tintG, gradTendril[2] * tintB, shader);
-            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                    LAYER_INNER, INNER_RADIUS * powerScale, INNER_ALPHA, power,
-                    gradInner[0] * tintR, gradInner[1] * tintG, gradInner[2] * tintB, shader);
-            renderCrossBillboardLayer(originRel, endRel, right, up, beamDir,
-                    LAYER_CORE, CORE_RADIUS * powerScale, CORE_ALPHA, power,
-                    gradCore[0] * tintR, gradCore[1] * tintG, gradCore[2] * tintB, shader);
-        } catch (Exception e) {
-            CECMod.getLogger().error("Error rendering laser beam", e);
+            shaderLayer(o, e, right, up, beamDir, LAYER_OUTER, OUTER_RADIUS*powerScale, OUTER_ALPHA, power, gO[0]*tintR, gO[1]*tintG, gO[2]*tintB, shader);
+            shaderFlicker(o, e, right, up, FLICKER_RADIUS*powerScale, FLICKER_ALPHA, power, gF[0]*tintR, gF[1]*tintG, gF[2]*tintB, shader);
+            shaderTendrils(o, e, right, up, beamDir, TENDRIL_ALPHA, power, powerScale, gameTime, beamHash, gT[0]*tintR, gT[1]*tintG, gT[2]*tintB, shader);
+            shaderLayer(o, e, right, up, beamDir, LAYER_INNER, INNER_RADIUS*powerScale, INNER_ALPHA, power, gI[0]*tintR, gI[1]*tintG, gI[2]*tintB, shader);
+            shaderLayer(o, e, right, up, beamDir, LAYER_CORE, CORE_RADIUS*powerScale, CORE_ALPHA, power, gC[0]*tintR, gC[1]*tintG, gC[2]*tintB, shader);
+        } catch (Exception ex) {
+            CECMod.getLogger().error("Error rendering laser beam (shader path)", ex);
         } finally {
-            // Always restore GL state even if rendering crashed
             RenderSystem.getModelViewStack().popPose();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.depthMask(true);
@@ -277,140 +289,144 @@ public class LaserBeamGlobalRenderer {
         }
     }
 
-
-    private static void renderCrossBillboardLayer(Vec3 originRel, Vec3 endRel, Vec3 right, Vec3 up,
-                                                   Vec3 beamDir, int layerIndex, float radius, float alpha,
-                                                   int power, float colorR, float colorG, float colorB, ShaderInstance shader) {
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
+    private static void shaderLayer(Vec3 o, Vec3 e, Vec3 right, Vec3 up, Vec3 beamDir,
+                                     int layerIndex, float radius, float alpha, int power,
+                                     float r, float g, float b, ShaderInstance shader) {
+        Tesselator tess = Tesselator.getInstance();
+        BufferBuilder builder = tess.getBuilder();
         try {
             builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
-
             for (double angle : CROSS_ANGLES) {
-                // Rotate the offset vector around the beam axis
-                Vec3 offset = right.scale(Math.cos(angle) * radius)
-                        .add(up.scale(Math.sin(angle) * radius));
-
-                Vec3 v0 = originRel.subtract(offset);
-                Vec3 v1 = originRel.add(offset);
-                Vec3 v2 = endRel.add(offset);
-                Vec3 v3 = endRel.subtract(offset);
-
-                addVertex(builder, v0, 0.0f, 0.0f, layerIndex, power, alpha, colorR, colorG, colorB);
-                addVertex(builder, v1, 0.0f, 1.0f, layerIndex, power, alpha, colorR, colorG, colorB);
-                addVertex(builder, v2, 1.0f, 1.0f, layerIndex, power, alpha, colorR, colorG, colorB);
-                addVertex(builder, v3, 1.0f, 0.0f, layerIndex, power, alpha, colorR, colorG, colorB);
+                Vec3 off = right.scale(Math.cos(angle)*radius).add(up.scale(Math.sin(angle)*radius));
+                shaderVtx(builder, o.subtract(off), 0, 0, layerIndex, power, alpha, r, g, b);
+                shaderVtx(builder, o.add(off),      0, 1, layerIndex, power, alpha, r, g, b);
+                shaderVtx(builder, e.add(off),      1, 1, layerIndex, power, alpha, r, g, b);
+                shaderVtx(builder, e.subtract(off), 1, 0, layerIndex, power, alpha, r, g, b);
             }
-
             shader.apply();
             BufferUploader.drawWithShader(builder.end());
             shader.clear();
-        } catch (Exception e) {
-            // Discard the buffer if it's still building to prevent cascading failures
+        } catch (Exception ex) {
             try { builder.end(); } catch (Exception ignored) {}
-            throw e;
+            throw ex;
         }
     }
 
-    /**
-     * Two cross-billboards (0/90 deg) for ambient flicker glow — more volumetric than a single quad.
-     */
-    private static void renderFlickerLayer(Vec3 originRel, Vec3 endRel, Vec3 right, Vec3 up,
-                                           float radius, float alpha, int power, float tintR, float tintG, float tintB, ShaderInstance shader) {
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
+    private static void shaderFlicker(Vec3 o, Vec3 e, Vec3 right, Vec3 up,
+                                       float radius, float alpha, int power,
+                                       float r, float g, float b, ShaderInstance shader) {
+        Tesselator tess = Tesselator.getInstance();
+        BufferBuilder builder = tess.getBuilder();
         try {
             builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
-
-            Vec3[] offsets = {right.scale(radius), up.scale(radius)};
-            for (Vec3 offset : offsets) {
-                Vec3 v0 = originRel.subtract(offset);
-                Vec3 v1 = originRel.add(offset);
-                Vec3 v2 = endRel.add(offset);
-                Vec3 v3 = endRel.subtract(offset);
-
-                addVertex(builder, v0, 0.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v1, 0.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v2, 1.0f, 1.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v3, 1.0f, 0.0f, LAYER_FLICKER, power, alpha, tintR, tintG, tintB);
+            for (Vec3 off : new Vec3[]{right.scale(radius), up.scale(radius)}) {
+                shaderVtx(builder, o.subtract(off), 0, 0, LAYER_FLICKER, power, alpha, r, g, b);
+                shaderVtx(builder, o.add(off),      0, 1, LAYER_FLICKER, power, alpha, r, g, b);
+                shaderVtx(builder, e.add(off),      1, 1, LAYER_FLICKER, power, alpha, r, g, b);
+                shaderVtx(builder, e.subtract(off), 1, 0, LAYER_FLICKER, power, alpha, r, g, b);
             }
-
             shader.apply();
             BufferUploader.drawWithShader(builder.end());
             shader.clear();
-        } catch (Exception e) {
+        } catch (Exception ex) {
             try { builder.end(); } catch (Exception ignored) {}
-            throw e;
+            throw ex;
         }
     }
 
-    /**
-     * Elongated arc strips that crawl along the beam surface like electricity.
-     * Seeds persist for 3 ticks so arcs are visible rather than per-frame noise.
-     */
-    private static void renderTendrils(Vec3 originRel, Vec3 endRel, Vec3 right, Vec3 up,
-                                       Vec3 beamDir, float alpha, int power, float powerScale,
-                                       long gameTime, int beamHash, float tintR, float tintG, float tintB, ShaderInstance shader) {
+    private static void shaderTendrils(Vec3 o, Vec3 e, Vec3 right, Vec3 up, Vec3 beamDir,
+                                        float alpha, int power, float powerScale,
+                                        long gameTime, int beamHash,
+                                        float r, float g, float b, ShaderInstance shader) {
         long seed = beamHash ^ ((gameTime / 3) * 31L);
         Random rand = new Random(seed);
+        int count = 6 + (int)((power - 1) / 15.0f * 10);
+        Vec3 beamVec = e.subtract(o);
 
-        int tendrilCount = 6 + (int) ((power - 1) / 15.0f * 10);
-
-        Vec3 beamVec = endRel.subtract(originRel);
-
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
+        Tesselator tess = Tesselator.getInstance();
+        BufferBuilder builder = tess.getBuilder();
         try {
             builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+            for (int i = 0; i < count; i++) {
+                float tS = rand.nextFloat() * 0.7f;
+                float tE = Math.min(1.0f, tS + 0.1f + rand.nextFloat() * 0.2f);
+                Vec3 aS = o.add(beamVec.scale(tS)), aE = o.add(beamVec.scale(tE));
+                float ang = rand.nextFloat() * (float)(Math.PI * 2);
+                float rd = (0.12f + rand.nextFloat() * 0.22f) * powerScale;
+                Vec3 off = right.scale(Math.cos(ang)*rd).add(up.scale(Math.sin(ang)*rd));
+                float sw = 0.018f + rand.nextFloat() * 0.025f;
+                Vec3 tan = beamDir.cross(off.normalize()).normalize().scale(sw);
 
-            for (int i = 0; i < tendrilCount; i++) {
-                float tStart = rand.nextFloat() * 0.7f;
-                float arcFraction = 0.1f + rand.nextFloat() * 0.2f;
-                float tEnd = Math.min(1.0f, tStart + arcFraction);
-
-                Vec3 arcStart = originRel.add(beamVec.scale(tStart));
-                Vec3 arcEnd = originRel.add(beamVec.scale(tEnd));
-
-                float angle = rand.nextFloat() * (float) (Math.PI * 2.0);
-                float radialDist = (0.12f + rand.nextFloat() * 0.22f) * powerScale;
-                Vec3 offset = right.scale(Math.cos(angle) * radialDist)
-                        .add(up.scale(Math.sin(angle) * radialDist));
-
-                float stripWidth = 0.018f + rand.nextFloat() * 0.025f;
-                Vec3 offsetNorm = offset.normalize();
-                Vec3 tangent = beamDir.cross(offsetNorm).normalize().scale(stripWidth);
-
-                Vec3 v0 = arcStart.add(offset).subtract(tangent);
-                Vec3 v1 = arcStart.add(offset).add(tangent);
-                Vec3 v2 = arcEnd.add(offset).add(tangent);
-                Vec3 v3 = arcEnd.add(offset).subtract(tangent);
-
-                float uStart = tStart;
-                float uEnd = tEnd;
-
-                addVertex(builder, v0, uStart, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v1, uStart, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v2, uEnd, 1.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
-                addVertex(builder, v3, uEnd, 0.0f, LAYER_TENDRIL, power, alpha, tintR, tintG, tintB);
+                shaderVtx(builder, aS.add(off).subtract(tan), tS, 0, LAYER_TENDRIL, power, alpha, r, g, b);
+                shaderVtx(builder, aS.add(off).add(tan),      tS, 1, LAYER_TENDRIL, power, alpha, r, g, b);
+                shaderVtx(builder, aE.add(off).add(tan),      tE, 1, LAYER_TENDRIL, power, alpha, r, g, b);
+                shaderVtx(builder, aE.add(off).subtract(tan), tE, 0, LAYER_TENDRIL, power, alpha, r, g, b);
             }
-
             shader.apply();
             BufferUploader.drawWithShader(builder.end());
             shader.clear();
-        } catch (Exception e) {
+        } catch (Exception ex) {
             try { builder.end(); } catch (Exception ignored) {}
-            throw e;
+            throw ex;
         }
     }
 
-    private static void addVertex(BufferBuilder builder, Vec3 pos, float u, float v,
-                                  int layerIndex, int power, float alpha,
-                                  float tintR, float tintG, float tintB) {
-        builder.vertex(pos.x, pos.y, pos.z)
-                .uv(u, v)
-                .overlayCoords(layerIndex, power)
-                .color(tintR, tintG, tintB, alpha)
-                .uv2(15728880)
-                .endVertex();
+    private static void shaderVtx(BufferBuilder b, Vec3 pos, float u, float v,
+                                   int layerIndex, int power, float alpha,
+                                   float r, float g, float bx) {
+        b.vertex(pos.x, pos.y, pos.z).uv(u, v).overlayCoords(layerIndex, power)
+                .color(r, g, bx, alpha).uv2(15728880).endVertex();
+    }
+
+    private static SuperRenderTypeBuffer fallbackBuffer;
+    private static VertexConsumer fallbackConsumer;
+
+    private static void fallbackRenderBeam(PoseStack poseStack, Vec3 camera, BeamData beam,
+                                            float partialTick, long gameTime, int beamHash) {
+        Vec3 dir = beam.direction.normalize();
+
+        poseStack.pushPose();
+        poseStack.translate(
+                beam.origin.x - camera.x,
+                beam.origin.y - camera.y,
+                beam.origin.z - camera.z
+        );
+
+        // Rotate beam from vertical (Y-up) to beam direction using yaw/pitch
+        float yaw = (float) Math.toDegrees(Math.atan2(dir.x, dir.z));
+        float pitch = (float) Math.toDegrees(Math.asin(dir.y));
+        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yaw));
+        poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(90.0F - pitch));
+        poseStack.translate(-0.5D, 0.0D, -0.5D);
+
+        // Get beam color from gradient + tint
+        int power = Math.max(1, Math.min(16, beam.power));
+        float[] gC = getGradientColor(LAYER_CORE, power);
+        float tintR = 1, tintG = 1, tintB = 1;
+        if (beam.colorTint >= 0) {
+            tintR = ((beam.colorTint >> 16) & 0xFF) / 255.0f;
+            tintG = ((beam.colorTint >> 8) & 0xFF) / 255.0f;
+            tintB = (beam.colorTint & 0xFF) / 255.0f;
+        }
+        float[] colors = {gC[0] * tintR, gC[1] * tintG, gC[2] * tintB, 1.0f};
+
+        // Use mc.renderBuffers().bufferSource() - same as master branch
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+
+        // Render using the exact same beacon beam method from master branch
+        float powerScale = 0.65f + 0.55f * (power / 16.0f);
+        LaserRenderer.renderBeaconBeam(poseStack, bufferSource, partialTick, gameTime,
+                0, beam.range + 1, colors, 0.2F * powerScale, 0.25F * powerScale);
+
+        poseStack.popPose();
+    }
+
+    private static final ResourceLocation BEAM_TEX = new ResourceLocation("textures/entity/beacon_beam.png");
+
+    private static void fallbackFlush() {
+        // Flush only the beacon beam RenderTypes (not all batches which breaks Iris)
+        MultiBufferSource.BufferSource buf = Minecraft.getInstance().renderBuffers().bufferSource();
+        buf.endBatch(RenderType.beaconBeam(BEAM_TEX, false));
+        buf.endBatch(RenderType.beaconBeam(BEAM_TEX, true));
     }
 }

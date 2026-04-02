@@ -15,6 +15,13 @@ public class PacketHandler {
     public static final ResourceLocation LASER_BURN_PACKET = CECMod.resource("laser_burn");
 
     public static void register() {
+        // S2C receiver is client-only - don't register on dedicated server
+        if (dev.architectury.platform.Platform.getEnvironment() == dev.architectury.utils.Env.CLIENT) {
+            registerClient();
+        }
+    }
+
+    private static void registerClient() {
         NetworkManager.registerReceiver(
                 NetworkManager.Side.S2C,
                 LASER_BURN_PACKET,

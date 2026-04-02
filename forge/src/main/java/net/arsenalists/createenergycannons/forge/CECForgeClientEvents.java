@@ -47,7 +47,6 @@ public class CECForgeClientEvents {
     }
 
     public static void registerShaders(RegisterShadersEvent event) {
-        LaserBeamGlobalRenderer.clearGradientCache();
         try {
             event.registerShader(
                 new ShaderInstance(
@@ -60,17 +59,18 @@ public class CECForgeClientEvents {
         } catch (Exception e) {
             CECMod.getLogger().error("Failed to register energy_muzzle_particle shader, particles will use vanilla fallback", e);
         }
+
         try {
             event.registerShader(
                 new ShaderInstance(
                     event.getResourceProvider(),
                     "createenergycannons:laser_beam",
-                    CECVertexFormats.PARTICLE_WITH_OVERLAY
+                    net.arsenalists.createenergycannons.content.particle.CECVertexFormats.PARTICLE_WITH_OVERLAY
                 ),
                 shader -> CECClientShaders.laserBeamShader = shader
             );
         } catch (Exception e) {
-            CECMod.getLogger().error("Failed to register laser_beam shader, laser beams will not render", e);
+            CECMod.getLogger().error("Failed to register laser_beam shader, beam will use fallback renderer", e);
         }
     }
 
@@ -116,10 +116,12 @@ public class CECForgeClientEvents {
             } catch (Exception e) {
                 CECMod.getLogger().error("Error rendering laser burns", e);
             }
+        }
+
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             try {
                 LaserBeamGlobalRenderer.renderFrame(
                     event.getPoseStack(),
-                    mc.renderBuffers().bufferSource(),
                     cam, event.getPartialTick(), level.getGameTime()
                 );
             } catch (Exception e) {

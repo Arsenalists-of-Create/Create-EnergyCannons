@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import com.mojang.math.Axis;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.Vec3;
 import net.fabricmc.api.EnvType;
@@ -80,6 +82,98 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
                 .normal(normal, nx, ny, nz).endVertex();
 
         ps.popPose();
+    }
+
+
+    public static final ResourceLocation BEAM_LOCATION = new ResourceLocation("textures/entity/beacon_beam.png");
+
+    public static void renderBeaconBeam(PoseStack ps, MultiBufferSource buffer,
+                                        float partialTick, long gameTime,
+                                        int yOffset, int height, float[] colors) {
+        renderBeaconBeam(ps, buffer, BEAM_LOCATION, partialTick, 1.0F,
+                gameTime, yOffset, height, colors, 0.2F, 0.25F);
+    }
+
+    public static void renderBeaconBeam(PoseStack ps, MultiBufferSource buffer,
+                                        float partialTick, long gameTime,
+                                        int yOffset, int height, float[] colors,
+                                        float beamRadius, float glowRadius) {
+        renderBeaconBeam(ps, buffer, BEAM_LOCATION, partialTick, 1.0F,
+                gameTime, yOffset, height, colors, beamRadius, glowRadius);
+    }
+
+    public static void renderBeaconBeam(PoseStack ps, MultiBufferSource buffer,
+                                        ResourceLocation beamLocation, float partialTick,
+                                        float textureScale, long gameTime,
+                                        int yOffset, int height, float[] colors,
+                                        float beamRadius, float glowRadius) {
+        int maxY = yOffset + height;
+        ps.pushPose();
+        ps.translate(0.5D, 0.0D, 0.5D);
+        float f = (float) Math.floorMod(gameTime, 40) + partialTick;
+        float f1 = height < 0 ? f : -f;
+        float f2 = Mth.frac(f1 * 0.2F - (float) Mth.floor(f1 * 0.1F));
+        float cr = colors[0], cg = colors[1], cb = colors[2];
+
+        // Solid rotating core
+        ps.pushPose();
+        ps.mulPose(Axis.YP.rotationDegrees(f * 2.25F - 45.0F));
+        float f15 = -1.0F + f2;
+        float f16 = (float) height * textureScale * (0.5F / beamRadius) + f15;
+        renderPart(ps, buffer.getBuffer(RenderType.beaconBeam(beamLocation, false)),
+                cr, cg, cb, 1.0F, yOffset, maxY,
+                0.0F, beamRadius, beamRadius, 0.0F,
+                -beamRadius, 0.0F, 0.0F, -beamRadius,
+                0.0F, 1.0F, f16, f15);
+        ps.popPose();
+
+        // Translucent glow
+        f15 = -1.0F + f2;
+        f16 = (float) height * textureScale + f15;
+        renderPart(ps, buffer.getBuffer(RenderType.beaconBeam(beamLocation, true)),
+                cr, cg, cb, 0.125F, yOffset, maxY,
+                -glowRadius, -glowRadius, glowRadius, -glowRadius,
+                -glowRadius, glowRadius, glowRadius, glowRadius,
+                0.0F, 1.0F, f16, f15);
+        ps.popPose();
+    }
+
+    private static void renderPart(PoseStack ps, VertexConsumer c,
+                                   float r, float g, float b, float a,
+                                   int minY, int maxY,
+                                   float x0, float z0, float x1, float z1,
+                                   float x2, float z2, float x3, float z3,
+                                   float minU, float maxU, float minV, float maxV) {
+        PoseStack.Pose pose = ps.last();
+        Matrix4f mat = pose.pose();
+        Matrix3f norm = pose.normal();
+        renderBeamQuad(mat, norm, c, r, g, b, a, minY, maxY, x0, z0, x1, z1, minU, maxU, minV, maxV);
+        renderBeamQuad(mat, norm, c, r, g, b, a, minY, maxY, x3, z3, x2, z2, minU, maxU, minV, maxV);
+        renderBeamQuad(mat, norm, c, r, g, b, a, minY, maxY, x1, z1, x3, z3, minU, maxU, minV, maxV);
+        renderBeamQuad(mat, norm, c, r, g, b, a, minY, maxY, x2, z2, x0, z0, minU, maxU, minV, maxV);
+    }
+
+    private static void renderBeamQuad(Matrix4f mat, Matrix3f norm, VertexConsumer c,
+                                        float r, float g, float b, float a,
+                                        int minY, int maxY,
+                                        float minX, float minZ, float maxX, float maxZ,
+                                        float minU, float maxU, float minV, float maxV) {
+        beamVertex(mat, norm, c, r, g, b, a, maxY, minX, minZ, maxU, minV);
+        beamVertex(mat, norm, c, r, g, b, a, minY, minX, minZ, maxU, maxV);
+        beamVertex(mat, norm, c, r, g, b, a, minY, maxX, maxZ, minU, maxV);
+        beamVertex(mat, norm, c, r, g, b, a, maxY, maxX, maxZ, minU, minV);
+    }
+
+    private static void beamVertex(Matrix4f mat, Matrix3f norm, VertexConsumer c,
+                                    float r, float g, float b, float a,
+                                    int y, float x, float z, float u, float v) {
+        c.vertex(mat, x, (float) y, z)
+                .color(r, g, b, a)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(15728880)
+                .normal(norm, 0.0F, 1.0F, 0.0F)
+                .endVertex();
     }
 
     @Override
