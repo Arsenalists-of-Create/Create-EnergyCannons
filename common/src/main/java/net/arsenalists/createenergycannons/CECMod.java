@@ -61,6 +61,7 @@ public class CECMod {
             getLogger().warn("Failed to unfreeze contraption registry", t);
         }
         CECContraptionTypes.register();
+        CECArmInteractionPointTypes.register();
         // Particle and sound registrations use DeferredRegister and require a bus
         // NOTE: CECDefaultCannonMountPropertiesSerializers.init() must be called
         // during common setup (after registries fire), not here.
