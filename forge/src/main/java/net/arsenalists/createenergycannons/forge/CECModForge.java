@@ -1,28 +1,31 @@
 package net.arsenalists.createenergycannons.forge;
 
 import com.mojang.serialization.Codec;
+import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import dev.architectury.platform.forge.EventBuses;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.config.CECConfig;
 import net.arsenalists.createenergycannons.content.energy.EnergyCapHelper;
 import net.arsenalists.createenergycannons.content.energy.IModEnergyStorage;
 import net.arsenalists.createenergycannons.forge.loot.SledLootModifier;
-import net.arsenalists.createenergycannons.registry.CECContraptionTypes;
+import net.arsenalists.createenergycannons.registry.CECCreateRegistries;
 import net.arsenalists.createenergycannons.registry.CECDefaultCannonMountPropertiesSerializers;
 import net.createmod.catnip.config.ConfigBase;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.api.distmarker.Dist;
+import net.createmod.catnip.platform.CatnipServices;
 
 import java.util.Map;
 
@@ -38,46 +41,57 @@ public final class CECModForge {
     public CECModForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        new CECMod();
+
         GLM_REGISTRY.register(modEventBus);
 
-        // basic initialization that doesn't depend on a bus
-        CECMod.init();
-
-        // Register Registrate's event listeners so RegisterEvent populates entries
         CECMod.REGISTRATE.registerEventListeners(modEventBus);
-
-        // Submit our event bus so the deferred registers can do their work
         EventBuses.registerModEventBus(CECMod.MODID, modEventBus);
-
-        // post-bus registrations (tabs, particles, sounds)
         CECMod.postBusRegister();
 
-        // Register common mod event bus listeners
+        modEventBus.addListener(this::onRegister);
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(CECForgeEvents::onConfigLoad);
         modEventBus.addListener(CECForgeEvents::onConfigReload);
 
-        // Register client-only mod event bus listeners only on client side
         if (FMLEnvironment.dist.isClient()) {
             registerClientListeners(modEventBus);
         }
 
-        // Set up Forge energy provider
         EnergyCapHelper.setProvider((be, side) ->
                 be.getCapability(ForgeCapabilities.ENERGY, side)
                         .map(CECModForge::wrapForgeEnergy)
                         .orElse(EnergyCapHelper.EMPTY)
         );
 
-        // Register configs with Forge
         ModLoadingContext context = ModLoadingContext.get();
         for (Map.Entry<ModConfig.Type, ConfigBase> pair : CECConfig.CONFIGS.entrySet()) {
             context.registerConfig(pair.getKey(), pair.getValue().specification);
         }
     }
 
+    private void onRegister(RegisterEvent event) {
+        // Depending on mappings/Create wrapper, you may need to replace `.key()`
+        // with the appropriate registry-key accessor for these built-in registries.
+
+        if (event.getRegistryKey().equals(CreateBuiltInRegistries.CONTRAPTION_TYPE.key())) {
+            event.register(CreateBuiltInRegistries.CONTRAPTION_TYPE.key(), helper ->
+                    CECCreateRegistries.registerContraptionTypes(helper::register)
+            );
+        }
+
+        if (event.getRegistryKey().equals(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE.key())) {
+            event.register(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE.key(), helper ->
+                    CECCreateRegistries.registerArmInteractionPointTypes(helper::register)
+            );
+        }
+    }
+
     private void onCommonSetup(FMLCommonSetupEvent event) {
-        CECDefaultCannonMountPropertiesSerializers.init();
+        event.enqueueWork(() -> {
+            CECMod.init();
+            CECDefaultCannonMountPropertiesSerializers.init();
+        });
     }
 
     private static void registerClientListeners(net.minecraftforge.eventbus.api.IEventBus modEventBus) {
