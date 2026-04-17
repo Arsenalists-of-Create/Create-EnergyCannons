@@ -1,5 +1,6 @@
 package net.arsenalists.createenergycannons.config.server;
 
+
 import net.createmod.catnip.config.ConfigBase;
 
 public class CECServerConfig extends ConfigBase {
