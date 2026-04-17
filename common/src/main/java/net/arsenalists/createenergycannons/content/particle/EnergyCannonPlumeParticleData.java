@@ -4,16 +4,12 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.simibubi.create.foundation.particle.ICustomParticleData;
 import net.arsenalists.createenergycannons.registry.CECParticles;
-import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
-public class EnergyCannonPlumeParticleData implements ParticleOptions, ICustomParticleData<EnergyCannonPlumeParticleData> {
+public class EnergyCannonPlumeParticleData implements ParticleOptions {
 
     public static final Codec<EnergyCannonPlumeParticleData> CODEC = RecordCodecBuilder.create(instance ->
         instance.group(
@@ -78,21 +74,5 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions, ICustomPa
     @Override
     public String writeToString() {
         return String.format("%f %f %d %d", this.size, this.power, this.cannonType, this.lifetime);
-    }
-
-    @Override
-    public Deserializer<EnergyCannonPlumeParticleData> getDeserializer() {
-        return DESERIALIZER;
-    }
-
-    @Override
-    public Codec<EnergyCannonPlumeParticleData> getCodec(ParticleType<EnergyCannonPlumeParticleData> type) {
-        return CODEC;
-    }
-
-    @Environment(EnvType.CLIENT)
-    @Override
-    public ParticleProvider<EnergyCannonPlumeParticleData> getFactory() {
-        return new EnergyCannonPlumeParticle.Provider();
     }
 }

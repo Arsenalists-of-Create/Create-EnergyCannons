@@ -1,29 +1,25 @@
 {
   "variants": {
     "facing=down": {
-      "model": "createenergycannons:block/laser",
+      "model": "createenergycannons:block/laser_vertical",
       "x": 180
     },
-    "facing=east": {
-      "model": "createenergycannons:block/laser",
-      "x": 90,
-      "y": 90
+    "facing=up": {
+      "model": "createenergycannons:block/laser_vertical"
     },
-    "facing=north": {
-      "model": "createenergycannons:block/laser",
-      "x": 90
+    "facing=east": {
+      "model": "createenergycannons:block/laser"
     },
     "facing=south": {
       "model": "createenergycannons:block/laser",
-      "x": 90,
-      "y": 180
-    },
-    "facing=up": {
-      "model": "createenergycannons:block/laser"
+      "y": 90
     },
     "facing=west": {
       "model": "createenergycannons:block/laser",
-      "x": 90,
+      "y": 180
+    },
+    "facing=north": {
+      "model": "createenergycannons:block/laser",
       "y": 270
     }
   }

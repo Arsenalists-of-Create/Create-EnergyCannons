@@ -85,6 +85,15 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         return mountPos;
     }
 
+    @Override
+    public void fail(BlockPos pos, Level level, PitchOrientedContraptionEntity entity,
+                     BlockEntity blockEntity, int chargesUsed) {
+        if (entity != null && PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
+            chargesUsed = 0;
+        }
+        super.fail(pos, level, entity, blockEntity, chargesUsed);
+    }
+
     /**
      * Get the current projectile velocity for radar targeting.
      * This calculates based on available energy and cannon type.
@@ -416,6 +425,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 return;
             }
         }
+
+
+        if (this.getMuzzleVelocity(level) < 1f) return;
 
         // Start charging sequence
         LOGGER.warn("[Railgun] Starting charge sequence");
@@ -765,6 +777,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     return;
                 }
             }
+
+            if (this.getMuzzleVelocity(level) < 1f) return;
+
             ControlPitchContraption controller = entity.getController();
             RandomSource rand = level.getRandom();
             BlockPos currentPos = this.startPos.immutable();
