@@ -158,18 +158,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             COILGUNCOST = 10000;
             RAILGUNCOST = 20000;
         }
-        LOGGER.warn("[EnergyContraption] assemble pos={} block={}", pos, level.getBlockState(pos));
-        BlockState breech = level.getBlockState(pos);
-        Direction facing = breech.getValue(BlockStateProperties.FACING);
-        BlockPos next = pos.relative(facing);
-        LOGGER.warn("[EnergyContraption] nextPos={} block={}", next, level.getBlockState(next));
-
         boolean ok = super.assemble(level, pos);
-        LOGGER.warn("[EnergyContraption] super.assemble() returned: {}", ok);
-        if (!ok) {
-            LOGGER.error("[EnergyContraption] Assembly failed in parent class!");
-            return false;
-        }
+        if (!ok) return false;
 
         if (this.anchor != null) {
             BlockPos checkAbove = this.anchor.above(2);
@@ -180,23 +170,16 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             } else if (CECBlocks.ENERGY_CANNON_MOUNT.has(level.getBlockState(checkBelow))) {
                 mountPos = checkBelow;
             } else {
-                LOGGER.error("[EnergyContraption] NO MOUNT FOUND!");
+                LOGGER.error("Energy cannon assembled but no mount block found above or below anchor");
             }
-        } else {
         }
-
-        LOGGER.warn("[EnergyContraption] blocks size: {}", this.blocks.size());
-        LOGGER.warn("[EnergyContraption] startPos: {}", this.startPos);
-        LOGGER.warn("[EnergyContraption] initialOrientation: {}", this.initialOrientation);
 
         boolean coil = false, rail = false;
         int coilBlockCount = 0, railBlockCount = 0;
 
-        LOGGER.warn("[EnergyContraption] Scanning {} blocks...", this.blocks.size());
         for (Map.Entry<BlockPos, StructureBlockInfo> entry : this.blocks.entrySet()) {
             StructureBlockInfo info = entry.getValue();
             Block b = info.state().getBlock();
-            String blockName = b.getClass().getSimpleName();
 
             if (b instanceof CoilGunBlock) {
                 coil = true;
@@ -204,16 +187,14 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
                 if (info.state().hasProperty(CoilGunBlock.OVERHEATED) &&
                     info.state().getValue(CoilGunBlock.OVERHEATED)) {
+                    long endTime;
                     if (info.nbt() != null && info.nbt().contains("CooldownEndTime")) {
-                        long endTime = info.nbt().getLong("CooldownEndTime");
-                        coilgunCooldownEndTimes.put(entry.getKey(), endTime);
-                        LOGGER.warn("[EnergyContraption] Restored cooldown end time {} for pos {}", endTime, entry.getKey());
+                        endTime = info.nbt().getLong("CooldownEndTime");
                     } else {
                         // No NBT data, assume full duration from now
-                        long endTime = level.getGameTime() + OVERHEAT_DURATION;
-                        coilgunCooldownEndTimes.put(entry.getKey(), endTime);
-                        LOGGER.warn("[EnergyContraption] No NBT, set new cooldown end time {} for pos {}", endTime, entry.getKey());
+                        endTime = level.getGameTime() + OVERHEAT_DURATION;
                     }
+                    coilgunCooldownEndTimes.put(entry.getKey(), endTime);
                 }
             }
             if (b instanceof RailGunBlock) {
@@ -223,10 +204,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
 
         // priority if both exist
-        Mode oldMode = this.mode;
         this.mode = rail ? Mode.RAIL : (coil ? Mode.COIL : Mode.NORMAL);
-        LOGGER.warn("[EnergyContraption] Mode decision: coilBlocks={}, railBlocks={}", coilBlockCount, railBlockCount);
-        LOGGER.warn("[EnergyContraption] Mode changed from {} to {}", oldMode, this.mode);
         return true;
     }
 
@@ -372,20 +350,16 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
     @Override
     public void fireShot(ServerLevel level, PitchOrientedContraptionEntity entity) {
-        LOGGER.warn("[EnergyContraption] fireShot called! mode={}", this.mode);
         if (this.mode == Mode.NORMAL) {
-            LOGGER.warn("[EnergyContraption] Mode is NORMAL, calling super");
             super.fireShot(level, entity);
             return;
         }
 
         if (this.mode == Mode.COIL) {
-            LOGGER.warn("[EnergyContraption] Mode is COIL, calling fireCoil");
             fireCoil(level, entity);
             return;
         }
 
-        LOGGER.warn("[EnergyContraption] Mode is RAIL, calling fireRail");
         fireRail(level, entity);
     }
     @Override
@@ -406,10 +380,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         long currentTime = level.getGameTime();
 
         // Check if already charging
-        if (railgunCharging) {
-            LOGGER.warn("[Railgun] Already charging, ignoring fire command");
-            return;
-        }
+        if (railgunCharging) return;
 
         // Check if there's actually a shell loaded before doing overheat checks
         BlockPos firstPos = this.startPos.immutable();
@@ -430,7 +401,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         if (this.getMuzzleVelocity(level) < 1f) return;
 
         // Start charging sequence
-        LOGGER.warn("[Railgun] Starting charge sequence");
         railgunCharging = true;
         long chargeEndTime = currentTime + CHARGE_DURATION;
 
@@ -453,7 +423,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     }
 
     private void actuallyFireRail(ServerLevel level, PitchOrientedContraptionEntity entity) {
-        LOGGER.warn("BOOM");
         BlockPos endPos = this.startPos.relative(this.initialOrientation.getOpposite());
         if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
             return;
@@ -484,13 +453,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
         }
         BlockPos pos = this.getMountPos();
-        LOGGER.warn("[Railgun] Looking for energy at mount pos: {}", pos);
         BlockEntity energyBE = level.getBlockEntity(pos);
         if (energyBE == null) {
-            LOGGER.error("[Railgun] No block entity found at mount position!");
+            LOGGER.error("Energy cannon firing but no block entity at mount pos {}", pos);
             return;
         }
-        LOGGER.warn("[Railgun] Found block entity: {}", energyBE.getClass().getSimpleName());
         IModEnergyStorage energy = EnergyCapHelper.getEnergy(energyBE, null);
         int energyUsed = energy.extractEnergy(railCount * RAILGUNCOST, false);
         if (energyBE instanceof SmartBlockEntity smartBE)
@@ -505,7 +472,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             Block block = containedBlockInfo.state().getBlock();
             // Shells require magnetic sleds
             if (block instanceof FuzedProjectileBlock && (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled"))) {
-                LOGGER.warn("failed: shell requires magnetic sled");
                 return;
             }
 
@@ -533,7 +499,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                 // All projectiles require magnetic sleds
                 if (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled")) {
-                    LOGGER.warn("failed: projectile requires magnetic sled");
                     return;
                 }
 
@@ -754,7 +719,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
     }
     public void fireCoil(ServerLevel level, PitchOrientedContraptionEntity entity){
-            LOGGER.warn("bang2?");
             BlockPos endPos = this.startPos.relative(this.initialOrientation.getOpposite());
             if (this.presentBlockEntities.get(endPos) instanceof QuickfiringBreechBlockEntity qfbreech && qfbreech.getOpenProgress() > 0)
                 return;
@@ -855,7 +819,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                     // All projectiles require magnetic sleds
                     if (containedBlockInfo.nbt() == null || !containedBlockInfo.nbt().contains("Sled") || !containedBlockInfo.nbt().getBoolean("Sled")) {
-                        LOGGER.warn("failed: projectile requires magnetic sled");
                         return;
                     }
 

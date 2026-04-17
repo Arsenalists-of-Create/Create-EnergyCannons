@@ -282,7 +282,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
         if (!(level instanceof ServerLevel serverLevel)) return;
 
+
         BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
+        if (energyBE == null) energyBE = level.getBlockEntity(this.anchor.above(2));
         if (energyBE == null) return;
 
         IModEnergyStorage energy = EnergyCapHelper.getEnergy(energyBE, null);

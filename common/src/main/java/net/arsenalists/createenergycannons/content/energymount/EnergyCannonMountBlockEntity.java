@@ -85,9 +85,6 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     protected void assemble() throws AssemblyException {
-        LOGGER.warn("[EnergyMount] WorldPos: {}", this.worldPosition);
-        LOGGER.warn("[EnergyMount] BlockState: {}", this.getBlockState());
-
         if (!CECBlocks.ENERGY_CANNON_MOUNT.has(this.getBlockState())) {
             return;
         }
@@ -95,41 +92,30 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         Direction vertical = this.getBlockState().getValue(BlockStateProperties.VERTICAL_DIRECTION);
 
         BlockPos assemblyPos = this.worldPosition.relative(vertical, -2);
-        LOGGER.warn("[EnergyMount] Assembly position: {}", assemblyPos);
-        LOGGER.warn("[EnergyMount] Block at assembly pos: {}", this.getLevel().getBlockState(assemblyPos));
 
         if (this.getLevel().isOutsideBuildHeight(assemblyPos)) {
-            LOGGER.error("[EnergyMount] Assembly position outside world bounds!");
             throw cannonBlockOutsideOfWorld(assemblyPos);
         }
 
         BlockState blockAtAssembly = this.getLevel().getBlockState(assemblyPos);
         if (blockAtAssembly.isAir()) {
-            LOGGER.warn("[EnergyMount] No cannon block found at assembly position");
             return;
         }
 
         AbstractMountedCannonContraption mountedCannon;
         if (blockAtAssembly.getBlock() instanceof LaserBlock) {
             mountedCannon = new MountedLaserCannonContraption();
-            LOGGER.warn("[EnergyMount] Created MountedLaserCannonContraption");
         } else {
             mountedCannon = new MountedEnergyCannonContraption();
-            LOGGER.warn("[EnergyMount] Created MountedEnergyCannonContraption");
         }
 
-        LOGGER.warn("[EnergyMount] Calling mountedCannon.assemble()...");
         boolean assembled = mountedCannon.assemble(this.getLevel(), assemblyPos);
-        LOGGER.warn("[EnergyMount] mountedCannon.assemble() returned: {}", assembled);
 
         if (mountedCannon != null && assembled) {
-            LOGGER.warn("[EnergyMount] Contraption assembled successfully!");
-
             Direction facing = this.getBlockState().getValue(CannonMountBlock.HORIZONTAL_FACING);
             Direction cannonFacing = mountedCannon.initialOrientation();
 
             if (facing.getAxis() != cannonFacing.getAxis() && cannonFacing.getAxis().isHorizontal()) {
-                LOGGER.warn("[EnergyMount] Cannon axis doesn't match mount axis, returning");
                 return;
             }
 

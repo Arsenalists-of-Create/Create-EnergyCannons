@@ -65,10 +65,10 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions {
 
     @Override
     public void writeToNetwork(FriendlyByteBuf buffer) {
-        buffer.writeFloat(this.size)
-            .writeFloat(this.power);
-        buffer.writeVarInt(this.cannonType);
-        buffer.writeVarInt(this.lifetime);
+        buffer.writeFloat(this.size);
+        buffer.writeFloat(this.power);
+        buffer.writeInt(this.cannonType);
+        buffer.writeInt(this.lifetime);
     }
 
     @Override

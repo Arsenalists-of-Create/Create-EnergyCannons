@@ -1,6 +1,5 @@
 package net.arsenalists.createenergycannons.content.energymount;
 
-import com.mojang.logging.LogUtils;
 import com.simibubi.create.content.kinetics.base.KineticBlock;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
@@ -27,7 +26,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import org.slf4j.Logger;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntity;
 
 import java.util.Iterator;
@@ -37,7 +35,6 @@ public class EnergyCannonMount extends KineticBlock implements IBE<EnergyCannonM
     public static final BooleanProperty ASSEMBLY_POWERED;
     public static final BooleanProperty FIRE_POWERED;
     public static final DirectionProperty VERTICAL_DIRECTION;
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     public EnergyCannonMount(BlockBehaviour.Properties properties) {
         super(properties);
@@ -108,10 +105,8 @@ public class EnergyCannonMount extends KineticBlock implements IBE<EnergyCannonM
         Direction fireDirection = state.getValue(HORIZONTAL_FACING);
         int firePower = level.getSignal(pos.relative(fireDirection), fireDirection);
 
-        this.withBlockEntityDo(level, pos, (cmbe) -> {
-            LOGGER.warn("bang?");
-            cmbe.onRedstoneUpdate(assemblyPowered, prevAssemblyPowered, firePowered, prevFirePowered, firePower);
-        });
+        this.withBlockEntityDo(level, pos, (cmbe) ->
+            cmbe.onRedstoneUpdate(assemblyPowered, prevAssemblyPowered, firePowered, prevFirePowered, firePower));
     }
 
 
