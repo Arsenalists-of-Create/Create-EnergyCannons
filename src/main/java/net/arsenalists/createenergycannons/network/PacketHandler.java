@@ -30,9 +30,10 @@ public class PacketHandler {
                 LASER_BURN_PACKET,
                 LaserBurnS2CPacket::handle
         );
-        *///?} else
+        *///?} else {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C,
                 LaserBurnS2CPacket.TYPE, LaserBurnS2CPacket.STREAM_CODEC, LaserBurnS2CPacket::handle);
+        //?}
     }
 
     //? if <1.21 {

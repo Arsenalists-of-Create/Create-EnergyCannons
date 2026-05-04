@@ -26,12 +26,13 @@ public class CECParticles {
                     return EnergyMuzzleParticleData.CODEC;
                 }
             }
-            *///?} else
+            *///?} else {
             new ParticleType<EnergyMuzzleParticleData>(false) {
                 // TODO Phase 2: override MapCodec<T> codec() and StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec()
                 public com.mojang.serialization.MapCodec<EnergyMuzzleParticleData> codec() { return null; }
                 public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyMuzzleParticleData> streamCodec() { return null; }
             }
+            //?}
         );
 
     public static final RegistrySupplier<ParticleType<EnergyCannonPlumeParticleData>> ENERGY_CANNON_PLUME =
@@ -43,12 +44,13 @@ public class CECParticles {
                     return EnergyCannonPlumeParticleData.CODEC;
                 }
             }
-            *///?} else
+            *///?} else {
             new ParticleType<EnergyCannonPlumeParticleData>(false) {
                 // TODO Phase 2: override MapCodec<T> codec() and StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec()
                 public com.mojang.serialization.MapCodec<EnergyCannonPlumeParticleData> codec() { return null; }
                 public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyCannonPlumeParticleData> streamCodec() { return null; }
             }
+            //?}
         );
 
     public static void register() {

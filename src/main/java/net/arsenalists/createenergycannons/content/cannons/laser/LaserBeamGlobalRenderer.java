@@ -421,9 +421,10 @@ public class LaserBeamGlobalRenderer {
         //? if <1.21 {
         /*b.vertex(pos.x, pos.y, pos.z).uv(u, v).overlayCoords(layerIndex, power)
                 .color(r, g, bx, alpha).uv2(15728880).endVertex();
-        *///?} else
+        *///?} else {
         b.addVertex((float)pos.x, (float)pos.y, (float)pos.z).setUv(u, v).setOverlay((power << 16) | (layerIndex & 0xFFFF))
                 .setColor(r, g, bx, alpha).setLight(15728880);
+        //?}
     }
 
     private static SuperRenderTypeBuffer fallbackBuffer;

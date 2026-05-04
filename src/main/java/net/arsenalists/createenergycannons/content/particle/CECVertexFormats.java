@@ -16,7 +16,7 @@ public class CECVertexFormats {
             .put("UV2", DefaultVertexFormat.ELEMENT_UV2)
             .build()
     );
-    *///?} else
+    *///?} else {
     public static final VertexFormat PARTICLE_WITH_OVERLAY = VertexFormat.builder()
         .add("Position", VertexFormatElement.POSITION)
         .add("UV0", VertexFormatElement.UV0)
@@ -24,4 +24,5 @@ public class CECVertexFormats {
         .add("Color", VertexFormatElement.COLOR)
         .add("UV2", VertexFormatElement.UV2)
         .build();
+    //?}
 }

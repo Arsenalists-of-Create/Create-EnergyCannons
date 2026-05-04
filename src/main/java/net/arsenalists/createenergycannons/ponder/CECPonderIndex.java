@@ -13,9 +13,10 @@ public class CECPonderIndex {
         //? if <1.21 {
         /*PonderSceneRegistrationHelper<ItemProviderEntry<?>> HELPER =
                 helper.withKeyFunction(RegistryEntry::getId);
-        *///?} else
+        *///?} else {
         PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> HELPER =
                 helper.withKeyFunction(RegistryEntry::getId);
+        //?}
 
         // Energy Cannon Mount
         HELPER.forComponents(CECBlocks.ENERGY_CANNON_MOUNT)
