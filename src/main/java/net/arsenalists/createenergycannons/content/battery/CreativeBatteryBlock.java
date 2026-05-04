@@ -14,13 +14,14 @@ public class CreativeBatteryBlock extends Block implements IBE<CreativeBatteryBl
         super(properties);
     }
 
-    //? if >=1.21
+    //? if >=1.21 {
     public static final com.mojang.serialization.MapCodec<CreativeBatteryBlock> CODEC = simpleCodec(CreativeBatteryBlock::new);
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.Block> codec() {
         return CODEC;
     }
+    //?}
 
 
     @Override

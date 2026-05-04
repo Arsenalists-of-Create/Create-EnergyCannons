@@ -42,13 +42,14 @@ public class EnergyCannonMount extends KineticBlock implements IBE<EnergyCannonM
         this.registerDefaultState((BlockState) ((BlockState) ((BlockState) ((BlockState) ((BlockState) this.stateDefinition.any()).setValue(HORIZONTAL_FACING, Direction.NORTH)).setValue(ASSEMBLY_POWERED, false)).setValue(FIRE_POWERED, false)).setValue(VERTICAL_DIRECTION, Direction.DOWN));
     }
 
-    //? if >=1.21
+    //? if >=1.21 {
     public static final com.mojang.serialization.MapCodec<EnergyCannonMount> CODEC = simpleCodec(EnergyCannonMount::new);
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.Block> codec() {
         return CODEC;
     }
+    //?}
 
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
