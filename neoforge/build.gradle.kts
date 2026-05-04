@@ -123,48 +123,47 @@ dependencies {
     }
 
     // Dev runtime test mods — load in runClient only, not bundled in the published jar.
-    // Sable is the physics/sub-level mod our compat/sable code targets; Create Aeronautics
-    // is built on Sable and bundles Create Simulated (no separate Simulated mod exists).
-    modRuntimeOnly("maven.modrinth:sable:g8CObHcP")               // Sable 1.1.3+mc1.21.1
-    // Create Aeronautics — the published "create-aeronautics" jar is a BUNDLE WRAPPER
-    // that nests aeronautics/simulated/offroad as JIJ. NeoForge production extracts JIJ
-    // mods automatically; Loom's dev runtime does NOT. Use the bundle for dependency
-    // resolution + JIJ source, but the actual mod content is loaded via the extracted
-    // jars below (extractAeronauticsBundle task).
-    // Create Aeronautics — the published jar is a BUNDLE WRAPPER that nests
-    // aeronautics/simulated/offroad as JIJ. NeoForge production extracts JIJ mods
-    // automatically; Loom's dev runtime does NOT. We grab the bundle from Modrinth
-    // (resolves the deps), then extractBundledMods() pulls the inner jars out at
-    // configuration time so modRuntimeOnly can pass them through Loom remapping.
-    modRuntimeOnly("maven.modrinth:create-aeronautics:1sv6OtSz")
-    extractBundledMods("create-aeronautics", "1sv6OtSz", listOf(
-        "dev.eriksonn.aeronautics.aeronautics-neoforge-1.21.1-1.1.3.jar",
-        "dev.simulated_team.simulated.simulated-neoforge-1.21.1-1.1.3.jar",
-        "dev.ryanhcode.offroad.offroad-neoforge-1.21.1-1.1.3.jar",
-    )).forEach { modRuntimeOnly(files(it)) }
-    // Veil — required at runtime by Aeronautics/Simulated/Offroad (449 refs in Simulated alone)
-    // even though their mods.toml doesn't declare it. Without it, runClient crashes with
-    // NoClassDefFoundError: foundry/veil/api/compat/SodiumCompat at mod-load time.
-    modRuntimeOnly("maven.modrinth:veil:iIz78CBf")                // Veil 3.6.2
+    // Skipped on CI: these are for local testing against Sable/Aeronautics/Veil and the
+    // create-aeronautics bundle download relies on a Loom cache that doesn't exist in CI.
+    if (System.getenv("CI") == null) {
+        // Sable is the physics/sub-level mod our compat/sable code targets; Create Aeronautics
+        // is built on Sable and bundles Create Simulated (no separate Simulated mod exists).
+        modRuntimeOnly("maven.modrinth:sable:g8CObHcP")               // Sable 1.1.3+mc1.21.1
+        // Create Aeronautics — the published jar is a BUNDLE WRAPPER that nests
+        // aeronautics/simulated/offroad as JIJ. NeoForge production extracts JIJ mods
+        // automatically; Loom's dev runtime does NOT. We grab the bundle from Modrinth
+        // (resolves the deps), then extractBundledMods() pulls the inner jars out at
+        // configuration time so modRuntimeOnly can pass them through Loom remapping.
+        modRuntimeOnly("maven.modrinth:create-aeronautics:1sv6OtSz")
+        extractBundledMods("create-aeronautics", "1sv6OtSz", listOf(
+            "dev.eriksonn.aeronautics.aeronautics-neoforge-1.21.1-1.1.3.jar",
+            "dev.simulated_team.simulated.simulated-neoforge-1.21.1-1.1.3.jar",
+            "dev.ryanhcode.offroad.offroad-neoforge-1.21.1-1.1.3.jar",
+        )).forEach { modRuntimeOnly(files(it)) }
+        // Veil — required at runtime by Aeronautics/Simulated/Offroad (449 refs in Simulated alone)
+        // even though their mods.toml doesn't declare it. Without it, runClient crashes with
+        // NoClassDefFoundError: foundry/veil/api/compat/SodiumCompat at mod-load time.
+        modRuntimeOnly("maven.modrinth:veil:iIz78CBf")                // Veil 3.6.2
 
-    // Veil's Dear ImGui bindings — JIJ-bundled inside the published Veil jar but Loom
-    // doesn't extract JIJ for dev. Use forgeRuntimeLibrary (NOT plain runtimeOnly) so
-    // these land on the NeoForge mod classloader; runtimeOnly only adds to Gradle's
-    // classpath which the isolated mod classloader can't see, causing
-    // ClassNotFoundException: imgui.ImGui at mod-load time.
-    "forgeRuntimeLibrary"("io.github.spair:imgui-java-binding:1.88.0")
-    "forgeRuntimeLibrary"("io.github.spair:imgui-java-lwjgl3:1.88.0")
-    "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-windows:1.88.0")
-    "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-linux:1.88.0")
-    "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-macos:1.88.0")
+        // Veil's Dear ImGui bindings — JIJ-bundled inside the published Veil jar but Loom
+        // doesn't extract JIJ for dev. Use forgeRuntimeLibrary (NOT plain runtimeOnly) so
+        // these land on the NeoForge mod classloader; runtimeOnly only adds to Gradle's
+        // classpath which the isolated mod classloader can't see, causing
+        // ClassNotFoundException: imgui.ImGui at mod-load time.
+        "forgeRuntimeLibrary"("io.github.spair:imgui-java-binding:1.88.0")
+        "forgeRuntimeLibrary"("io.github.spair:imgui-java-lwjgl3:1.88.0")
+        "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-windows:1.88.0")
+        "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-linux:1.88.0")
+        "forgeRuntimeLibrary"("io.github.spair:imgui-java-natives-macos:1.88.0")
 
-    // Veil's other JIJ libs:
-    //   - molang-compiler is on modmaven, so use the normal coordinate
-    //   - glsl-processor is NOT published anywhere except JIJ'd inside Veil, so
-    //     extractVeilJij task (below) pulls it out and adds the extracted jar via files()
-    "forgeRuntimeLibrary"("gg.moonflower:molang-compiler:3.1.1.19")
-    "forgeRuntimeLibrary"(files(layout.buildDirectory.file("veil-jij/glsl-processor-0.2.3.jar"))
-        .builtBy("extractVeilJij"))
+        // Veil's other JIJ libs:
+        //   - molang-compiler is on modmaven, so use the normal coordinate
+        //   - glsl-processor is NOT published anywhere except JIJ'd inside Veil, so
+        //     extractVeilJij task (below) pulls it out and adds the extracted jar via files()
+        "forgeRuntimeLibrary"("gg.moonflower:molang-compiler:3.1.1.19")
+        "forgeRuntimeLibrary"(files(layout.buildDirectory.file("veil-jij/glsl-processor-0.2.3.jar"))
+            .builtBy("extractVeilJij"))
+    }
 
     commonBundle(project(common.path, "namedElements")) { isTransitive = false }
     shadowBundle(project(common.path, "transformProductionNeoForge")) { isTransitive = false }
