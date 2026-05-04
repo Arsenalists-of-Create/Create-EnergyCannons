@@ -1177,7 +1177,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
-    *///?} else
+    *///?} else {
     @Override
     public CompoundTag writeNBT(net.minecraft.core.HolderLookup.Provider provider, boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(provider, spawnPacket);
@@ -1201,6 +1201,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
+    //?}
 
 
 }
