@@ -5,6 +5,7 @@ import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import dev.architectury.platform.forge.EventBuses;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.config.CECConfig;
+import net.arsenalists.createenergycannons.config.ConfigType;
 import net.arsenalists.createenergycannons.content.energy.EnergyCapHelper;
 import net.arsenalists.createenergycannons.content.energy.IModEnergyStorage;
 import net.arsenalists.createenergycannons.forge.loot.SledLootModifier;
@@ -65,9 +66,17 @@ public final class CECModForge {
         );
 
         ModLoadingContext context = ModLoadingContext.get();
-        for (Map.Entry<ModConfig.Type, ConfigBase> pair : CECConfig.CONFIGS.entrySet()) {
-            context.registerConfig(pair.getKey(), pair.getValue().specification);
+        for (Map.Entry<ConfigType, ConfigBase> pair : CECConfig.CONFIGS.entrySet()) {
+            context.registerConfig(toForgeType(pair.getKey()), pair.getValue().specification);
         }
+    }
+
+    private static ModConfig.Type toForgeType(ConfigType t) {
+        return switch (t) {
+            case CLIENT -> ModConfig.Type.CLIENT;
+            case COMMON -> ModConfig.Type.COMMON;
+            case SERVER -> ModConfig.Type.SERVER;
+        };
     }
 
     private void onRegister(RegisterEvent event) {

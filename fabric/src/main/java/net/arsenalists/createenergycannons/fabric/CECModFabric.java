@@ -5,6 +5,7 @@ import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigRegistry;
 import fuzs.forgeconfigapiport.api.config.v2.ModConfigEvents;
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.config.CECConfig;
+import net.arsenalists.createenergycannons.config.ConfigType;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
 import net.arsenalists.createenergycannons.content.energy.EnergyCapHelper;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
@@ -59,8 +60,16 @@ public final class CECModFabric implements ModInitializer {
         });
 
         // Register configs using the public forge-config-api-port API
-        for (Map.Entry<ModConfig.Type, ConfigBase> pair : CECConfig.CONFIGS.entrySet()) {
-            ForgeConfigRegistry.INSTANCE.register(CECMod.MODID, pair.getKey(), pair.getValue().specification);
+        for (Map.Entry<ConfigType, ConfigBase> pair : CECConfig.CONFIGS.entrySet()) {
+            ForgeConfigRegistry.INSTANCE.register(CECMod.MODID, toModConfigType(pair.getKey()), pair.getValue().specification);
         }
+    }
+
+    private static ModConfig.Type toModConfigType(ConfigType t) {
+        return switch (t) {
+            case CLIENT -> ModConfig.Type.CLIENT;
+            case COMMON -> ModConfig.Type.COMMON;
+            case SERVER -> ModConfig.Type.SERVER;
+        };
     }
 }
