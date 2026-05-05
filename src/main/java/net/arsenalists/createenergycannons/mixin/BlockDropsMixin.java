@@ -39,6 +39,10 @@ public abstract class BlockDropsMixin {
                     net.minecraft.world.item.component.CustomData existing = stack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
                     if (existing != null) beTag = existing.copyTag();
                     beTag.putBoolean("Sled", true);
+                    if (!beTag.contains("id")) {
+                        net.minecraft.resources.ResourceLocation beId = net.minecraft.core.registries.BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
+                        if (beId != null) beTag.putString("id", beId.toString());
+                    }
                     stack.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.of(beTag));
                     //?}
                 }

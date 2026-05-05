@@ -10,7 +10,9 @@
     "CannonMountBEAccessor",
     "BigCannonProjectileBlockEntityMixin",
     "ProjectileBlockItemMixin",
-    "BlockDropsMixin"
+    "BlockDropsMixin",
+    "ProjectileBlockGetCloneItemStackMixin",
+    "SledPersistenceMixin"
   ],
   "injectors": {
     "defaultRequire": 1
