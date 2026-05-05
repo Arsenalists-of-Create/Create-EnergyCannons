@@ -1,0 +1,55 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "createenergycannons"
+version = "${version}"
+displayName = "${name}"
+authors = "HappySG, CeoOfGoogle, Aycer"
+
+
+[[mixins]]
+config = "createenergycannons.mixins.json"
+
+[[dependencies.createenergycannons]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.createenergycannons]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.createenergycannons]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.createenergycannons]]
+modId = "create"
+type = "required"
+versionRange = "[6.0.10,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.createenergycannons]]
+modId = "createbigcannons"
+type = "required"
+versionRange = "[5.11.2,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.createenergycannons]]
+modId = "sable"
+type = "optional"
+versionRange = "[1.1.3,)"
+ordering = "AFTER"
+side = "BOTH"
