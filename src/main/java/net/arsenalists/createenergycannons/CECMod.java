@@ -8,12 +8,12 @@ import net.arsenalists.createenergycannons.ponder.CECPonderPlugin;
 import net.createmod.ponder.foundation.PonderIndex;
 import net.arsenalists.createenergycannons.registry.*;
 //? if >=1.21
-import net.minecraft.core.registries.Registries;
+/*import net.minecraft.core.registries.Registries;*/
 import net.minecraft.resources.ResourceLocation;
 //? if >=1.21
-import net.minecraft.resources.ResourceKey;
+/*import net.minecraft.resources.ResourceKey;*/
 //? if >=1.21
-import net.minecraft.world.item.CreativeModeTab;
+/*import net.minecraft.world.item.CreativeModeTab;*/
 import org.slf4j.Logger;
 
 public class CECMod {
@@ -25,13 +25,14 @@ public class CECMod {
         getLogger().info("Initializing Create Energy Cannons!");
 
         //? if >=1.21 {
-        // Route every REGISTRATE.item(...) into our tab via Registrate's auto-tab path
+        /*// Route every REGISTRATE.item(...) into our tab via Registrate's auto-tab path
         REGISTRATE.defaultCreativeTab(ResourceKey.create(
                 Registries.CREATIVE_MODE_TAB,
                 ResourceLocation.fromNamespaceAndPath(MODID, "createenergycannons")));
-        //?}
+        *///?}
 
         // Registrate / normal common setup only
+        CECDataComponents.register();
         CECItems.register();
         CECBlocks.register();
         CECBlockEntity.register();
@@ -60,6 +61,7 @@ public class CECMod {
 
     public static void clientInit() {
         PonderIndex.addPlugin(new CECPonderPlugin());
+        net.arsenalists.createenergycannons.report.CrashReporter.detectOnStartup();
     }
 
     public static Logger getLogger() {
@@ -68,8 +70,8 @@ public class CECMod {
 
     public static ResourceLocation resource(String id) {
         //? if <1.21 {
-        /*return new ResourceLocation(MODID, id);
-        *///?} else
-        return ResourceLocation.fromNamespaceAndPath(MODID, id);
+        return new ResourceLocation(MODID, id);
+        //?} else
+        /*return ResourceLocation.fromNamespaceAndPath(MODID, id);*/
     }
 }

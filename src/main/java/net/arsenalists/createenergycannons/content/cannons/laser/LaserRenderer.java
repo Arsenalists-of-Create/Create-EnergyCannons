@@ -24,9 +24,9 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
 
     private static ResourceLocation getStainedGlassTexture(DyeColor color) {
         //? if <1.21 {
-        /*return new ResourceLocation("minecraft", "textures/block/" + color.getName() + "_stained_glass.png");
-        *///?} else
-        return ResourceLocation.withDefaultNamespace("textures/block/" + color.getName() + "_stained_glass.png");
+        return new ResourceLocation("minecraft", "textures/block/" + color.getName() + "_stained_glass.png");
+        //?} else
+        /*return ResourceLocation.withDefaultNamespace("textures/block/" + color.getName() + "_stained_glass.png");*/
     }
 
     public LaserRenderer(BlockEntityRendererProvider.Context context) {
@@ -66,16 +66,16 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
 
         ps.pushPose();
         //? if <1.21 {
-        /*Matrix4f pose = ps.last().pose();
+        Matrix4f pose = ps.last().pose();
         Matrix3f normal = ps.last().normal();
-        *///?} else
-        PoseStack.Pose pose = ps.last();
+        //?} else
+        /*PoseStack.Pose pose = ps.last();*/
 
         VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(getStainedGlassTexture(lensColor)));
 
         float nx = (float) n.x, ny = (float) n.y, nz = (float) n.z;
         //? if <1.21 {
-        /*vc.vertex(pose, (float) v0.x, (float) v0.y, (float) v0.z).color(1f, 1f, 1f, 1f)
+        vc.vertex(pose, (float) v0.x, (float) v0.y, (float) v0.z).color(1f, 1f, 1f, 1f)
                 .uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
                 .normal(normal, nx, ny, nz).endVertex();
         vc.vertex(pose, (float) v1.x, (float) v1.y, (float) v1.z).color(1f, 1f, 1f, 1f)
@@ -87,8 +87,8 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
         vc.vertex(pose, (float) v3.x, (float) v3.y, (float) v3.z).color(1f, 1f, 1f, 1f)
                 .uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
                 .normal(normal, nx, ny, nz).endVertex();
-        *///?} else {
-        vc.addVertex(pose, (float) v0.x, (float) v0.y, (float) v0.z).setColor(1f, 1f, 1f, 1f)
+        //?} else {
+        /*vc.addVertex(pose, (float) v0.x, (float) v0.y, (float) v0.z).setColor(1f, 1f, 1f, 1f)
                 .setUv(0, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(pose, nx, ny, nz);
         vc.addVertex(pose, (float) v1.x, (float) v1.y, (float) v1.z).setColor(1f, 1f, 1f, 1f)
@@ -100,16 +100,16 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
         vc.addVertex(pose, (float) v3.x, (float) v3.y, (float) v3.z).setColor(1f, 1f, 1f, 1f)
                 .setUv(0, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(pose, nx, ny, nz);
-        //?}
+        *///?}
 
         ps.popPose();
     }
 
 
     //? if <1.21 {
-    /*public static final ResourceLocation BEAM_LOCATION = new ResourceLocation("textures/entity/beacon_beam.png");
-    *///?} else
-    public static final ResourceLocation BEAM_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/beacon_beam.png");
+    public static final ResourceLocation BEAM_LOCATION = new ResourceLocation("textures/entity/beacon_beam.png");
+    //?} else
+    /*public static final ResourceLocation BEAM_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/beacon_beam.png");*/
 
     public static void renderBeaconBeam(PoseStack ps, MultiBufferSource buffer,
                                         float partialTick, long gameTime,
@@ -190,21 +190,21 @@ public class LaserRenderer extends SmartBlockEntityRenderer<LaserBlockEntity> {
                                     float r, float g, float b, float a,
                                     int y, float x, float z, float u, float v) {
         //? if <1.21 {
-        /*c.vertex(pose.pose(), x, (float) y, z)
+        c.vertex(pose.pose(), x, (float) y, z)
                 .color(r, g, b, a)
                 .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                 .uv2(15728880)
                 .normal(pose.normal(), 0.0F, 1.0F, 0.0F)
                 .endVertex();
-        *///?} else {
-        c.addVertex(pose.pose(), x, (float) y, z)
+        //?} else {
+        /*c.addVertex(pose.pose(), x, (float) y, z)
                 .setColor(r, g, b, a)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(15728880)
                 .setNormal(pose, 0.0F, 1.0F, 0.0F);
-        //?}
+        *///?}
     }
 
     @Override

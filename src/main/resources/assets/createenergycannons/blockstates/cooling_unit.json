@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "createenergycannons:block/cooling_unit"
+    }
+  }
+}

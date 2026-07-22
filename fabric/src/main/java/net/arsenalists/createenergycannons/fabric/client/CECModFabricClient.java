@@ -13,6 +13,7 @@ import net.arsenalists.createenergycannons.content.particle.LaserGlareParticle;
 import net.arsenalists.createenergycannons.registry.CECBlocks;
 import net.arsenalists.createenergycannons.registry.CECParticles;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -77,6 +78,13 @@ public final class CECModFabricClient implements ClientModInitializer {
         // Register render events
         WorldRenderEvents.AFTER_TRANSLUCENT.register(CECModFabricClient::renderAfterTranslucent);
         WorldRenderEvents.AFTER_ENTITIES.register(CECModFabricClient::renderAfterEntities);
+
+        // Keep the water decay clock fresh client-side (mirrors the server tick).
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.level != null)
+                net.arsenalists.createenergycannons.content.cooling.WaterTemp.currentTick = mc.level.getGameTime();
+            net.arsenalists.createenergycannons.client.CrashReportClient.clientTick();
+        });
     }
 
     private static void registerSledItemProperty() {

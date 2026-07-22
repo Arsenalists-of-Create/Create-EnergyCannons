@@ -16,7 +16,7 @@ public final class LaserParticleRenderTypes {
 
     public static final ParticleRenderType ADDITIVE = new ParticleRenderType() {
         //? if <1.21 {
-        /*@Override
+        @Override
         public void begin(BufferBuilder builder, TextureManager texManager) {
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
@@ -39,8 +39,8 @@ public final class LaserParticleRenderTypes {
             );
             RenderSystem.disableBlend();
         }
-        *///?} else {
-        @Override
+        //?} else {
+        /*@Override
         public BufferBuilder begin(Tesselator tesselator, TextureManager texManager) {
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
@@ -53,7 +53,7 @@ public final class LaserParticleRenderTypes {
             );
             return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
         }
-        //?}
+        *///?}
 
         @Override
         public String toString() { return "CEC_ADDITIVE"; }
@@ -62,7 +62,7 @@ public final class LaserParticleRenderTypes {
 
     public static final ParticleRenderType ADDITIVE_NO_DEPTH_WRITE = new ParticleRenderType() {
         //? if <1.21 {
-        /*@Override
+        @Override
         public void begin(BufferBuilder builder, TextureManager texManager) {
             RenderSystem.depthMask(false);               // no depth write
             RenderSystem.enableDepthTest();               // still occluded
@@ -86,8 +86,8 @@ public final class LaserParticleRenderTypes {
             );
             RenderSystem.disableBlend();
         }
-        *///?} else {
-        @Override
+        //?} else {
+        /*@Override
         public BufferBuilder begin(Tesselator tesselator, TextureManager texManager) {
             RenderSystem.depthMask(false);
             RenderSystem.enableDepthTest();
@@ -100,7 +100,7 @@ public final class LaserParticleRenderTypes {
             );
             return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
         }
-        //?}
+        *///?}
 
         @Override
         public String toString() { return "CEC_ADDITIVE_NO_DEPTH_WRITE"; }

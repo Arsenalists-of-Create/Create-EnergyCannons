@@ -26,8 +26,15 @@ public class CoilGunBlockEntity extends BigCannonBlockEntity {
         return currentTime < cooldownEndTime;
     }
 
+    /** Active cooling: pull the cooldown forward by the given ticks, never past now. */
+    public void accelerateCooldown(long currentTime, int ticks) {
+        if (cooldownEndTime <= currentTime) return;
+        cooldownEndTime = Math.max(currentTime, cooldownEndTime - ticks);
+        setChanged();
+    }
+
     //? if <1.21 {
-    /*@Override
+    @Override
     protected void write(CompoundTag tag, boolean clientPacket) {
         super.write(tag, clientPacket);
         tag.putLong("CooldownEndTime", cooldownEndTime);
@@ -38,8 +45,8 @@ public class CoilGunBlockEntity extends BigCannonBlockEntity {
         super.read(tag, clientPacket);
         cooldownEndTime = tag.getLong("CooldownEndTime");
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     protected void write(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putLong("CooldownEndTime", cooldownEndTime);
@@ -50,5 +57,5 @@ public class CoilGunBlockEntity extends BigCannonBlockEntity {
         super.read(tag, registries, clientPacket);
         cooldownEndTime = tag.getLong("CooldownEndTime");
     }
-    //?}
+    *///?}
 }

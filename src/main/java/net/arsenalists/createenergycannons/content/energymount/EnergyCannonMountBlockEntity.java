@@ -39,7 +39,7 @@ import rbasamoyai.createbigcannons.cannons.CannonContraptionProviderBlock;
 import java.util.List;
 import java.util.Map;
 
-public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
+public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity implements IEnergyCannonMount {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final EnergyMountCap energyCap;
 
@@ -47,7 +47,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
 
     public EnergyCannonMountBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
-        // Read config lazily — config values may not be loaded yet during world loading
+        // Read config lazily - config values may not be loaded yet during world loading
         int capacity;
         try {
             capacity = CECConfig.server().mountEnergyCapacity.get();
@@ -68,6 +68,13 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     /** Returns the energy storage for this mount (for capability systems to wrap). */
     public IModEnergyStorage getEnergyStorage() {
         return energyCap;
+    }
+
+    /** Pull the mount's cooldown forward in step with active cooling, never past now. */
+    public void accelerateCooldown(long currentTime, int ticks) {
+        if (cooldownEndTime <= currentTime) return;
+        cooldownEndTime = Math.max(currentTime, cooldownEndTime - ticks);
+        setChanged();
     }
 
     @Override
@@ -205,7 +212,7 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
     }
 
     //? if <1.21 {
-    /*@Override
+    @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         if (tag.contains("energy"))
@@ -219,8 +226,8 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         tag.putInt("energy", energyCap.getEnergyStored());
         tag.putLong("CooldownEndTime", cooldownEndTime);
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     protected void read(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         if (tag.contains("energy"))
@@ -234,5 +241,5 @@ public class EnergyCannonMountBlockEntity extends CannonMountBlockEntity {
         tag.putInt("energy", energyCap.getEnergyStored());
         tag.putLong("CooldownEndTime", cooldownEndTime);
     }
-    //?}
+    *///?}
 }

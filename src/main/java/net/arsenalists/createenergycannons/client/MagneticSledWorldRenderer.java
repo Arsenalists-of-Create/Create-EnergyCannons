@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.sled.IMagneticSled;
 import net.arsenalists.createenergycannons.registry.CECPartials;
 //? if >=1.21
-import net.arsenalists.createenergycannons.compat.sable.SableUtils;
+/*import net.arsenalists.createenergycannons.compat.sable.SableUtils;*/
 //? if >=1.21
-import dev.ryanhcode.sable.companion.SubLevelAccess;
+/*import dev.ryanhcode.sable.companion.SubLevelAccess;*/
 import net.createmod.catnip.render.CachedBuffers;
 import net.createmod.catnip.render.SuperByteBuffer;
 import net.fabricmc.api.EnvType;
@@ -45,7 +45,7 @@ public class MagneticSledWorldRenderer {
                 LevelChunk chunk = level.getChunk(cx, cz);
 
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
-                    // Fused shells are handled by FuzedBlockEntityRendererMixin — skip them here
+                    // Fused shells are handled by FuzedBlockEntityRendererMixin - skip them here
                     if (be instanceof FuzedBlockEntity) continue;
                     if (!(be instanceof IMagneticSled sled)) continue;
                     if (!sled.isSled()) continue;
@@ -56,7 +56,7 @@ public class MagneticSledWorldRenderer {
 
                     poseStack.pushPose();
                     //? if >=1.21 {
-                    // If the cannon block is on a Sable sub-level (Aeronautics ship etc.),
+                    /*// If the cannon block is on a Sable sub-level (Aeronautics ship etc.),
                     SubLevelAccess sub = SableUtils.getSubLevel(level, pos);
                     if (sub != null) {
                         poseStack.translate(-cam.x, -cam.y, -cam.z);
@@ -65,8 +65,8 @@ public class MagneticSledWorldRenderer {
                     } else {
                         poseStack.translate(pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z);
                     }
-                    //?} else
-                    /*poseStack.translate(pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z);*/
+                    *///?} else
+                    poseStack.translate(pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z);
 
                     var facing = be.getBlockState().getValue(BlockStateProperties.FACING);
                     SuperByteBuffer sledRender = CachedBuffers.partialFacing(CECPartials.MAGNETIC_SLED, be.getBlockState(), facing);

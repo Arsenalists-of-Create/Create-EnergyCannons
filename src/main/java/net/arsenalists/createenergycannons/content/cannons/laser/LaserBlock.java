@@ -26,13 +26,13 @@ public class LaserBlock extends DirectionalBlock implements CannonContraptionPro
     }
 
     //? if >=1.21 {
-    public static final com.mojang.serialization.MapCodec<LaserBlock> CODEC = simpleCodec(LaserBlock::new);
+    /*public static final com.mojang.serialization.MapCodec<LaserBlock> CODEC = simpleCodec(LaserBlock::new);
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.DirectionalBlock> codec() {
         return CODEC;
     }
-    //?}
+    *///?}
 
     @Override
     public Class<LaserBlockEntity> getBlockEntityClass() {

@@ -12,6 +12,9 @@ authors = "HappySG, CeoOfGoogle, Aycer"
 [[mixins]]
 config = "createenergycannons.mixins.json"
 
+[[mixins]]
+config = "createenergycannons.neoforge.mixins.json"
+
 [[dependencies.createenergycannons]]
 modId = "neoforge"
 type = "required"

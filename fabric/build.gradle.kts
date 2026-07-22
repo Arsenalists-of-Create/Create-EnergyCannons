@@ -62,14 +62,14 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${common.mod.dep("fabric_api")}")
     modImplementation("dev.architectury:architectury-fabric:${common.mod.dep("architectury_api")}")
 
-    // Create Fabric — single dependency, everything else pulled in transitively
+    // Create Fabric - single dependency, everything else pulled in transitively
     // (porting_lib, flywheel, ponder, registrate, forge-config-api-port, milk-lib, etc.)
     modImplementation("com.simibubi.create:create-fabric:${common.mod.dep("create_fabric")}")
 
     // Create Big Cannons (Fabric)
     modImplementation("maven.modrinth:create-big-cannons:${common.mod.dep("cbc_fabric_id")}")
 
-    // RPL is JiJ'd in CBC but Loom doesn't extract JiJ jars for dev — must declare explicitly
+    // RPL is JiJ'd in CBC but Loom doesn't extract JiJ jars for dev - must declare explicitly
     modRuntimeOnly("com.rbasamoyai:ritchiesprojectilelib:${common.mod.dep("rpl_fabric")}") { isTransitive = false }
 
     commonBundle(project(common.path, "namedElements")) { isTransitive = false }

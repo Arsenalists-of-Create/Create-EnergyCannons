@@ -52,6 +52,9 @@ public final class CECModNeoForge {
         modEventBus.addListener(this::onRegister);
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onRegisterCapabilities);
+
+        // Keep WaterTemp's "now" current so water temperature decays on read anywhere it's stored.
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(CECModNeoForge::onServerTick);
         // Tab population is handled by Registrate's own BuildCreativeModeTabContentsEvent
         modEventBus.addListener(CECNeoForgeEvents::onConfigLoad);
         modEventBus.addListener(CECNeoForgeEvents::onConfigReload);
@@ -98,6 +101,13 @@ public final class CECModNeoForge {
         });
     }
 
+    private static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        net.minecraft.server.level.ServerLevel overworld = event.getServer().overworld();
+        if (overworld != null) {
+            net.arsenalists.createenergycannons.content.cooling.WaterTemp.currentTick = overworld.getGameTime();
+        }
+    }
+
     private void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
@@ -108,6 +118,16 @@ public final class CECModNeoForge {
                 Capabilities.EnergyStorage.BLOCK,
                 CECBlockEntity.ENERGY_CANNON_MOUNT.get(),
                 (be, side) -> wrapModEnergy(be.getEnergyStorage())
+        );
+        event.registerBlockEntity(
+                Capabilities.EnergyStorage.BLOCK,
+                CECBlockEntity.FIXED_ENERGY_CANNON_MOUNT.get(),
+                (be, side) -> wrapModEnergy(be.getEnergyStorage())
+        );
+        event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK,
+                CECBlockEntity.COOLING_UNIT.get(),
+                (be, side) -> be.getCoolantHandler()
         );
     }
 

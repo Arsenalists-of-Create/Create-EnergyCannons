@@ -96,6 +96,7 @@ dependencies {
 loom {
     forge {
         mixinConfig("createenergycannons.mixins.json")
+        mixinConfig("createenergycannons.forge.mixins.json")
     }
 }
 

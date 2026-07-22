@@ -67,7 +67,7 @@ dependencies {
         parchment("org.parchmentmc.data:parchment-$mcVersion:${mod.dep("parchment")}@zip")
     })
 
-    // Fabric Loader on common — only for the @Environment annotations, which get
+    // Fabric Loader on common - only for the @Environment annotations, which get
     // remapped to the right thing on each platform. Don't reference other Fabric
     // Loader classes from common code.
     modImplementation("net.fabricmc:fabric-loader:${mod.dep("fabric_loader")}")
@@ -104,7 +104,7 @@ dependencies {
         modCompileOnly("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${mod.dep("forge_config_api_port")}") { isTransitive = false }
     } else {
         // 1.21.1+ deps: NeoForge-only. Create bundles Catnip internally but Registrate
-        // and Ponder are external runtime deps — we pull them in at compile too so the
+        // and Ponder are external runtime deps - we pull them in at compile too so the
         // common code (CECBlocks, CECItems, gated Ponder classes) resolves.
         // NeoForge itself is needed compile-only because catnip's ConfigBase
         // transitively references net.neoforged.neoforge.common.ModConfigSpec.

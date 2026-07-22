@@ -44,6 +44,9 @@ public final class CECModForge {
 
         new CECMod();
 
+        net.arsenalists.createenergycannons.content.cooling.CoolantTanksFactory.setFactory(
+                net.arsenalists.createenergycannons.forge.cooling.ForgeCoolantTanks::new);
+
         GLM_REGISTRY.register(modEventBus);
 
         CECMod.REGISTRATE.registerEventListeners(modEventBus);

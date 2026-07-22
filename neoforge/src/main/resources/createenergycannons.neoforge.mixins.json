@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "net.arsenalists.createenergycannons.neoforge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "mixins": [
+    "OpenEndedPipeMixin",
+    "CreateLangMixin",
+    "FluidTankMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

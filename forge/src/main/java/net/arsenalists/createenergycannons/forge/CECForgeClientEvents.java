@@ -28,6 +28,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -90,6 +91,15 @@ public class CECForgeClientEvents {
             }
         }
         CECMod.getLogger().info("Registered has_sled item property for {} projectile items", count);
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        Level level = Minecraft.getInstance().level;
+        if (level != null)
+            net.arsenalists.createenergycannons.content.cooling.WaterTemp.currentTick = level.getGameTime();
+        net.arsenalists.createenergycannons.client.CrashReportClient.clientTick();
     }
 
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {

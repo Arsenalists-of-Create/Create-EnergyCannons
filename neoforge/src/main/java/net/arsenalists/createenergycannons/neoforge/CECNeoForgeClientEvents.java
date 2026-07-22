@@ -38,13 +38,22 @@ import rbasamoyai.createbigcannons.munitions.big_cannon.ProjectileBlockItem;
 @EventBusSubscriber(modid = CECMod.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class CECNeoForgeClientEvents {
 
-    /** Hooked from CECModNeoForge — registers mod-bus client listeners. */
+    /** Hooked from CECModNeoForge - registers mod-bus client listeners. */
     static void register(IEventBus modEventBus) {
         modEventBus.addListener(CECNeoForgeClientEvents::onClientSetup);
         modEventBus.addListener(CECNeoForgeClientEvents::registerShaders);
         modEventBus.addListener(CECNeoForgeClientEvents::registerParticleFactories);
         modEventBus.addListener(net.arsenalists.createenergycannons.neoforge.client.SledModelHandler::onRegisterAdditional);
         modEventBus.addListener(net.arsenalists.createenergycannons.neoforge.client.SledModelHandler::onModifyBakingResult);
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        Level level = Minecraft.getInstance().level;
+        if (level != null) {
+            net.arsenalists.createenergycannons.content.cooling.WaterTemp.currentTick = level.getGameTime();
+        }
+        net.arsenalists.createenergycannons.client.CrashReportClient.clientTick();
     }
 
     public static void onClientSetup(FMLClientSetupEvent event) {

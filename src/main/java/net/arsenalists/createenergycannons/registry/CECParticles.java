@@ -20,37 +20,35 @@ public class CECParticles {
     public static final RegistrySupplier<ParticleType<EnergyMuzzleParticleData>> ENERGY_MUZZLE =
         PARTICLES.register("energy_muzzle", () ->
             //? if <1.21 {
-            /*new ParticleType<EnergyMuzzleParticleData>(false, EnergyMuzzleParticleData.DESERIALIZER) {
+            new ParticleType<EnergyMuzzleParticleData>(false, EnergyMuzzleParticleData.DESERIALIZER) {
                 @Override
                 public Codec<EnergyMuzzleParticleData> codec() {
                     return EnergyMuzzleParticleData.CODEC;
                 }
             }
-            *///?} else {
-            new ParticleType<EnergyMuzzleParticleData>(false) {
-                // TODO Phase 2: override MapCodec<T> codec() and StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec()
-                public com.mojang.serialization.MapCodec<EnergyMuzzleParticleData> codec() { return null; }
-                public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyMuzzleParticleData> streamCodec() { return null; }
+            //?} else {
+            /*new ParticleType<EnergyMuzzleParticleData>(false) {
+                public com.mojang.serialization.MapCodec<EnergyMuzzleParticleData> codec() { return EnergyMuzzleParticleData.MAP_CODEC; }
+                public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyMuzzleParticleData> streamCodec() { return EnergyMuzzleParticleData.STREAM_CODEC; }
             }
-            //?}
+            *///?}
         );
 
     public static final RegistrySupplier<ParticleType<EnergyCannonPlumeParticleData>> ENERGY_CANNON_PLUME =
         PARTICLES.register("energy_cannon_plume", () ->
             //? if <1.21 {
-            /*new ParticleType<EnergyCannonPlumeParticleData>(false, EnergyCannonPlumeParticleData.DESERIALIZER) {
+            new ParticleType<EnergyCannonPlumeParticleData>(false, EnergyCannonPlumeParticleData.DESERIALIZER) {
                 @Override
                 public Codec<EnergyCannonPlumeParticleData> codec() {
                     return EnergyCannonPlumeParticleData.CODEC;
                 }
             }
-            *///?} else {
-            new ParticleType<EnergyCannonPlumeParticleData>(false) {
-                // TODO Phase 2: override MapCodec<T> codec() and StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec()
-                public com.mojang.serialization.MapCodec<EnergyCannonPlumeParticleData> codec() { return null; }
-                public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyCannonPlumeParticleData> streamCodec() { return null; }
+            //?} else {
+            /*new ParticleType<EnergyCannonPlumeParticleData>(false) {
+                public com.mojang.serialization.MapCodec<EnergyCannonPlumeParticleData> codec() { return EnergyCannonPlumeParticleData.MAP_CODEC; }
+                public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, EnergyCannonPlumeParticleData> streamCodec() { return EnergyCannonPlumeParticleData.STREAM_CODEC; }
             }
-            //?}
+            *///?}
         );
 
     public static void register() {

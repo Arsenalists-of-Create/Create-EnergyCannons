@@ -4,7 +4,7 @@ plugins {
     id("architectury-plugin") version "3.4-SNAPSHOT" apply false
     id("com.gradleup.shadow") version "8.3.6" apply false
 }
-stonecutter active "1.21.1" /* [SC] DO NOT EDIT */
+stonecutter active "1.20.1" /* [SC] DO NOT EDIT */
 
 // Builds every (loader, version) into build/libs/{mod.version}/{loader}.
 stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {

@@ -1,9 +1,13 @@
 package net.arsenalists.createenergycannons.content.cannons.magnetic.railgun;
 
+import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import net.arsenalists.createenergycannons.registry.CECBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,16 +24,19 @@ import rbasamoyai.createbigcannons.crafting.casting.CannonCastShape;
 
 import java.util.function.Supplier;
 
-public class RailGunBlock extends BigCannonTubeBlock {
+public class RailGunBlock extends BigCannonTubeBlock implements IWrenchable {
 
     public static final BooleanProperty OVERHEATED = BooleanProperty.create("overheated");
     public static final BooleanProperty CHARGING = BooleanProperty.create("charging");
+    // Cosmetic: rolls the rails a quarter turn around the bore (top/bottom <-> sides).
+    public static final BooleanProperty ROLLED = BooleanProperty.create("rolled");
 
     public RailGunBlock(Properties properties, BigCannonMaterial material, Supplier<CannonCastShape> cannonShape, VoxelShape base) {
         super(properties, material, cannonShape, base);
         this.registerDefaultState(this.stateDefinition.any()
             .setValue(OVERHEATED, false)
-            .setValue(CHARGING, false));
+            .setValue(CHARGING, false)
+            .setValue(ROLLED, false));
     }
 
     // 1.21+: BigCannonTubeBlock parent already supplies a codec via constructor
@@ -38,7 +45,18 @@ public class RailGunBlock extends BigCannonTubeBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(OVERHEATED, CHARGING);
+        builder.add(OVERHEATED, CHARGING, ROLLED);
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        if (level.isClientSide())
+            return InteractionResult.SUCCESS;
+        level.setBlockAndUpdate(pos, state.cycle(ROLLED));
+        AllSoundEvents.WRENCH_ROTATE.playOnServer(level, pos);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

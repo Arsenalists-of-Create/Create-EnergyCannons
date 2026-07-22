@@ -2,10 +2,14 @@ package net.arsenalists.createenergycannons.forge;
 
 import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.content.battery.CreativeBatteryBlockEntity;
+import net.arsenalists.createenergycannons.content.cooling.CoolingUnitBlockEntity;
+import net.arsenalists.createenergycannons.content.cooling.WaterTemp;
 import net.arsenalists.createenergycannons.content.energy.IModEnergyStorage;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
+import net.arsenalists.createenergycannons.content.energymount.FixedEnergyCannonMountBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -13,7 +17,9 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +43,37 @@ public class CECForgeCapabilities {
                 new ResourceLocation(CECMod.MODID, "energy_mount_energy"),
                 createEnergyProvider(mountBE::getEnergyStorage)
             );
+        } else if (be instanceof FixedEnergyCannonMountBlockEntity fixedMountBE) {
+            event.addCapability(
+                new ResourceLocation(CECMod.MODID, "fixed_energy_mount_energy"),
+                createEnergyProvider(fixedMountBE::getEnergyStorage)
+            );
+        } else if (be instanceof CoolingUnitBlockEntity coolingBE) {
+            event.addCapability(
+                new ResourceLocation(CECMod.MODID, "cooling_unit_fluid"),
+                createFluidProvider((IFluidHandler) coolingBE.coolantFluidHandler())
+            );
         }
+    }
+
+    // Keep the decay clock ("now") fresh server-side; the client mirror lives in CECForgeClientEvents.
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        ServerLevel overworld = event.getServer().overworld();
+        if (overworld != null) WaterTemp.currentTick = overworld.getGameTime();
+    }
+
+    private static ICapabilityProvider createFluidProvider(IFluidHandler handler) {
+        LazyOptional<IFluidHandler> lazy = LazyOptional.of(() -> handler);
+        return new ICapabilityProvider() {
+            @Override
+            public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+                if (cap == ForgeCapabilities.FLUID_HANDLER)
+                    return lazy.cast();
+                return LazyOptional.empty();
+            }
+        };
     }
 
     private static ICapabilityProvider createEnergyProvider(Supplier<IModEnergyStorage> storageSupplier) {

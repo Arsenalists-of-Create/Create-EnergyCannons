@@ -6,7 +6,7 @@ import net.arsenalists.createenergycannons.CECMod;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 //? if >=1.21
-import net.minecraft.resources.ResourceKey;
+/*import net.minecraft.resources.ResourceKey;*/
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
@@ -34,15 +34,21 @@ public class CECCreativeModeTabs {
 
     private static void displayItems(CreativeModeTab.ItemDisplayParameters pParameters, CreativeModeTab.Output pOutput) {
         //? if <1.21 {
-        /*pOutput.accept(CECBlocks.ENERGY_CANNON_MOUNT);
+        pOutput.accept(CECBlocks.ENERGY_CANNON_MOUNT);
+        pOutput.accept(CECBlocks.FIXED_ENERGY_CANNON_MOUNT);
         pOutput.accept(CECBlocks.BATTERY_BLOCK);
         pOutput.accept(CECBlocks.LASER);
         pOutput.accept(CECBlocks.NETHERSTEEL_RAILGUN_BARREL);
         pOutput.accept(CECBlocks.STEEL_RAILGUN_BARREL);
         pOutput.accept(CECBlocks.STEEL_COILGUN_BARREL);
         pOutput.accept(CECBlocks.NETHERSTEEL_COILGUN_BARREL);
+        pOutput.accept(CECBlocks.STEEL_REGENERATIVE_RAILGUN_BARREL);
+        pOutput.accept(CECBlocks.NETHERSTEEL_REGENERATIVE_RAILGUN_BARREL);
+        pOutput.accept(CECBlocks.STEEL_REGENERATIVE_COILGUN_BARREL);
+        pOutput.accept(CECBlocks.NETHERSTEEL_REGENERATIVE_COILGUN_BARREL);
+        pOutput.accept(CECBlocks.COOLING_UNIT);
         pOutput.accept(CECItems.MAGNETIC_SLED);
-        *///?}
+        //?}
         // 1.21+: tab population happens in register() via REGISTRATE.modifyCreativeModeTab.
     }
 

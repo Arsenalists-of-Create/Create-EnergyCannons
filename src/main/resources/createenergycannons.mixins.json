@@ -8,11 +8,11 @@
   ],
   "mixins": [
     "CannonMountBEAccessor",
+    "FixedCannonMountBEAccessor",
     "BigCannonProjectileBlockEntityMixin",
     "ProjectileBlockItemMixin",
     "BlockDropsMixin",
-    "ProjectileBlockGetCloneItemStackMixin",
-    "SledPersistenceMixin"
+    "ProjectileBlockGetCloneItemStackMixin"
   ],
   "injectors": {
     "defaultRequire": 1

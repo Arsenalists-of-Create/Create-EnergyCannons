@@ -1,7 +1,7 @@
 package net.arsenalists.createenergycannons.compat.vs2;
 
 //? if <1.21 {
-/*import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -49,6 +49,6 @@ public class VS2Utils {
         return VSGameUtilsKt.getShipObjectManagingPos(level, pos);
     }
 }
-*///?}
+//?}
 // 1.21+: VS2 has no official 1.21.1 build yet (track VS2 issue #1049).
 // PhysicsHandler degrades to no-ops when Mods.VALKYRIENSKIES.isLoaded() is false.

@@ -7,7 +7,9 @@ import net.arsenalists.createenergycannons.content.cannons.laser.LaserBlockEntit
 import net.arsenalists.createenergycannons.content.cannons.laser.LaserRenderer;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.coilgun.CoilGunBlockEntity;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.railgun.RailGunBlockEntity;
+import net.arsenalists.createenergycannons.content.cooling.CoolingUnitBlockEntity;
 import net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity;
+import net.arsenalists.createenergycannons.content.energymount.FixedEnergyCannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntityRenderer;
 
 
@@ -25,17 +27,29 @@ public class CECBlockEntity {
             .register();
 
 
+    public static final BlockEntityEntry<FixedEnergyCannonMountBlockEntity> FIXED_ENERGY_CANNON_MOUNT = CECMod.REGISTRATE
+            .blockEntity("fixed_energy_cannon_mount", FixedEnergyCannonMountBlockEntity::new)
+            .validBlock(CECBlocks.FIXED_ENERGY_CANNON_MOUNT)
+            .register();
+
     public static final BlockEntityEntry<CoilGunBlockEntity> COILGUN = CECMod.REGISTRATE
             .blockEntity("coilgun", CoilGunBlockEntity::new)
-            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL)
+            .validBlocks(CECBlocks.STEEL_COILGUN_BARREL, CECBlocks.NETHERSTEEL_COILGUN_BARREL,
+                    CECBlocks.STEEL_REGENERATIVE_COILGUN_BARREL, CECBlocks.NETHERSTEEL_REGENERATIVE_COILGUN_BARREL)
             .register();
 
     public static final BlockEntityEntry<RailGunBlockEntity> RAILGUN = CECMod.REGISTRATE
             .blockEntity("railgun", RailGunBlockEntity::new)
-            .validBlocks(CECBlocks.NETHERSTEEL_RAILGUN_BARREL, CECBlocks.STEEL_RAILGUN_BARREL)
+            .validBlocks(CECBlocks.NETHERSTEEL_RAILGUN_BARREL, CECBlocks.STEEL_RAILGUN_BARREL,
+                    CECBlocks.STEEL_REGENERATIVE_RAILGUN_BARREL, CECBlocks.NETHERSTEEL_REGENERATIVE_RAILGUN_BARREL)
             .register();
 
 
+
+    public static final BlockEntityEntry<CoolingUnitBlockEntity> COOLING_UNIT = CECMod.REGISTRATE
+            .blockEntity("cooling_unit", CoolingUnitBlockEntity::new)
+            .validBlock(CECBlocks.COOLING_UNIT)
+            .register();
 
     public static final BlockEntityEntry<LaserBlockEntity> LASER = CECMod.REGISTRATE
             .blockEntity("laser", LaserBlockEntity::new)

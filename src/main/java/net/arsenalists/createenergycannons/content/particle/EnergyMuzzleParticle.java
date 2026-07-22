@@ -33,7 +33,7 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
     private static ParticleRenderType makeRenderType(ResourceLocation gradient, String name) {
         return new ParticleRenderType() {
             //? if <1.21 {
-            /*@Override
+            @Override
             public void begin(BufferBuilder builder, TextureManager textureManager) {
                 RenderSystem.depthMask(true);
                 RenderSystem.enableBlend();
@@ -58,8 +58,8 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
             public void end(Tesselator tesselator) {
                 tesselator.end();
             }
-            *///?} else {
-            @Override
+            //?} else {
+            /*@Override
             public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
                 RenderSystem.depthMask(true);
                 RenderSystem.enableBlend();
@@ -78,7 +78,7 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                     return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                 }
             }
-            //?}
+            *///?}
 
             @Override
             public String toString() { return name; }
@@ -206,7 +206,7 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
         if (useCustomShader()) {
             int cannonPower = this.power;
             //? if <1.21 {
-            /*buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+            buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
                 .uv(m, o)
                 .overlayCoords(0, cannonPower)
                 .color(this.rCol, this.gCol, this.bCol, this.alpha)
@@ -230,8 +230,8 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                 .color(this.rCol, this.gCol, this.bCol, this.alpha)
                 .uv2(p)
                 .endVertex();
-            *///?} else {
-            buffer.addVertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+            //?} else {
+            /*buffer.addVertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
                 .setUv(m, o)
                 .setOverlay((cannonPower & 0xFFFF) << 16)
                 .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
@@ -251,11 +251,11 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                 .setOverlay((cannonPower & 0xFFFF) << 16)
                 .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
                 .setLight(p);
-            //?}
+            *///?}
         } else {
             // Vanilla fallback: standard PARTICLE format
             //? if <1.21 {
-            /*buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+            buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
                 .uv(m, o)
                 .color(this.rCol, this.gCol, this.bCol, this.alpha)
                 .uv2(p)
@@ -275,8 +275,8 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                 .color(this.rCol, this.gCol, this.bCol, this.alpha)
                 .uv2(p)
                 .endVertex();
-            *///?} else {
-            buffer.addVertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
+            //?} else {
+            /*buffer.addVertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z())
                 .setUv(m, o)
                 .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
                 .setLight(p);
@@ -292,7 +292,7 @@ public class EnergyMuzzleParticle extends TextureSheetParticle {
                 .setUv(l, o)
                 .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
                 .setLight(p);
-            //?}
+            *///?}
         }
     }
 

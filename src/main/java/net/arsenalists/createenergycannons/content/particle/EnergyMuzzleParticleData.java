@@ -26,7 +26,7 @@ public record EnergyMuzzleParticleData(int power, int cannonType, float size) im
     );
 
     //? if <1.21 {
-    /*@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     public static final Deserializer<EnergyMuzzleParticleData> DESERIALIZER =
         new Deserializer<>() {
             @Override
@@ -41,10 +41,25 @@ public record EnergyMuzzleParticleData(int power, int cannonType, float size) im
                 return new EnergyMuzzleParticleData(buf.readVarInt(), buf.readVarInt(), buf.readFloat());
             }
         };
-    *///?}
+    //?}
 
-    // 1.21+ replacement (Phase 2): drop in a StreamCodec.composite of VAR_INT, VAR_INT, FLOAT
-    // and reference it from CECParticles' streamCodec() override instead of DESERIALIZER.
+    //? if >=1.21 {
+    /*public static final com.mojang.serialization.MapCodec<EnergyMuzzleParticleData> MAP_CODEC = RecordCodecBuilder.mapCodec(i ->
+        i.group(
+            Codec.INT.fieldOf("power").forGetter(EnergyMuzzleParticleData::power),
+            Codec.INT.fieldOf("cannonType").forGetter(EnergyMuzzleParticleData::cannonType),
+            Codec.FLOAT.fieldOf("size").forGetter(EnergyMuzzleParticleData::size)
+        ).apply(i, EnergyMuzzleParticleData::new)
+    );
+
+    public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, EnergyMuzzleParticleData> STREAM_CODEC =
+        net.minecraft.network.codec.StreamCodec.composite(
+            net.minecraft.network.codec.ByteBufCodecs.VAR_INT, EnergyMuzzleParticleData::power,
+            net.minecraft.network.codec.ByteBufCodecs.VAR_INT, EnergyMuzzleParticleData::cannonType,
+            net.minecraft.network.codec.ByteBufCodecs.FLOAT, EnergyMuzzleParticleData::size,
+            EnergyMuzzleParticleData::new
+        );
+    *///?}
 
     @Override
     public ParticleType<?> getType() {
@@ -52,7 +67,7 @@ public record EnergyMuzzleParticleData(int power, int cannonType, float size) im
     }
 
     //? if <1.21 {
-    /*@Override
+    @Override
     public void writeToNetwork(FriendlyByteBuf buf) {
         buf.writeVarInt(power);
         buf.writeVarInt(cannonType);
@@ -63,5 +78,5 @@ public record EnergyMuzzleParticleData(int power, int cannonType, float size) im
     public String writeToString() {
         return "energy_muzzle " + power + " " + cannonType + " " + size;
     }
-    *///?}
+    //?}
 }

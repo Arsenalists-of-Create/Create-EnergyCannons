@@ -21,7 +21,7 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions {
     );
 
     //? if <1.21 {
-    /*@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     public static final Deserializer<EnergyCannonPlumeParticleData> DESERIALIZER = new Deserializer<>() {
         @Override
         public EnergyCannonPlumeParticleData fromCommand(ParticleType<EnergyCannonPlumeParticleData> type, StringReader reader) throws CommandSyntaxException {
@@ -41,10 +41,27 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions {
             return new EnergyCannonPlumeParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readInt(), buffer.readInt());
         }
     };
-    *///?}
+    //?}
 
-    // 1.21+ replacement (Phase 2): StreamCodec.composite of FLOAT, FLOAT, INT, INT
-    // referenced from CECParticles' streamCodec() override.
+    //? if >=1.21 {
+    /*public static final com.mojang.serialization.MapCodec<EnergyCannonPlumeParticleData> MAP_CODEC = RecordCodecBuilder.mapCodec(instance ->
+        instance.group(
+            Codec.FLOAT.fieldOf("size").forGetter(d -> d.size),
+            Codec.FLOAT.fieldOf("power").forGetter(d -> d.power),
+            Codec.INT.fieldOf("cannonType").forGetter(d -> d.cannonType),
+            Codec.INT.fieldOf("lifetime").forGetter(d -> d.lifetime)
+        ).apply(instance, EnergyCannonPlumeParticleData::new)
+    );
+
+    public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, EnergyCannonPlumeParticleData> STREAM_CODEC =
+        net.minecraft.network.codec.StreamCodec.composite(
+            net.minecraft.network.codec.ByteBufCodecs.FLOAT, EnergyCannonPlumeParticleData::size,
+            net.minecraft.network.codec.ByteBufCodecs.FLOAT, EnergyCannonPlumeParticleData::power,
+            net.minecraft.network.codec.ByteBufCodecs.VAR_INT, EnergyCannonPlumeParticleData::cannonType,
+            net.minecraft.network.codec.ByteBufCodecs.VAR_INT, EnergyCannonPlumeParticleData::lifetime,
+            EnergyCannonPlumeParticleData::new
+        );
+    *///?}
 
     private final float size;
     private final float power;
@@ -69,7 +86,7 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions {
     }
 
     //? if <1.21 {
-    /*@Override
+    @Override
     public void writeToNetwork(FriendlyByteBuf buffer) {
         buffer.writeFloat(this.size);
         buffer.writeFloat(this.power);
@@ -81,5 +98,5 @@ public class EnergyCannonPlumeParticleData implements ParticleOptions {
     public String writeToString() {
         return String.format("%f %f %d %d", this.size, this.power, this.cannonType, this.lifetime);
     }
-    *///?}
+    //?}
 }

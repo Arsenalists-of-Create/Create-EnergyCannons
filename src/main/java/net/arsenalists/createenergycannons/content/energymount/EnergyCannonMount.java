@@ -43,13 +43,13 @@ public class EnergyCannonMount extends KineticBlock implements IBE<EnergyCannonM
     }
 
     //? if >=1.21 {
-    public static final com.mojang.serialization.MapCodec<EnergyCannonMount> CODEC = simpleCodec(EnergyCannonMount::new);
+    /*public static final com.mojang.serialization.MapCodec<EnergyCannonMount> CODEC = simpleCodec(EnergyCannonMount::new);
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.Block> codec() {
         return CODEC;
     }
-    //?}
+    *///?}
 
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);

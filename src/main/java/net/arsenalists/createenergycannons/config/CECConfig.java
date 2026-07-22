@@ -4,10 +4,10 @@ import net.arsenalists.createenergycannons.CECMod;
 import net.arsenalists.createenergycannons.config.server.CECServerConfig;
 import net.createmod.catnip.config.ConfigBase;
 //? if <1.21 {
-/*import net.createmod.catnip.config.ui.BaseConfigScreen;
+import net.createmod.catnip.config.ui.BaseConfigScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-*///?}
+//?}
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -28,7 +28,7 @@ public class CECConfig {
     }
 
     //? if <1.21 {
-    /*public static <T extends ConfigBase> T register(Supplier<T> factory, ConfigType side) {
+    public static <T extends ConfigBase> T register(Supplier<T> factory, ConfigType side) {
         Pair<T, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(builder -> {
             T config = factory.get();
             config.registerAll(builder);
@@ -46,8 +46,8 @@ public class CECConfig {
         CONFIGS.forEach((type, config) -> specs.put(type, config.specification));
         return specs;
     }
-    *///?} else {
-    public static <T extends ConfigBase> T register(Supplier<T> factory, ConfigType side) {
+    //?} else {
+    /*public static <T extends ConfigBase> T register(Supplier<T> factory, ConfigType side) {
         Pair<T, net.neoforged.neoforge.common.ModConfigSpec> specPair =
             new net.neoforged.neoforge.common.ModConfigSpec.Builder().configure(builder -> {
                 T config = factory.get();
@@ -65,14 +65,14 @@ public class CECConfig {
         CONFIGS.forEach((type, config) -> specs.put(type, config.specification));
         return specs;
     }
-    //?}
+    *///?}
 
     public static void register() {
         server = register(CECServerConfig::new, ConfigType.SERVER);
     }
 
     //? if <1.21 {
-    /*public static BaseConfigScreen createConfigScreen(Minecraft mc, Screen parent) {
+    public static BaseConfigScreen createConfigScreen(Minecraft mc, Screen parent) {
         BaseConfigScreen.setDefaultActionFor(CECMod.MODID, (base) -> base
                 .withSpecs(null,
                         null,
@@ -80,5 +80,5 @@ public class CECConfig {
 
         return new BaseConfigScreen(parent, CECMod.MODID);
     }
-    *///?}
+    //?}
 }

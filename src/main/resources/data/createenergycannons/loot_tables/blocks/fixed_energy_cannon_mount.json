@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "createenergycannons:fixed_energy_cannon_mount"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "createenergycannons:blocks/fixed_energy_cannon_mount"
+}

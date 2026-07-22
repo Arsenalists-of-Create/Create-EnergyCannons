@@ -170,7 +170,15 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             } else if (CECBlocks.ENERGY_CANNON_MOUNT.has(level.getBlockState(checkBelow))) {
                 mountPos = checkBelow;
             } else {
-                LOGGER.error("Energy cannon assembled but no mount block found above or below anchor");
+                // A fixed mount sits directly against the cannon anchor, not two blocks above/below.
+                for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                    if (CECBlocks.FIXED_ENERGY_CANNON_MOUNT.has(level.getBlockState(this.anchor.relative(d)))) {
+                        mountPos = this.anchor.relative(d);
+                        break;
+                    }
+                }
+                if (mountPos == null)
+                    LOGGER.error("Energy cannon assembled but no mount block found");
             }
         }
 
@@ -249,6 +257,11 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
         }
 
+        // Active cooling: circulate water to pull the cooldown forward before the passive clear below.
+        if (!level.isClientSide()) {
+            tickActiveCooling(level, entity, level.getGameTime());
+        }
+
         // Handle railgun cooldown
         if (!level.isClientSide()) {
             long currentTime = level.getGameTime();
@@ -285,7 +298,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
         }
 
-        // Server-side overheat smoke particles — same pattern as sonic boom
+        // Server-side overheat smoke particles - same pattern as sonic boom
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel && level.getGameTime() % 4 == 0) {
             long currentTime = level.getGameTime();
             for (BlockEntity be : this.presentBlockEntities.values()) {
@@ -348,6 +361,80 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
     }
 
+    // Cooling tuning - refreshed from server config each cooling tick (defaults below).
+    private static int COOL_TICKS_PER_BARREL = 2;   // cooldown ticks pulled forward per regen barrel per tick
+    private static int WATER_PER_BARREL = 5;        // mB of water spent per regen barrel per tick
+    private static int HEAT_PER_USE = 100;          // temperature added to the water it circulates
+    private static int MAX_WATER_TEMP = 200;
+    private static int COOLING_ENERGY_PER_BARREL = 250; // energy drawn from the mount per regen barrel per tick
+
+    private net.arsenalists.createenergycannons.content.cooling.CoolantUnit findCoolingUnit(Level level) {
+        if (getMountPos() == null) return null;
+        for (Direction d : Direction.values()) {
+            if (level.getBlockEntity(getMountPos().relative(d))
+                    instanceof net.arsenalists.createenergycannons.content.cooling.CoolantUnit cu) {
+                return cu;
+            }
+        }
+        return null;
+    }
+
+    private void tickActiveCooling(Level level, PitchOrientedContraptionEntity entity, long currentTime) {
+        net.arsenalists.createenergycannons.content.cooling.CoolantUnit cooling = findCoolingUnit(level);
+        if (cooling == null) return;
+        try {
+            var cfg = net.arsenalists.createenergycannons.config.CECConfig.server();
+            HEAT_PER_USE = cfg.coolingHeatPerUse.get();
+            MAX_WATER_TEMP = cfg.coolingMaxTemperature.get();
+            COOL_TICKS_PER_BARREL = cfg.coolingCooldownTicksPerBarrel.get();
+            WATER_PER_BARREL = cfg.coolingWaterPerBarrel.get();
+            COOLING_ENERGY_PER_BARREL = cfg.coolingEnergyPerBarrel.get();
+        } catch (Exception ignored) {}
+        if (cooling.getColdAmount() <= 0) return;
+        int hotSpace = cooling.getHotCapacity() - cooling.getHotAmount();
+        if (hotSpace <= 0) return; // hot tank clogged - drain it to resume cooling
+
+        int regen = 0;
+        for (StructureBlockInfo info : this.blocks.values()) {
+            if (info.state().getBlock() instanceof net.arsenalists.createenergycannons.content.cooling.IRegenBarrel) regen++;
+        }
+        if (regen == 0) return; // no regenerative barrels built in - passive cooldown only
+
+        int coolTicks = regen * COOL_TICKS_PER_BARREL;
+        int waterPerCannon = regen * WATER_PER_BARREL;
+
+        // Active cooling draws power from the mount, competing with firing - regen setups are thirstier.
+        if (!(level.getBlockEntity(getMountPos())
+                instanceof net.arsenalists.createenergycannons.content.energymount.IEnergyCannonMount mount))
+            return;
+        int energyCost = regen * COOLING_ENERGY_PER_BARREL;
+        if (mount.getEnergyStorage().extractEnergy(energyCost, true) < energyCost) return; // not enough power to cool
+
+        boolean cooled = false;
+
+        for (BlockEntity be : this.presentBlockEntities.values()) {
+            boolean overheated = (be instanceof RailGunBlockEntity r && r.isOverheated(currentTime))
+                    || (be instanceof CoilGunBlockEntity c && c.isOverheated(currentTime));
+            if (!overheated) continue;
+
+            int draw = Math.min(waterPerCannon, hotSpace);
+            if (draw <= 0) break;
+            int moved = cooling.circulate(draw, HEAT_PER_USE, MAX_WATER_TEMP, currentTime);
+            if (moved <= 0) break;
+            hotSpace -= moved;
+
+            if (be instanceof RailGunBlockEntity r) r.accelerateCooldown(currentTime, coolTicks);
+            else if (be instanceof CoilGunBlockEntity c) c.accelerateCooldown(currentTime, coolTicks);
+            cooled = true;
+            if (hotSpace <= 0) break;
+        }
+        if (cooled) {
+            mount.getEnergyStorage().extractEnergy(energyCost, false);
+            cooling.markCoolantChanged();
+            mount.accelerateCooldown(currentTime, coolTicks);
+        }
+    }
+
     @Override
     public void fireShot(ServerLevel level, PitchOrientedContraptionEntity entity) {
         if (this.mode == Mode.NORMAL) {
@@ -362,6 +449,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         fireRail(level, entity);
     }
+
     @Override
     public ICannonContraptionType getCannonType() {
         return CECCannonContraptionTypes.RAIL_CANNON;
@@ -494,7 +582,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 }
             } else if (block instanceof BigCannonPropellantBlock cpropel && !(block instanceof ProjectileBlock)) {
                 // Energy cannons don't use propellant - consume and skip it
-                this.consumeBlock(behavior, currentPos);
+                this.consumeBlock(level, behavior, currentPos);
                 airGapPresent = false;
             } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                 // All projectiles require magnetic sleds
@@ -515,7 +603,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                         this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                     return;
                 }
-                this.consumeBlock(behavior, currentPos);
+                this.consumeBlock(level, behavior, currentPos);
                 if (cannonInfo.state().is(CBCTags.CBCBlockTags.REDUCES_SPREAD)) {
                     propelCtx.spread = Math.max(propelCtx.spread - spreadSub, minimumSpread);
                 }
@@ -529,7 +617,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                     return;
                 } else {
-                    this.consumeBlock(behavior, currentPos);
+                    this.consumeBlock(level, behavior, currentPos);
                 }
             }
             currentPos = currentPos.relative(this.initialOrientation);
@@ -691,7 +779,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
             BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
-            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
+            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.IEnergyCannonMount energyMountBE) {
                 energyMountBE.setCannonCooldown(cooldownEndTime);
             }
 
@@ -814,7 +902,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     }
                 } else if (block instanceof BigCannonPropellantBlock cpropel && !(block instanceof ProjectileBlock)) {
                     // Energy cannons don't use propellant - consume and skip it
-                    this.consumeBlock(behavior, currentPos);
+                    this.consumeBlock(level, behavior, currentPos);
                     airGapPresent = false;
                 } else if (block instanceof ProjectileBlock<?> projBlock && projectile == null) {
                     // All projectiles require magnetic sleds
@@ -835,7 +923,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                             this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                         return;
                     }
-                    this.consumeBlock(behavior, currentPos);
+                    this.consumeBlock(level, behavior, currentPos);
                     if (cannonInfo.state().is(CBCTags.CBCBlockTags.REDUCES_SPREAD)) {
                         propelCtx.spread = Math.max(propelCtx.spread - spreadSub, minimumSpread);
                     }
@@ -849,7 +937,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                         this.fail(currentPos, level, entity, behavior.blockEntity, (int) propelCtx.chargesUsed);
                         return;
                     } else {
-                        this.consumeBlock(behavior, currentPos);
+                        this.consumeBlock(level, behavior, currentPos);
                     }
                 }
                 currentPos = currentPos.relative(this.initialOrientation);
@@ -881,7 +969,6 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                     for (ListIterator<StructureBlockInfo> projIter = projectileBlocks.listIterator(); projIter.hasNext(); ) {
                         int j = projIter.nextIndex();
                         StructureBlockInfo projInfo = projIter.next();
-                        System.out.println(projInfo.nbt());
                         if (projInfo.state().getBlock() instanceof ProjectileBlock<?> cproj1 && cproj1.isValidAddition(copy, projInfo, j, this.initialOrientation))
                             continue;
                         if (canFail) this.fail(currentPos, level, entity, null, (int) propelCtx.chargesUsed);
@@ -1010,7 +1097,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             long cooldownEndTime = level.getGameTime() + OVERHEAT_DURATION;
 
             BlockEntity mountBE = level.getBlockEntity(this.getMountPos());
-            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.EnergyCannonMountBlockEntity energyMountBE) {
+            if (mountBE instanceof net.arsenalists.createenergycannons.content.energymount.IEnergyCannonMount energyMountBE) {
                 energyMountBE.setCannonCooldown(cooldownEndTime);
             }
 
@@ -1042,16 +1129,16 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
 
 
-    private void consumeBlock(BigCannonBehavior behavior, BlockPos pos) {
-        this.consumeBlock(behavior, pos, BigCannonBehavior::removeBlock);
+    private void consumeBlock(ServerLevel level, BigCannonBehavior behavior, BlockPos pos) {
+        this.consumeBlock(level, behavior, pos, BigCannonBehavior::removeBlock);
     }
 
-    private void consumeBlock(BigCannonBehavior behavior, BlockPos pos, Consumer<BigCannonBehavior> action) {
+    private void consumeBlock(ServerLevel level, BigCannonBehavior behavior, BlockPos pos, Consumer<BigCannonBehavior> action) {
         action.accept(behavior);
         //? if <1.21 {
-        /*CompoundTag tag = behavior.blockEntity.saveWithFullMetadata();
-        *///?} else
-        CompoundTag tag = behavior.blockEntity.saveWithFullMetadata(behavior.blockEntity.getLevel().registryAccess());
+        CompoundTag tag = behavior.blockEntity.saveWithFullMetadata();
+        //?} else
+        /*CompoundTag tag = behavior.blockEntity.saveWithFullMetadata(level.registryAccess());*/
         tag.remove("x");
         tag.remove("y");
         tag.remove("z");
@@ -1130,9 +1217,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         if (nbt.contains("MountPos")) {
             //? if <1.21 {
-            /*mountPos = NbtUtils.readBlockPos(nbt.getCompound("MountPos"));
-            *///?} else
-            mountPos = NbtUtils.readBlockPos(nbt, "MountPos").orElse(null);
+            mountPos = NbtUtils.readBlockPos(nbt.getCompound("MountPos"));
+            //?} else
+            /*mountPos = NbtUtils.readBlockPos(nbt, "MountPos").orElse(null);*/
         }
 
         // Read cooldown end times
@@ -1143,9 +1230,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 if (key.endsWith("_Pos")) {
                     String baseKey = key.substring(0, key.length() - 4);
                     //? if <1.21 {
-                    /*BlockPos pos = NbtUtils.readBlockPos(timersTag.getCompound(key));
-                    *///?} else
-                    BlockPos pos = NbtUtils.readBlockPos(timersTag, key).orElse(null);
+                    BlockPos pos = NbtUtils.readBlockPos(timersTag.getCompound(key));
+                    //?} else
+                    /*BlockPos pos = NbtUtils.readBlockPos(timersTag, key).orElse(null);*/
                     long endTime = timersTag.getLong(baseKey);
                     coilgunCooldownEndTimes.put(pos, endTime);
                 }
@@ -1154,7 +1241,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     }
 
     //? if <1.21 {
-    /*@Override
+    @Override
     public CompoundTag writeNBT(boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(spawnPacket);
 
@@ -1177,8 +1264,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     public CompoundTag writeNBT(net.minecraft.core.HolderLookup.Provider provider, boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(provider, spawnPacket);
 
@@ -1201,7 +1288,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
-    //?}
+    *///?}
 
 
 }
