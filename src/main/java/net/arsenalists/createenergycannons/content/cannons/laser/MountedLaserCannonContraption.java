@@ -74,22 +74,17 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
         // Refresh config values at runtime
         try { LASER_ENERGY_BLOCK = CECConfig.server().laserPowerConsumption.get(); } catch (Exception ignored) {}
-        Vec3 start = anchor.getCenter();
-        float pitch = pitchOrientedContraptionEntity.pitch;
-        float yaw = pitchOrientedContraptionEntity.yaw;
+        Vec3 start = pitchOrientedContraptionEntity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0);
         int range = CECConfig.server().laserRange.get();
-        int invert = pitchOrientedContraptionEntity.getInitialOrientation().getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
-        if (pitchOrientedContraptionEntity.getInitialOrientation().getAxis() == Direction.Axis.Z) {
-            invert = -invert;
-        }
 
         boolean onShip = PhysicsHandler.isBlockInShipyard(serverLevel, pitchOrientedContraptionEntity.blockPosition());
 
         final Vec3 worldStart;
-        Vec3 direction = Vec3.directionFromRotation(invert * pitch, yaw);
+        Vec3 direction = pitchOrientedContraptionEntity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO.relative(this.initialOrientation)), 0)
+                .subtract(start).normalize();
 
         if (onShip) {
-            worldStart = PhysicsHandler.getWorldVec(serverLevel, pitchOrientedContraptionEntity.blockPosition());
+            worldStart = PhysicsHandler.getWorldVec(serverLevel, start);
             direction = PhysicsHandler.getWorldVecDirectionTransform(serverLevel, pitchOrientedContraptionEntity.blockPosition(), direction);
         } else {
             worldStart = start;
@@ -111,7 +106,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         final HitResult result = clipResult;
 
         // Muzzle glow at beam START
-        int glareTint = getLaser().map(l -> LaserBeamGlobalRenderer.dyeColorToTint(l.getLensColor())).orElse(-1);
+        int glareTint = getLaser().map(LaserBlockEntity::getLensTint).orElse(-1);
         spawnGlareMuzzle(serverLevel, worldStart, glareTint);
 
         getLaser().ifPresent(laser -> {
@@ -144,9 +139,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
             });
             closestEntity.hurt(serverLevel.damageSources().generic(), CECConfig.server().laserDamage.get());
             //? if <1.21 {
-            /*closestEntity.setSecondsOnFire(CECConfig.server().laserBurnTime.get());
-            *///?} else
-            closestEntity.igniteForSeconds((float) CECConfig.server().laserBurnTime.get());
+            closestEntity.setSecondsOnFire(CECConfig.server().laserBurnTime.get());
+            //?} else
+            /*closestEntity.igniteForSeconds((float) CECConfig.server().laserBurnTime.get());*/
             serverLevel.playSound(null, closestEntity.getX(), closestEntity.getY(), closestEntity.getZ(),
                     SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.4f,
                     1.8f + serverLevel.random.nextFloat() * 0.4f);
@@ -243,18 +238,12 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         if (level.isClientSide) {
             getLaser().ifPresent(laser -> {
                 if (laser.getFireRate() > 0 && laser.getRange() > 0) {
-                    Vec3 origin = anchor.getCenter();
-                    Direction facing = entity.getInitialOrientation();
-
-                    int invert = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
-                    if (facing.getAxis() == Direction.Axis.Z) {
-                        invert = -invert;
-                    }
-
-                    Vec3 direction = Vec3.directionFromRotation(invert * entity.pitch, entity.yaw);
+                    Vec3 origin = entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0);
+                    Vec3 direction = entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO.relative(this.initialOrientation)), 0)
+                            .subtract(origin).normalize();
 
                     if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
-                        origin = PhysicsHandler.getWorldVec(level, entity.blockPosition());
+                        origin = PhysicsHandler.getWorldVec(level, origin);
                         direction = PhysicsHandler.getWorldVecDirectionTransform(level, entity.blockPosition(), direction);
                     }
 
@@ -265,7 +254,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
                             laser.getRange(),
                             laser.getFireRate(),
                             level.getGameTime(),
-                            LaserBeamGlobalRenderer.dyeColorToTint(laser.getLensColor())
+                            laser.getLensTint()
                     );
                 } else {
                     LaserBeamGlobalRenderer.remove(entity.getId());
@@ -295,6 +284,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         int energyAvailable = energy.extractEnergy(LASER_ENERGY_BLOCK, true);
         if (energyAvailable < LASER_ENERGY_BLOCK) {
             laser.setFireRate(0);
+            BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
             return;
         }
 
@@ -354,9 +344,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
             if (blockInfo.nbt() == null) continue;
             //? if <1.21 {
-            /*BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt());
-            *///?} else
-            BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt(), level.registryAccess());
+            BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt());
+            //?} else
+            /*BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt(), level.registryAccess());*/
             this.presentBlockEntities.put(localPos, be);
         }
         return true;

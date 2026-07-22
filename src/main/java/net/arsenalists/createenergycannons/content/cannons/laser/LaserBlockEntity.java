@@ -73,7 +73,7 @@ public class LaserBlockEntity extends SmartBlockEntity {
     }
 
     //? if <1.21 {
-    /*@Override
+    @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
         this.fireRate = tag.getInt("fireRate");
@@ -88,8 +88,8 @@ public class LaserBlockEntity extends SmartBlockEntity {
         tag.putInt("lastUpdate", this.lastUpdate);
         tag.putInt("range", this.range);
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     protected void read(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         this.fireRate = tag.getInt("fireRate");
@@ -104,7 +104,7 @@ public class LaserBlockEntity extends SmartBlockEntity {
         tag.putInt("lastUpdate", this.lastUpdate);
         tag.putInt("range", this.range);
     }
-    //?}
+    *///?}
     @Override
     public AABB getRenderBoundingBox() {
         return new AABB(getBlockPos()).inflate(getRange() + 10);
@@ -123,5 +123,15 @@ public class LaserBlockEntity extends SmartBlockEntity {
             return pane.getColor();
         }
         return null;
+    }
+
+    public int getLensTint() {
+        DyeColor color = getLensColor();
+        if (color == null) return -1;
+        //? if <1.21 {
+        float[] rgb = color.getTextureDiffuseColors();
+        return ((int)(rgb[0]*255) << 16) | ((int)(rgb[1]*255) << 8) | (int)(rgb[2]*255);
+        //?} else
+        /*return color.getTextureDiffuseColor() & 0xFFFFFF;*/
     }
 }

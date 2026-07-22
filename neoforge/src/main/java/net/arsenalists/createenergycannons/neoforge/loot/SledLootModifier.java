@@ -6,7 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.arsenalists.createenergycannons.content.cannons.magnetic.sled.IMagneticSled;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,7 +23,7 @@ import java.util.function.Supplier;
 
 /**
  * Injects the "Sled" tag into the BLOCK_ENTITY_DATA component of dropped shells so
- * magnetic sleds persist across pickup/place — same intent as the Forge variant.
+ * magnetic sleds persist across pickup/place - same intent as the Forge variant.
  */
 public class SledLootModifier extends LootModifier {
 
@@ -41,6 +43,10 @@ public class SledLootModifier extends LootModifier {
                     CustomData existing = stack.get(DataComponents.BLOCK_ENTITY_DATA);
                     CompoundTag tag = existing == null ? new CompoundTag() : existing.copyTag();
                     tag.putBoolean("Sled", true);
+                    if (!tag.contains("id")) {
+                        ResourceLocation beId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType());
+                        if (beId != null) tag.putString("id", beId.toString());
+                    }
                     stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(tag));
                 }
             }

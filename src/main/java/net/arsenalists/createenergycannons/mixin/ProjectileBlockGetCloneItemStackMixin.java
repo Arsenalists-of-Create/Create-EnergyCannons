@@ -15,7 +15,7 @@ import rbasamoyai.createbigcannons.munitions.big_cannon.ProjectileBlock;
 /**
  * Copies the magnetic-sled flag from a block's BE into the item produced by
  * pick-block (Ctrl+Middle-click). Mirrors how CBC's own ProjectileBlock copies
- * tracer/fuze components — except sled is stored in BlockEntityTag instead of
+ * tracer/fuze components - except sled is stored in BlockEntityTag instead of
  * a top-level component.
  */
 @Mixin(ProjectileBlock.class)
@@ -31,9 +31,9 @@ public abstract class ProjectileBlockGetCloneItemStackMixin {
         if (stack == null || stack.isEmpty()) return;
 
         //? if <1.21 {
-        /*stack.getOrCreateTagElement("BlockEntityTag").putBoolean("Sled", true);
-        *///?} else {
-        net.minecraft.nbt.CompoundTag beTag = new net.minecraft.nbt.CompoundTag();
+        stack.getOrCreateTagElement("BlockEntityTag").putBoolean("Sled", true);
+        //?} else {
+        /*net.minecraft.nbt.CompoundTag beTag = new net.minecraft.nbt.CompoundTag();
         net.minecraft.world.item.component.CustomData existing =
                 stack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
         if (existing != null) beTag = existing.copyTag();
@@ -45,6 +45,6 @@ public abstract class ProjectileBlockGetCloneItemStackMixin {
         }
         stack.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA,
                 net.minecraft.world.item.component.CustomData.of(beTag));
-        //?}
+        *///?}
     }
 }

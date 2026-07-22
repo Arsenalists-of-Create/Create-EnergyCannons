@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rbasamoyai.createbigcannons.munitions.big_cannon.BigCannonProjectileBlockEntity;
 
 /**
- * This covers every shell type (fused, solid shot, AP, etc.) without individual mixins.
+ * Covers every shell type (fused, solid shot, AP, etc.) without individual mixins.
  */
 @Mixin(BigCannonProjectileBlockEntity.class)
 public abstract class BigCannonProjectileBlockEntityMixin extends SyncedBlockEntity implements IMagneticSled {
@@ -38,7 +38,7 @@ public abstract class BigCannonProjectileBlockEntityMixin extends SyncedBlockEnt
 
 
     //? if <1.21 {
-    /*@Inject(method = {"saveAdditional", "method_11007", "m_183515_"}, at = @At("TAIL"), remap = false, require = 1)
+    @Inject(method = {"saveAdditional", "method_11007", "m_183515_"}, at = @At("TAIL"), remap = false, require = 1)
     private void saveSledState(CompoundTag tag, CallbackInfo ci) {
         tag.putBoolean("Sled", this.create_EnergyCannons$sled);
     }
@@ -47,8 +47,21 @@ public abstract class BigCannonProjectileBlockEntityMixin extends SyncedBlockEnt
     private void loadSledState(CompoundTag tag, CallbackInfo ci) {
         this.create_EnergyCannons$sled = tag.getBoolean("Sled");
     }
+    //?}
+
+    //? if >=1.21 {
+    /*// BCPBE extends SyncedBlockEntity, which has no write/read hooks, so persist through
+    // the vanilla disk methods it inherits from BlockEntity.
+    @Override
+    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putBoolean("Sled", this.create_EnergyCannons$sled);
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.create_EnergyCannons$sled = tag.getBoolean("Sled");
+    }
     *///?}
-    // 1.21: CBC 5.11.2's BigCannonProjectileBlockEntity doesn't override
-    // saveAdditional/loadAdditional directly (they go through Create's SmartBlockEntity
-    // write/read pattern instead). Skip the inject on 1.21
 }

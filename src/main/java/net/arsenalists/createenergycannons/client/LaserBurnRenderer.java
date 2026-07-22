@@ -68,14 +68,14 @@ public class LaserBurnRenderer {
             VertexConsumer emissiveConsumer = new EmissiveAlphaVertexConsumer(baseConsumer, alpha);
 
             //? if <1.21 {
-            /*VertexConsumer consumer = new SheetedDecalTextureGenerator(
+            VertexConsumer consumer = new SheetedDecalTextureGenerator(
                     emissiveConsumer,
                     pose.pose(),
                     pose.normal(),
                     1.0f
             );
-            *///?} else
-            VertexConsumer consumer = new SheetedDecalTextureGenerator(emissiveConsumer, pose, 1.0f);
+            //?} else
+            /*VertexConsumer consumer = new SheetedDecalTextureGenerator(emissiveConsumer, pose, 1.0f);*/
 
             Minecraft.getInstance().getBlockRenderer().renderBreakingTexture(state, pos, level, poseStack, consumer);
 
@@ -101,7 +101,7 @@ public class LaserBurnRenderer {
         }
 
         //? if <1.21 {
-        /*@Override
+        @Override
         public VertexConsumer vertex(double x, double y, double z) {
             return wrapped.vertex(x, y, z);
         }
@@ -145,8 +145,8 @@ public class LaserBurnRenderer {
         public void unsetDefaultColor() {
             wrapped.unsetDefaultColor();
         }
-        *///?} else {
-        @Override
+        //?} else {
+        /*@Override
         public VertexConsumer addVertex(float x, float y, float z) {
             return wrapped.addVertex(x, y, z);
         }
@@ -176,6 +176,6 @@ public class LaserBurnRenderer {
         public VertexConsumer setNormal(float x, float y, float z) {
             return wrapped.setNormal(x, y, z);
         }
-        //?}
+        *///?}
     }
 }

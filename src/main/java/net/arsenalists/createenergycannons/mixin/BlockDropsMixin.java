@@ -16,8 +16,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 /**
- * Universal fix: injects the "Sled" tag into ANY block drop whose BlockEntity
- * has a magnetic sled attached. Works for all shell types, including modded ones.
+ * Injects the Sled tag into any block drop whose block entity has a sled attached.
+ * Targets Block directly, so it covers modded shell types too.
  */
 @Mixin(Block.class)
 public abstract class BlockDropsMixin {
@@ -33,9 +33,9 @@ public abstract class BlockDropsMixin {
             for (ItemStack stack : drops) {
                 if (!stack.isEmpty()) {
                     //? if <1.21 {
-                    /*stack.getOrCreateTagElement("BlockEntityTag").putBoolean("Sled", true);
-                    *///?} else {
-                    net.minecraft.nbt.CompoundTag beTag = new net.minecraft.nbt.CompoundTag();
+                    stack.getOrCreateTagElement("BlockEntityTag").putBoolean("Sled", true);
+                    //?} else {
+                    /*net.minecraft.nbt.CompoundTag beTag = new net.minecraft.nbt.CompoundTag();
                     net.minecraft.world.item.component.CustomData existing = stack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
                     if (existing != null) beTag = existing.copyTag();
                     beTag.putBoolean("Sled", true);
@@ -44,7 +44,7 @@ public abstract class BlockDropsMixin {
                         if (beId != null) beTag.putString("id", beId.toString());
                     }
                     stack.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.of(beTag));
-                    //?}
+                    *///?}
                 }
             }
         }

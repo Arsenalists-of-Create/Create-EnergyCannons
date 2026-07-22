@@ -3,6 +3,7 @@ package net.arsenalists.createenergycannons.network;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.arsenalists.createenergycannons.CECMod;
+import net.arsenalists.createenergycannons.client.LaserBurnClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -19,30 +20,30 @@ public class PacketHandler {
             registerClient();
         } else {
             //? if >=1.21
-            NetworkManager.registerS2CPayloadType(LaserBurnS2CPacket.TYPE, LaserBurnS2CPacket.STREAM_CODEC);
+            /*NetworkManager.registerS2CPayloadType(LaserBurnS2CPacket.TYPE, LaserBurnS2CPacket.STREAM_CODEC);*/
         }
     }
 
     private static void registerClient() {
         //? if <1.21 {
-        /*NetworkManager.registerReceiver(
+        NetworkManager.registerReceiver(
                 NetworkManager.Side.S2C,
                 LASER_BURN_PACKET,
-                LaserBurnS2CPacket::handle
+                LaserBurnClient::handle
         );
-        *///?} else {
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C,
-                LaserBurnS2CPacket.TYPE, LaserBurnS2CPacket.STREAM_CODEC, LaserBurnS2CPacket::handle);
-        //?}
+        //?} else {
+        /*NetworkManager.registerReceiver(NetworkManager.Side.S2C,
+                LaserBurnS2CPacket.TYPE, LaserBurnS2CPacket.STREAM_CODEC, LaserBurnClient::handle);
+        *///?}
     }
 
     //? if <1.21 {
-    /*private static FriendlyByteBuf toBuffer(LaserBurnS2CPacket packet) {
+    private static FriendlyByteBuf toBuffer(LaserBurnS2CPacket packet) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         packet.toBytes(buf);
         return buf;
     }
-    *///?}
+    //?}
 
     public static void sendToAllTracking(LaserBurnS2CPacket packet, Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel serverLevel)) return;
@@ -50,9 +51,9 @@ public class PacketHandler {
         for (ServerPlayer player : serverLevel.players()) {
             if (player.distanceToSqr(blockCenter) < 64 * 64) {
                 //? if <1.21 {
-                /*NetworkManager.sendToPlayer(player, LASER_BURN_PACKET, toBuffer(packet));
-                *///?} else
-                NetworkManager.sendToPlayer(player, packet);
+                NetworkManager.sendToPlayer(player, LASER_BURN_PACKET, toBuffer(packet));
+                //?} else
+                /*NetworkManager.sendToPlayer(player, packet);*/
             }
         }
     }

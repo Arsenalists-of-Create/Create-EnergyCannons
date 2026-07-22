@@ -20,7 +20,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,15 +114,6 @@ public class LaserBeamGlobalRenderer {
 
     public static void clearGradientCache() { gradientColors = null; }
 
-    public static int dyeColorToTint(@Nullable DyeColor color) {
-        if (color == null) return -1;
-        //? if <1.21 {
-        /*float[] rgb = color.getTextureDiffuseColors();
-        return ((int)(rgb[0]*255) << 16) | ((int)(rgb[1]*255) << 8) | (int)(rgb[2]*255);
-        *///?} else
-        return color.getTextureDiffuseColor() & 0xFFFFFF;
-    }
-
     public static void registerWorldBeam(LaserBlockEntity be) {
         if (be.getLevel() == null) return;
         if (be.getFireRate() <= 0 || be.getRange() <= 0) {
@@ -134,7 +124,7 @@ public class LaserBeamGlobalRenderer {
         ACTIVE_BEAMS.put(be.getBlockPos().hashCode(), new BeamData(
                 Vec3.atCenterOf(be.getBlockPos()), Vec3.atLowerCornerOf(dir.getNormal()),
                 be.getRange(), be.getFireRate(), false,
-                be.getLevel().getGameTime(), dyeColorToTint(be.getLensColor())));
+                be.getLevel().getGameTime(), be.getLensTint()));
     }
 
     public static void registerMountedBeam(int entityId, Vec3 origin, Vec3 direction,
@@ -201,11 +191,6 @@ public class LaserBeamGlobalRenderer {
         boolean shaderPackOn = isShaderPackActive();
         boolean useCustomShader = shaderLoaded && !shaderPackOn;
 
-        if (gameTime % 100 == 0) {
-            CECMod.getLogger().info("[LaserBeam] beams={} shaderLoaded={} shaderPackOn={} useCustom={}",
-                    ACTIVE_BEAMS.size(), shaderLoaded, shaderPackOn, useCustomShader);
-        }
-
         var it = ACTIVE_BEAMS.entrySet().iterator();
         while (it.hasNext()) {
             var entry = it.next();
@@ -253,16 +238,16 @@ public class LaserBeamGlobalRenderer {
         poseStack.pushPose();
         poseStack.translate(beam.origin.x - camera.x, beam.origin.y - camera.y, beam.origin.z - camera.z);
         //? if <1.21 {
-        /*RenderSystem.getModelViewStack().pushPose();
+        RenderSystem.getModelViewStack().pushPose();
         RenderSystem.getModelViewStack().mulPoseMatrix(poseStack.last().pose());
-        *///?} else {
-        // 1.21+: getModelViewStack() returns a joml Matrix4fStack, but the shader
+        //?} else {
+        /*// 1.21+: getModelViewStack() returns a joml Matrix4fStack, but the shader
         // reads from a SEPARATE modelViewMatrix field. Without applyModelViewMatrix()
         // after the stack mutation, the shader binds the previous (camera-only) matrix
         // and the beam vertices end up in wildly wrong screen positions.
         RenderSystem.getModelViewStack().pushMatrix();
         RenderSystem.getModelViewStack().mul(poseStack.last().pose());
-        //?}
+        *///?}
         RenderSystem.applyModelViewMatrix();
         poseStack.popPose();
 
@@ -293,9 +278,9 @@ public class LaserBeamGlobalRenderer {
             CECMod.getLogger().error("Error rendering laser beam (shader path)", ex);
         } finally {
             //? if <1.21 {
-            /*RenderSystem.getModelViewStack().popPose();
-            *///?} else
-            RenderSystem.getModelViewStack().popMatrix();
+            RenderSystem.getModelViewStack().popPose();
+            //?} else
+            /*RenderSystem.getModelViewStack().popMatrix();*/
             // Pair the pop with applyModelViewMatrix() so the shader sees the restored
             // matrix on subsequent draws (see push/mul comment above for the 1.21 reason).
             RenderSystem.applyModelViewMatrix();
@@ -311,10 +296,10 @@ public class LaserBeamGlobalRenderer {
                                      float r, float g, float b, ShaderInstance shader) {
         Tesselator tess = Tesselator.getInstance();
         //? if <1.21 {
-        /*BufferBuilder builder = tess.getBuilder();
+        BufferBuilder builder = tess.getBuilder();
         builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
-        *///?} else
-        BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        //?} else
+        /*BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);*/
         try {
             for (double angle : CROSS_ANGLES) {
                 Vec3 off = right.scale(Math.cos(angle)*radius).add(up.scale(Math.sin(angle)*radius));
@@ -325,15 +310,15 @@ public class LaserBeamGlobalRenderer {
             }
             shader.apply();
             //? if <1.21 {
-            /*BufferUploader.drawWithShader(builder.end());
-            *///?} else
-            BufferUploader.drawWithShader(builder.buildOrThrow());
+            BufferUploader.drawWithShader(builder.end());
+            //?} else
+            /*BufferUploader.drawWithShader(builder.buildOrThrow());*/
             shader.clear();
         } catch (Exception ex) {
             //? if <1.21 {
-            /*try { builder.end(); } catch (Exception ignored) {}
-            *///?} else
-            try { builder.buildOrThrow(); } catch (Exception ignored) {}
+            try { builder.end(); } catch (Exception ignored) {}
+            //?} else
+            /*try { builder.buildOrThrow(); } catch (Exception ignored) {}*/
             throw ex;
         }
     }
@@ -343,10 +328,10 @@ public class LaserBeamGlobalRenderer {
                                        float r, float g, float b, ShaderInstance shader) {
         Tesselator tess = Tesselator.getInstance();
         //? if <1.21 {
-        /*BufferBuilder builder = tess.getBuilder();
+        BufferBuilder builder = tess.getBuilder();
         builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
-        *///?} else
-        BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        //?} else
+        /*BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);*/
         try {
             for (Vec3 off : new Vec3[]{right.scale(radius), up.scale(radius)}) {
                 shaderVtx(builder, o.subtract(off), 0, 0, LAYER_FLICKER, power, alpha, r, g, b);
@@ -356,15 +341,15 @@ public class LaserBeamGlobalRenderer {
             }
             shader.apply();
             //? if <1.21 {
-            /*BufferUploader.drawWithShader(builder.end());
-            *///?} else
-            BufferUploader.drawWithShader(builder.buildOrThrow());
+            BufferUploader.drawWithShader(builder.end());
+            //?} else
+            /*BufferUploader.drawWithShader(builder.buildOrThrow());*/
             shader.clear();
         } catch (Exception ex) {
             //? if <1.21 {
-            /*try { builder.end(); } catch (Exception ignored) {}
-            *///?} else
-            try { builder.buildOrThrow(); } catch (Exception ignored) {}
+            try { builder.end(); } catch (Exception ignored) {}
+            //?} else
+            /*try { builder.buildOrThrow(); } catch (Exception ignored) {}*/
             throw ex;
         }
     }
@@ -380,10 +365,10 @@ public class LaserBeamGlobalRenderer {
 
         Tesselator tess = Tesselator.getInstance();
         //? if <1.21 {
-        /*BufferBuilder builder = tess.getBuilder();
+        BufferBuilder builder = tess.getBuilder();
         builder.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
-        *///?} else
-        BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);
+        //?} else
+        /*BufferBuilder builder = tess.begin(VertexFormat.Mode.QUADS, CECVertexFormats.PARTICLE_WITH_OVERLAY);*/
         try {
             for (int i = 0; i < count; i++) {
                 float tS = rand.nextFloat() * 0.7f;
@@ -402,15 +387,15 @@ public class LaserBeamGlobalRenderer {
             }
             shader.apply();
             //? if <1.21 {
-            /*BufferUploader.drawWithShader(builder.end());
-            *///?} else
-            BufferUploader.drawWithShader(builder.buildOrThrow());
+            BufferUploader.drawWithShader(builder.end());
+            //?} else
+            /*BufferUploader.drawWithShader(builder.buildOrThrow());*/
             shader.clear();
         } catch (Exception ex) {
             //? if <1.21 {
-            /*try { builder.end(); } catch (Exception ignored) {}
-            *///?} else
-            try { builder.buildOrThrow(); } catch (Exception ignored) {}
+            try { builder.end(); } catch (Exception ignored) {}
+            //?} else
+            /*try { builder.buildOrThrow(); } catch (Exception ignored) {}*/
             throw ex;
         }
     }
@@ -419,12 +404,12 @@ public class LaserBeamGlobalRenderer {
                                    int layerIndex, int power, float alpha,
                                    float r, float g, float bx) {
         //? if <1.21 {
-        /*b.vertex(pos.x, pos.y, pos.z).uv(u, v).overlayCoords(layerIndex, power)
+        b.vertex(pos.x, pos.y, pos.z).uv(u, v).overlayCoords(layerIndex, power)
                 .color(r, g, bx, alpha).uv2(15728880).endVertex();
-        *///?} else {
-        b.addVertex((float)pos.x, (float)pos.y, (float)pos.z).setUv(u, v).setOverlay((power << 16) | (layerIndex & 0xFFFF))
+        //?} else {
+        /*b.addVertex((float)pos.x, (float)pos.y, (float)pos.z).setUv(u, v).setOverlay((power << 16) | (layerIndex & 0xFFFF))
                 .setColor(r, g, bx, alpha).setLight(15728880);
-        //?}
+        *///?}
     }
 
     private static SuperRenderTypeBuffer fallbackBuffer;
@@ -471,9 +456,9 @@ public class LaserBeamGlobalRenderer {
     }
 
     //? if <1.21 {
-    /*private static final ResourceLocation BEAM_TEX = new ResourceLocation("textures/entity/beacon_beam.png");
-    *///?} else
-    private static final ResourceLocation BEAM_TEX = ResourceLocation.withDefaultNamespace("textures/entity/beacon_beam.png");
+    private static final ResourceLocation BEAM_TEX = new ResourceLocation("textures/entity/beacon_beam.png");
+    //?} else
+    /*private static final ResourceLocation BEAM_TEX = ResourceLocation.withDefaultNamespace("textures/entity/beacon_beam.png");*/
 
     private static void fallbackFlush() {
         // Flush only the beacon beam RenderTypes (not all batches which breaks Iris)
