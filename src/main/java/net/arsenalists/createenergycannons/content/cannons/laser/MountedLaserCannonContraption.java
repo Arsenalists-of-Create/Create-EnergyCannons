@@ -18,7 +18,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import rbasamoyai.createbigcannons.cannon_control.ControlPitchContraption;
 import rbasamoyai.createbigcannons.cannon_control.cannon_types.ICannonContraptionType;
 import rbasamoyai.createbigcannons.cannon_control.contraption.AbstractMountedCannonContraption;
+import rbasamoyai.createbigcannons.cannon_control.cannon_mount.CannonMountBlockEntity;
 import rbasamoyai.createbigcannons.cannon_control.contraption.PitchOrientedContraptionEntity;
 import rbasamoyai.createbigcannons.cannons.big_cannons.BigCannonBlock;
 
@@ -56,6 +59,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     protected int breakerId = -NEXT_BREAKER_ID.incrementAndGet();
     protected Map<BlockPos, Float> breakProgress = new HashMap<>();
     private static int LASER_ENERGY_BLOCK = 500; // default, updated from config at runtime
+    private boolean handle;
 
     @Override
     public void onRedstoneUpdate(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity, boolean togglePower, int firePower, ControlPitchContraption controlPitchContraption) {
@@ -139,9 +143,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
             });
             closestEntity.hurt(serverLevel.damageSources().generic(), CECConfig.server().laserDamage.get());
             //? if <1.21 {
-            closestEntity.setSecondsOnFire(CECConfig.server().laserBurnTime.get());
-            //?} else
-            /*closestEntity.igniteForSeconds((float) CECConfig.server().laserBurnTime.get());*/
+            /*closestEntity.setSecondsOnFire(CECConfig.server().laserBurnTime.get());
+            *///?} else
+            closestEntity.igniteForSeconds((float) CECConfig.server().laserBurnTime.get());
             serverLevel.playSound(null, closestEntity.getX(), closestEntity.getY(), closestEntity.getZ(),
                     SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.4f,
                     1.8f + serverLevel.random.nextFloat() * 0.4f);
@@ -235,6 +239,17 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     public void tick(Level level, PitchOrientedContraptionEntity entity) {
         super.tick(level, entity);
 
+        LivingEntity passenger = entity.getControllingPassenger();
+        if (passenger != null && this.canBeTurnedByPassenger(passenger)) {
+            entity.pitch = -passenger.xRotO;
+            entity.yaw = Mth.wrapDegrees(passenger.yRotO);
+            passenger.setYBodyRot(passenger.getYRot());
+        }
+        if (entity.getController() instanceof CannonMountBlockEntity) {
+            entity.setXRot(entity.pitch);
+            entity.setYRot(entity.yaw);
+        }
+
         if (level.isClientSide) {
             getLaser().ifPresent(laser -> {
                 if (laser.getFireRate() > 0 && laser.getRange() > 0) {
@@ -310,7 +325,7 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
     @Override
     public ICannonContraptionType getCannonType() {
-        return CECCannonContraptionTypes.LASER;
+        return this.handle ? CECCannonContraptionTypes.HANDLE_LASER : CECCannonContraptionTypes.LASER;
     }
 
     @Override
@@ -337,6 +352,10 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
         this.startPos = pos;
         this.anchor = pos;
 
+        this.handle = startState.hasProperty(LaserBlock.HANDLE) && startState.getValue(LaserBlock.HANDLE);
+        // Seats are stored in contraption-local space, and the laser block is the anchor.
+        if (this.handle) this.getSeats().add(BlockPos.ZERO);
+
         for (StructureTemplate.StructureBlockInfo blockInfo : cannonBlocks) {
             BlockPos localPos = blockInfo.pos().subtract(pos);
             StructureTemplate.StructureBlockInfo localBlockInfo = new StructureTemplate.StructureBlockInfo(localPos, blockInfo.state(), blockInfo.nbt());
@@ -344,13 +363,52 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
             if (blockInfo.nbt() == null) continue;
             //? if <1.21 {
-            BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt());
-            //?} else
-            /*BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt(), level.registryAccess());*/
+            /*BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt());
+            *///?} else
+            BlockEntity be = BlockEntity.loadStatic(localPos, blockInfo.state(), blockInfo.nbt(), level.registryAccess());
             this.presentBlockEntities.put(localPos, be);
         }
         return true;
     }
+
+    @Override
+    public boolean canBeTurnedByPassenger(Entity entity) {
+        return this.handle;
+    }
+
+    @Override
+    public boolean canBeTurnedByController(ControlPitchContraption controller) {
+        return !this.handle;
+    }
+
+    @Override
+    public BlockPos getSeatPos(Entity passenger) {
+        if (this.entity != null && passenger == this.entity.getControllingPassenger())
+            return BlockPos.ZERO.relative(this.initialOrientation.getOpposite());
+        return super.getSeatPos(passenger);
+    }
+
+    @Override
+    public void readNBT(Level world, CompoundTag nbt, boolean spawnData) {
+        super.readNBT(world, nbt, spawnData);
+        this.handle = nbt.getBoolean("Handle");
+    }
+
+    //? if <1.21 {
+    /*@Override
+    public CompoundTag writeNBT(boolean spawnPacket) {
+        CompoundTag nbt = super.writeNBT(spawnPacket);
+        nbt.putBoolean("Handle", this.handle);
+        return nbt;
+    }
+    *///?} else {
+    @Override
+    public CompoundTag writeNBT(net.minecraft.core.HolderLookup.Provider provider, boolean spawnPacket) {
+        CompoundTag nbt = super.writeNBT(provider, spawnPacket);
+        nbt.putBoolean("Handle", this.handle);
+        return nbt;
+    }
+    //?}
 
     @Override
     public ContraptionType getType() {

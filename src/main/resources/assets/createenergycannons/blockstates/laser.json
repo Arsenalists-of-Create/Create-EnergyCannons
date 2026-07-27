@@ -1,25 +1,47 @@
 {
   "variants": {
-    "facing=down": {
+    "facing=down,handle=false": {
       "model": "createenergycannons:block/laser_vertical",
       "x": 180
     },
-    "facing=up": {
+    "facing=down,handle=true": {
+      "model": "createenergycannons:block/laser_vertical",
+      "x": 180
+    },
+    "facing=up,handle=false": {
       "model": "createenergycannons:block/laser_vertical"
     },
-    "facing=east": {
+    "facing=up,handle=true": {
+      "model": "createenergycannons:block/laser_vertical"
+    },
+    "facing=east,handle=false": {
       "model": "createenergycannons:block/laser"
     },
-    "facing=south": {
+    "facing=east,handle=true": {
+      "model": "createenergycannons:block/laser_handles"
+    },
+    "facing=south,handle=false": {
       "model": "createenergycannons:block/laser",
       "y": 90
     },
-    "facing=west": {
+    "facing=south,handle=true": {
+      "model": "createenergycannons:block/laser_handles",
+      "y": 90
+    },
+    "facing=west,handle=false": {
       "model": "createenergycannons:block/laser",
       "y": 180
     },
-    "facing=north": {
+    "facing=west,handle=true": {
+      "model": "createenergycannons:block/laser_handles",
+      "y": 180
+    },
+    "facing=north,handle=false": {
       "model": "createenergycannons:block/laser",
+      "y": 270
+    },
+    "facing=north,handle=true": {
+      "model": "createenergycannons:block/laser_handles",
       "y": 270
     }
   }

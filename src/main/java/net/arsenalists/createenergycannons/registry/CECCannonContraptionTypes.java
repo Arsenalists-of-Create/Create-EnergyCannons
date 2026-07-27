@@ -9,6 +9,7 @@ import java.util.Locale;
 
 public enum CECCannonContraptionTypes implements ICannonContraptionType {
     LASER,
+    HANDLE_LASER,
     COILGUN,
     RAIL_CANNON;
 
