@@ -5,6 +5,7 @@ import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import net.arsenalists.createenergycannons.compat.cbc.CBCRecoil;
 import net.arsenalists.createenergycannons.compat.vs2.PhysicsHandler;
 import net.arsenalists.createenergycannons.config.CECConfig;
 import net.arsenalists.createenergycannons.config.server.CECServerConfig;
@@ -667,7 +668,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
         }
 
         Vec3 spawnPos = entity.toGlobalVector(Vec3.atCenterOf(currentPos.relative(this.initialOrientation)), 0);
-        Vec3 vec = spawnPos.subtract(entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0)).normalize();
+        Vec3 cannonOrigin = entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0);
+        Vec3 vec = spawnPos.subtract(cannonOrigin).normalize();
         spawnPos = spawnPos.subtract(vec.scale(2));
 
         if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
@@ -709,7 +711,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         recoilMagnitude += propelCtx.recoil;
         recoilMagnitude *= CBCConfigs.server().cannons.bigCannonRecoilScale.getF();
-        if (controller != null) controller.onRecoil(vec.scale(-recoilMagnitude), entity);
+        if (controller != null) CBCRecoil.apply(controller, vec.scale(-recoilMagnitude), cannonOrigin, entity);
 
         this.hasFired = true;
 
@@ -987,7 +989,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
             }
 
             Vec3 spawnPos = entity.toGlobalVector(Vec3.atCenterOf(currentPos.relative(this.initialOrientation)), 0);
-            Vec3 vec = spawnPos.subtract(entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0)).normalize();
+            Vec3 cannonOrigin = entity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0);
+            Vec3 vec = spawnPos.subtract(cannonOrigin).normalize();
             spawnPos = spawnPos.subtract(vec.scale(2));
 
             if (PhysicsHandler.isBlockInShipyard(level, entity.blockPosition())) {
@@ -1028,7 +1031,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
             recoilMagnitude += propelCtx.recoil;
             recoilMagnitude *= CBCConfigs.server().cannons.bigCannonRecoilScale.getF();
-            if (controller != null) controller.onRecoil(vec.scale(-recoilMagnitude), entity);
+            if (controller != null) CBCRecoil.apply(controller, vec.scale(-recoilMagnitude), cannonOrigin, entity);
 
             this.hasFired = true;
 
@@ -1136,9 +1139,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     private void consumeBlock(ServerLevel level, BigCannonBehavior behavior, BlockPos pos, Consumer<BigCannonBehavior> action) {
         action.accept(behavior);
         //? if <1.21 {
-        CompoundTag tag = behavior.blockEntity.saveWithFullMetadata();
-        //?} else
-        /*CompoundTag tag = behavior.blockEntity.saveWithFullMetadata(level.registryAccess());*/
+        /*CompoundTag tag = behavior.blockEntity.saveWithFullMetadata();
+        *///?} else
+        CompoundTag tag = behavior.blockEntity.saveWithFullMetadata(level.registryAccess());
         tag.remove("x");
         tag.remove("y");
         tag.remove("z");
@@ -1217,9 +1220,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         if (nbt.contains("MountPos")) {
             //? if <1.21 {
-            mountPos = NbtUtils.readBlockPos(nbt.getCompound("MountPos"));
-            //?} else
-            /*mountPos = NbtUtils.readBlockPos(nbt, "MountPos").orElse(null);*/
+            /*mountPos = NbtUtils.readBlockPos(nbt.getCompound("MountPos"));
+            *///?} else
+            mountPos = NbtUtils.readBlockPos(nbt, "MountPos").orElse(null);
         }
 
         // Read cooldown end times
@@ -1230,9 +1233,9 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
                 if (key.endsWith("_Pos")) {
                     String baseKey = key.substring(0, key.length() - 4);
                     //? if <1.21 {
-                    BlockPos pos = NbtUtils.readBlockPos(timersTag.getCompound(key));
-                    //?} else
-                    /*BlockPos pos = NbtUtils.readBlockPos(timersTag, key).orElse(null);*/
+                    /*BlockPos pos = NbtUtils.readBlockPos(timersTag.getCompound(key));
+                    *///?} else
+                    BlockPos pos = NbtUtils.readBlockPos(timersTag, key).orElse(null);
                     long endTime = timersTag.getLong(baseKey);
                     coilgunCooldownEndTimes.put(pos, endTime);
                 }
@@ -1241,7 +1244,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
     }
 
     //? if <1.21 {
-    @Override
+    /*@Override
     public CompoundTag writeNBT(boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(spawnPacket);
 
@@ -1264,8 +1267,8 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
-    //?} else {
-    /*@Override
+    *///?} else {
+    @Override
     public CompoundTag writeNBT(net.minecraft.core.HolderLookup.Provider provider, boolean spawnPacket) {
         CompoundTag nbt = super.writeNBT(provider, spawnPacket);
 
@@ -1288,7 +1291,7 @@ public class MountedEnergyCannonContraption extends MountedBigCannonContraption 
 
         return nbt;
     }
-    *///?}
+    //?}
 
 
 }

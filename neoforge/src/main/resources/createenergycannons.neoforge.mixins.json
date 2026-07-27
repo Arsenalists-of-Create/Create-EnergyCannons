@@ -3,10 +3,13 @@
   "package": "net.arsenalists.createenergycannons.neoforge.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
+  "plugin": "net.arsenalists.createenergycannons.neoforge.mixin.CECMixinPlugin",
   "mixins": [
     "OpenEndedPipeMixin",
     "CreateLangMixin",
-    "FluidTankMixin"
+    "FluidTankMixin",
+    "BigCannonProjectileNbtInjectMixin",
+    "BigCannonProjectileNbtOverrideMixin"
   ],
   "injectors": {
     "defaultRequire": 1
