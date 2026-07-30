@@ -78,6 +78,9 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
     public void fireShot(ServerLevel serverLevel, PitchOrientedContraptionEntity pitchOrientedContraptionEntity) {
         // Refresh config values at runtime
         try { LASER_ENERGY_BLOCK = CECConfig.server().laserPowerConsumption.get(); } catch (Exception ignored) {}
+
+        if (!drawEnergy(serverLevel, pitchOrientedContraptionEntity)) return;
+
         Vec3 start = pitchOrientedContraptionEntity.toGlobalVector(Vec3.atCenterOf(BlockPos.ZERO), 0);
         int range = CECConfig.server().laserRange.get();
 
@@ -289,28 +292,32 @@ public class MountedLaserCannonContraption extends AbstractMountedCannonContrapt
 
         if (!(level instanceof ServerLevel serverLevel)) return;
 
+        fireShot(serverLevel, entity);
+    }
 
+    private boolean drawEnergy(ServerLevel level, PitchOrientedContraptionEntity entity) {
         BlockEntity energyBE = level.getBlockEntity(this.anchor.below(2));
         if (energyBE == null) energyBE = level.getBlockEntity(this.anchor.above(2));
-        if (energyBE == null) return;
+        if (energyBE == null) return false;
 
         IModEnergyStorage energy = EnergyCapHelper.getEnergy(energyBE, null);
 
         int energyAvailable = energy.extractEnergy(LASER_ENERGY_BLOCK, true);
         if (energyAvailable < LASER_ENERGY_BLOCK) {
-            laser.setFireRate(0);
-            BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
-            return;
+            getLaser().ifPresent(laser -> {
+                laser.setFireRate(0);
+                BigCannonBlock.writeAndSyncSingleBlockData(laser, this.blocks.get(laser.getBlockPos()), entity, this);
+            });
+            return false;
         }
 
         int energyUsed = energy.extractEnergy(LASER_ENERGY_BLOCK, false);
         if (energyUsed < LASER_ENERGY_BLOCK) {
-            return;
+            return false;
         }
 
         if (energyBE instanceof SmartBlockEntity smartBE) smartBE.notifyUpdate();
-
-        fireShot(serverLevel, entity);
+        return true;
     }
 
     @Override
